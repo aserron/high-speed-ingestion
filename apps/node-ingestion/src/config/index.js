@@ -1,21 +1,36 @@
 /**
  * Configuration Management System
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
  * Provides centralized configuration management with validation,
  * environment variable support, and type checking for the Node.js
  * financial data ingestion system.
  */
 
+<<<<<<< HEAD
 // import { fileURLToPath } from 'url'
 // import { dirname } from 'path'
+=======
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 import Joi from 'joi'
 import dotenv from 'dotenv'
 
 // Load environment variables
 dotenv.config()
 
+<<<<<<< HEAD
 // const __filename = fileURLToPath(import.meta.url)
 // const __dirname = dirname(__filename)
+=======
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 
 /**
  * Configuration schema validation using Joi
@@ -36,23 +51,39 @@ const configSchema = Joi.object({
     url: Joi.string().uri({ scheme: ['ws', 'wss'] }).default('wss://localhost:8080/market-data'),
     protocols: Joi.array().items(Joi.string()).optional(),
     headers: Joi.object().pattern(Joi.string(), Joi.string()).optional(),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Connection settings
     connectTimeoutMs: Joi.number().integer().min(1000).max(30000).default(5000),
     pingIntervalMs: Joi.number().integer().min(5000).max(300000).default(30000),
     pongTimeoutMs: Joi.number().integer().min(1000).max(30000).default(5000),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Reconnection settings
     maxReconnectAttempts: Joi.number().integer().min(0).max(100).default(10),
     reconnectDelayMs: Joi.number().integer().min(10).max(10000).default(100),
     reconnectBackoffMultiplier: Joi.number().min(1.0).max(10.0).default(2.0),
     reconnectMaxDelayMs: Joi.number().integer().min(1000).max(300000).default(30000),
     reconnectJitterMs: Joi.number().integer().min(0).max(5000).default(1000),
+<<<<<<< HEAD
 
     // Performance settings
     maxMessageSize: Joi.number().integer().min(1024).max(10 * 1024 * 1024).default(1024 * 1024),
     compressionEnabled: Joi.boolean().default(true),
 
+=======
+    
+    // Performance settings
+    maxMessageSize: Joi.number().integer().min(1024).max(10 * 1024 * 1024).default(1024 * 1024),
+    compressionEnabled: Joi.boolean().default(true),
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Security settings
     tlsEnabled: Joi.boolean().default(true),
     tlsVerifyCertificate: Joi.boolean().default(true)
@@ -63,17 +94,29 @@ const configSchema = Joi.object({
     // Batch processing
     batchSize: Joi.number().integer().min(1).max(10000).default(100),
     batchTimeoutMs: Joi.number().integer().min(1).max(1000).default(10),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Backpressure handling
     maxQueueSize: Joi.number().integer().min(100).max(1000000).default(10000),
     backpressureThreshold: Joi.number().min(0.1).max(1.0).default(0.8),
     dropOldestOnBackpressure: Joi.boolean().default(true),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Performance monitoring
     latencyMeasurementEnabled: Joi.boolean().default(true),
     latencyHistogramBuckets: Joi.array().items(Joi.number().positive()).default([0.1, 0.5, 1, 2, 5, 10, 20, 50, 100]),
     metricsCollectionIntervalMs: Joi.number().integer().min(100).max(60000).default(1000),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Message validation
     validateIncomingMessages: Joi.boolean().default(true),
     strictSchemaValidation: Joi.boolean().default(false)
@@ -94,16 +137,28 @@ const configSchema = Joi.object({
     port: Joi.number().integer().min(1).max(65535).default(6379),
     password: Joi.string().optional(),
     db: Joi.number().integer().min(0).max(15).default(0),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Connection settings
     maxConnections: Joi.number().integer().min(1).max(100).default(10),
     minConnections: Joi.number().integer().min(1).max(50).default(2),
     acquireTimeoutMs: Joi.number().integer().min(1000).max(30000).default(5000),
+<<<<<<< HEAD
 
     // Performance settings
     socketKeepalive: Joi.boolean().default(true),
     keyPrefix: Joi.string().optional(),
 
+=======
+    
+    // Performance settings
+    socketKeepalive: Joi.boolean().default(true),
+    keyPrefix: Joi.string().optional(),
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Retry settings
     retryDelayOnFailover: Joi.number().integer().min(10).max(10000).default(100),
     maxRetriesPerRequest: Joi.number().integer().min(0).max(10).default(3)
@@ -116,13 +171,21 @@ const configSchema = Joi.object({
     database: Joi.string().default('finance_benchmark'),
     username: Joi.string().default('benchmark_user'),
     password: Joi.string().default('benchmark_pass'),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Connection pooling
     maxConnections: Joi.number().integer().min(1).max(100).default(20),
     minConnections: Joi.number().integer().min(1).max(50).default(5),
     acquireTimeoutMs: Joi.number().integer().min(1000).max(30000).default(5000),
     idleTimeoutMs: Joi.number().integer().min(5000).max(300000).default(30000),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Performance settings
     statementTimeoutMs: Joi.number().integer().min(1000).max(300000).default(30000),
     queryTimeoutMs: Joi.number().integer().min(1000).max(300000).default(30000),
@@ -143,18 +206,30 @@ const configSchema = Joi.object({
     prometheusEnabled: Joi.boolean().default(true),
     prometheusPort: Joi.number().integer().min(1024).max(65535).default(9090),
     prometheusPath: Joi.string().default('/metrics'),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Logging configuration
     logLevel: Joi.string().valid('error', 'warn', 'info', 'debug').default('info'),
     logFormat: Joi.string().valid('json', 'text').default('json'),
     logTimestamps: Joi.boolean().default(true),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Health checks
     healthCheckEnabled: Joi.boolean().default(true),
     healthCheckPort: Joi.number().integer().min(1024).max(65535).default(8080),
     healthCheckPath: Joi.string().default('/health'),
     healthCheckIntervalMs: Joi.number().integer().min(1000).max(60000).default(5000),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Performance tracking
     trackResourceUsage: Joi.boolean().default(true),
     resourceUsageIntervalMs: Joi.number().integer().min(100).max(60000).default(1000),
@@ -167,24 +242,40 @@ const configSchema = Joi.object({
     durationMs: Joi.number().integer().min(1000).max(3600000).default(60000),
     warmupMs: Joi.number().integer().min(0).max(300000).default(10000),
     cooldownMs: Joi.number().integer().min(0).max(60000).default(5000),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Message generation
     messageRatePerSecond: Joi.number().integer().min(1).max(1000000).default(10000),
     burstModeEnabled: Joi.boolean().default(true),
     burstIntervalMs: Joi.number().integer().min(1000).max(300000).default(10000),
     burstMultiplier: Joi.number().min(1.0).max(100.0).default(5.0),
+<<<<<<< HEAD
 
     // Test symbols
     symbols: Joi.array().items(Joi.string()).default(['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'META', 'NVDA', 'NFLX']),
     symbolRotationEnabled: Joi.boolean().default(true),
 
+=======
+    
+    // Test symbols
+    symbols: Joi.array().items(Joi.string()).default(['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'META', 'NVDA', 'NFLX']),
+    symbolRotationEnabled: Joi.boolean().default(true),
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Data generation
     priceRangeMin: Joi.number().min(0.01).default(1.0),
     priceRangeMax: Joi.number().min(1.0).default(1000.0),
     quantityRangeMin: Joi.number().min(0.01).default(1.0),
     quantityRangeMax: Joi.number().min(1.0).default(10000.0),
     exchanges: Joi.array().items(Joi.string()).default(['NYSE', 'NASDAQ', 'BATS', 'ARCA']),
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Results collection
     collectDetailedMetrics: Joi.boolean().default(true),
     saveResultsToDatabase: Joi.boolean().default(true),
@@ -195,7 +286,11 @@ const configSchema = Joi.object({
 /**
  * Load configuration from environment variables with nested support
  */
+<<<<<<< HEAD
 function loadConfigFromEnv () {
+=======
+function loadConfigFromEnv() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   const config = {
     app: {
       name: process.env.APP_NAME,
@@ -306,7 +401,11 @@ function loadConfigFromEnv () {
   }
 
   // Remove undefined values and filter out NaN numbers to let Joi apply defaults
+<<<<<<< HEAD
   function cleanValue (key, value) {
+=======
+  function cleanValue(key, value) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     if (value === undefined || value === null || value === '') {
       return undefined
     }
@@ -315,14 +414,22 @@ function loadConfigFromEnv () {
     }
     return value
   }
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   return JSON.parse(JSON.stringify(config, cleanValue))
 }
 
 /**
  * Validate and create configuration
  */
+<<<<<<< HEAD
 function createConfig () {
+=======
+function createConfig() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   const envConfig = loadConfigFromEnv()
   const { error, value } = configSchema.validate(envConfig, {
     allowUnknown: false,
@@ -345,7 +452,11 @@ let config = null
 /**
  * Get the global configuration instance
  */
+<<<<<<< HEAD
 export function getConfig () {
+=======
+export function getConfig() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   if (!config) {
     config = createConfig()
   }
@@ -355,7 +466,11 @@ export function getConfig () {
 /**
  * Reload configuration (primarily for testing)
  */
+<<<<<<< HEAD
 export function reloadConfig () {
+=======
+export function reloadConfig() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   config = null
   return getConfig()
 }
@@ -363,14 +478,22 @@ export function reloadConfig () {
 /**
  * Set configuration (primarily for testing)
  */
+<<<<<<< HEAD
 export function setConfig (newConfig) {
+=======
+export function setConfig(newConfig) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   config = newConfig
 }
 
 /**
  * Get database connection URL
  */
+<<<<<<< HEAD
 export function getDatabaseUrl (cfg = getConfig()) {
+=======
+export function getDatabaseUrl(cfg = getConfig()) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   const { postgresql } = cfg
   return `postgresql://${postgresql.username}:${postgresql.password}@${postgresql.host}:${postgresql.port}/${postgresql.database}`
 }
@@ -378,7 +501,11 @@ export function getDatabaseUrl (cfg = getConfig()) {
 /**
  * Get Redis connection URL
  */
+<<<<<<< HEAD
 export function getRedisUrl (cfg = getConfig()) {
+=======
+export function getRedisUrl(cfg = getConfig()) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   const { redis } = cfg
   const auth = redis.password ? `:${redis.password}@` : ''
   return `redis://${auth}${redis.host}:${redis.port}/${redis.db}`
@@ -387,14 +514,22 @@ export function getRedisUrl (cfg = getConfig()) {
 /**
  * Check if running in production environment
  */
+<<<<<<< HEAD
 export function isProduction (cfg = getConfig()) {
+=======
+export function isProduction(cfg = getConfig()) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   return cfg.app.environment === 'production'
 }
 
 /**
  * Check if running in development environment
  */
+<<<<<<< HEAD
 export function isDevelopment (cfg = getConfig()) {
+=======
+export function isDevelopment(cfg = getConfig()) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   return cfg.app.environment === 'development'
 }
 
@@ -406,4 +541,8 @@ export default {
   getRedisUrl,
   isProduction,
   isDevelopment
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)

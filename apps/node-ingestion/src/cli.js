@@ -1,6 +1,10 @@
 /**
  * Command Line Interface
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
  * Provides CLI commands for running the Node.js financial data ingestion system
  * with proper configuration, logging, and error handling.
  */
@@ -17,7 +21,11 @@ const program = new Command()
 /**
  * Setup CLI program
  */
+<<<<<<< HEAD
 function setupCLI () {
+=======
+function setupCLI() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   program
     .name('finance-ingestion')
     .description('High-performance Node.js financial data ingestion system')
@@ -110,14 +118,22 @@ function setupCLI () {
 /**
  * Run command implementation
  */
+<<<<<<< HEAD
 async function runCommand (options) {
   // Initialize configuration and logging
   const config = getConfig()
 
+=======
+async function runCommand(options) {
+  // Initialize configuration and logging
+  const config = getConfig()
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   // Override configuration with CLI options
   if (options.host || options.port) {
     config.websocket.url = `wss://${options.host || 'localhost'}:${options.port || 8080}/market-data`
   }
+<<<<<<< HEAD
 
   if (options.duration && parseInt(options.duration) > 0) {
     config.benchmark.durationMs = parseInt(options.duration) * 1000
@@ -127,15 +143,32 @@ async function runCommand (options) {
     config.cluster.enabled = true
   }
 
+=======
+  
+  if (options.duration && parseInt(options.duration) > 0) {
+    config.benchmark.durationMs = parseInt(options.duration) * 1000
+  }
+  
+  if (options.cluster) {
+    config.cluster.enabled = true
+  }
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   if (options.workers) {
     config.cluster.workers = parseInt(options.workers)
   }
 
   setupLogging(config)
   setupErrorHandlers()
+<<<<<<< HEAD
 
   const logger = getLogger('cli')
 
+=======
+  
+  const logger = getLogger('cli')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   logger.info('Starting ingestion system', {
     websocketUrl: config.websocket.url,
     durationMs: config.benchmark.durationMs,
@@ -155,21 +188,36 @@ async function runCommand (options) {
 /**
  * Cluster command implementation
  */
+<<<<<<< HEAD
 async function clusterCommand (options) {
   const config = getConfig()
 
   // Enable clustering
   config.cluster.enabled = true
 
+=======
+async function clusterCommand(options) {
+  const config = getConfig()
+  
+  // Enable clustering
+  config.cluster.enabled = true
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   if (options.workers) {
     config.cluster.workers = parseInt(options.workers)
   }
 
   setupLogging(config)
   setupErrorHandlers()
+<<<<<<< HEAD
 
   const logger = getLogger('cli')
 
+=======
+  
+  const logger = getLogger('cli')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   logger.info('Starting cluster mode', {
     workers: config.cluster.workers || 'auto'
   })
@@ -180,18 +228,30 @@ async function clusterCommand (options) {
 /**
  * Benchmark command implementation
  */
+<<<<<<< HEAD
 async function benchmarkCommand (options) {
   const config = getConfig()
 
+=======
+async function benchmarkCommand(options) {
+  const config = getConfig()
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   if (options.duration) {
     config.benchmark.durationMs = parseInt(options.duration) * 1000
   }
 
   setupLogging(config)
   setupErrorHandlers()
+<<<<<<< HEAD
 
   const logger = getLogger('cli')
 
+=======
+  
+  const logger = getLogger('cli')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   logger.info('Starting benchmark suite', {
     durationMs: config.benchmark.durationMs,
     outputFile: options.output,
@@ -201,6 +261,7 @@ async function benchmarkCommand (options) {
   // Placeholder for benchmark implementation
   logger.info('Benchmark suite would start here')
   logger.info('This will be implemented in subsequent tasks')
+<<<<<<< HEAD
 
   if (options.output) {
     logger.info(`Would save results to ${options.output} in ${options.format} format`)
@@ -209,12 +270,23 @@ async function benchmarkCommand (options) {
   // Simulate benchmark execution
   await new Promise(resolve => setTimeout(resolve, 2000))
 
+=======
+  
+  if (options.output) {
+    logger.info(`Would save results to ${options.output} in ${options.format} format`)
+  }
+  
+  // Simulate benchmark execution
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   logger.info('Benchmark suite completed')
 }
 
 /**
  * Validate config command implementation
  */
+<<<<<<< HEAD
 async function validateConfigCommand () {
   try {
     const config = getConfig()
@@ -226,26 +298,55 @@ async function validateConfigCommand () {
 
     const errors = []
 
+=======
+async function validateConfigCommand() {
+  try {
+    const config = getConfig()
+    setupLogging(config)
+    
+    const logger = getLogger('cli')
+    
+    logger.info('Validating configuration...')
+    
+    const errors = []
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Check WebSocket configuration
     if (!config.websocket.url.startsWith('ws://') && !config.websocket.url.startsWith('wss://')) {
       errors.push('WebSocket URL must start with ws:// or wss://')
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Check database configuration
     if (!config.postgresql.database) {
       errors.push('PostgreSQL database name is required')
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Check Redis configuration
     if (config.redis.port < 1 || config.redis.port > 65535) {
       errors.push('Redis port must be between 1 and 65535')
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Check cluster configuration
     if (config.cluster.workers < 0 || config.cluster.workers > 32) {
       errors.push('Cluster workers must be between 0 and 32')
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     if (errors.length > 0) {
       logger.error('Configuration validation failed', { errors })
       errors.forEach(error => console.error(`ERROR: ${error}`))
@@ -254,6 +355,10 @@ async function validateConfigCommand () {
       logger.info('Configuration validation passed')
       console.log('Configuration is valid ✓')
     }
+<<<<<<< HEAD
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   } catch (error) {
     console.error('Configuration validation error:', error.message)
     process.exit(1)
@@ -263,6 +368,7 @@ async function validateConfigCommand () {
 /**
  * Health check command implementation
  */
+<<<<<<< HEAD
 async function healthCheckCommand () {
   const config = getConfig()
   setupLogging(config)
@@ -271,6 +377,16 @@ async function healthCheckCommand () {
 
   logger.info('Performing health checks...')
 
+=======
+async function healthCheckCommand() {
+  const config = getConfig()
+  setupLogging(config)
+  
+  const logger = getLogger('cli')
+  
+  logger.info('Performing health checks...')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   // Placeholder for health check implementation
   const checks = [
     'WebSocket connectivity',
@@ -278,13 +394,21 @@ async function healthCheckCommand () {
     'PostgreSQL connectivity',
     'System resources'
   ]
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   for (const check of checks) {
     logger.info(`Would check: ${check}`)
     // Simulate check
     await new Promise(resolve => setTimeout(resolve, 500))
   }
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   logger.info('All health checks would pass')
   console.log('All health checks passed ✓')
 }
@@ -292,12 +416,22 @@ async function healthCheckCommand () {
 /**
  * Main CLI entry point
  */
+<<<<<<< HEAD
 async function main () {
   try {
     const cli = setupCLI()
 
     // Parse command line arguments
     await cli.parseAsync(process.argv)
+=======
+async function main() {
+  try {
+    const cli = setupCLI()
+    
+    // Parse command line arguments
+    await cli.parseAsync(process.argv)
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   } catch (error) {
     console.error('CLI error:', error.message)
     process.exit(1)
@@ -317,4 +451,8 @@ export default {
   validateConfigCommand,
   healthCheckCommand,
   main
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)

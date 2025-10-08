@@ -1,6 +1,10 @@
 /**
  * Native Clustering for Multi-Core Utilization
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
  * Implements Node.js cluster management for maximum CPU utilization
  * with proper worker lifecycle management, graceful shutdown, and
  * load balancing for the financial data ingestion system.
@@ -16,7 +20,11 @@ import { setupErrorHandlers, ClusterError } from './errors/index.js'
  * Cluster manager class
  */
 class ClusterManager {
+<<<<<<< HEAD
   constructor () {
+=======
+  constructor() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     this.config = getConfig()
     this.logger = null
     this.workers = new Map()
@@ -28,11 +36,19 @@ class ClusterManager {
   /**
    * Initialize the cluster manager
    */
+<<<<<<< HEAD
   async initialize () {
     // Setup logging first
     setupLogging(this.config)
     this.logger = getLogger('cluster-manager')
 
+=======
+  async initialize() {
+    // Setup logging first
+    setupLogging(this.config)
+    this.logger = getLogger('cluster-manager')
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Setup error handlers
     setupErrorHandlers()
 
@@ -55,7 +71,11 @@ class ClusterManager {
   /**
    * Start the primary process
    */
+<<<<<<< HEAD
   async startPrimary () {
+=======
+  async startPrimary() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     this.logger.info('Starting cluster primary process', {
       pid: process.pid,
       clusterEnabled: this.config.cluster.enabled
@@ -94,7 +114,11 @@ class ClusterManager {
   /**
    * Start a single worker (no clustering)
    */
+<<<<<<< HEAD
   async startSingleWorker () {
+=======
+  async startSingleWorker() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     try {
       const { default: app } = await import('./index.js')
       await app.start()
@@ -107,10 +131,17 @@ class ClusterManager {
   /**
    * Start a worker process
    */
+<<<<<<< HEAD
   async startWorker () {
     const workerId = process.env.WORKER_ID || cluster.worker.id
     const logger = getLogger(`worker-${workerId}`)
 
+=======
+  async startWorker() {
+    const workerId = process.env.WORKER_ID || cluster.worker.id
+    const logger = getLogger(`worker-${workerId}`)
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     logger.info('Starting worker process', {
       workerId,
       pid: process.pid,
@@ -121,7 +152,11 @@ class ClusterManager {
       // Import and start the main application
       const { default: app } = await import('./index.js')
       await app.start()
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
       logger.info('Worker process started successfully', {
         workerId,
         uptime: process.uptime()
@@ -139,7 +174,11 @@ class ClusterManager {
   /**
    * Fork a new worker
    */
+<<<<<<< HEAD
   async forkWorker () {
+=======
+  async forkWorker() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     return new Promise((resolve, reject) => {
       const worker = cluster.fork()
       const workerId = worker.id
@@ -169,10 +208,17 @@ class ClusterManager {
       })
 
       worker.on('error', (error) => {
+<<<<<<< HEAD
         this.logger.error('Worker error', {
           workerId,
           error: error.message,
           stack: error.stack
+=======
+        this.logger.error('Worker error', { 
+          workerId, 
+          error: error.message,
+          stack: error.stack 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
         })
         reject(new ClusterError(`Worker ${workerId} error: ${error.message}`, workerId, 'start'))
       })
@@ -193,11 +239,19 @@ class ClusterManager {
   /**
    * Setup cluster event handlers
    */
+<<<<<<< HEAD
   setupClusterEventHandlers () {
     cluster.on('exit', (worker, code, signal) => {
       const workerId = worker.id
       const workerInfo = this.workers.get(workerId)
 
+=======
+  setupClusterEventHandlers() {
+    cluster.on('exit', (worker, code, signal) => {
+      const workerId = worker.id
+      const workerInfo = this.workers.get(workerId)
+      
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
       this.logger.warn('Worker exited', {
         workerId,
         pid: worker.process.pid,
@@ -223,12 +277,21 @@ class ClusterManager {
   /**
    * Restart a worker
    */
+<<<<<<< HEAD
   async restartWorker (workerId) {
     const restartCount = this.restartCounts.get(workerId) || 0
 
     if (restartCount >= this.config.cluster.maxRestarts) {
       this.logger.error('Worker restart limit exceeded', {
         workerId,
+=======
+  async restartWorker(workerId) {
+    const restartCount = this.restartCounts.get(workerId) || 0
+    
+    if (restartCount >= this.config.cluster.maxRestarts) {
+      this.logger.error('Worker restart limit exceeded', { 
+        workerId, 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
         restartCount,
         maxRestarts: this.config.cluster.maxRestarts
       })
@@ -236,7 +299,11 @@ class ClusterManager {
     }
 
     this.logger.info('Restarting worker', { workerId, restartCount })
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Increment restart count
     this.restartCounts.set(workerId, restartCount + 1)
 
@@ -247,9 +314,15 @@ class ClusterManager {
       await this.forkWorker()
       this.logger.info('Worker restarted successfully', { workerId })
     } catch (error) {
+<<<<<<< HEAD
       this.logger.error('Failed to restart worker', {
         workerId,
         error: error.message
+=======
+      this.logger.error('Failed to restart worker', { 
+        workerId, 
+        error: error.message 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
       })
     }
   }
@@ -257,9 +330,15 @@ class ClusterManager {
   /**
    * Setup graceful shutdown
    */
+<<<<<<< HEAD
   setupGracefulShutdown () {
     const signals = ['SIGTERM', 'SIGINT', 'SIGUSR2']
 
+=======
+  setupGracefulShutdown() {
+    const signals = ['SIGTERM', 'SIGINT', 'SIGUSR2']
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     signals.forEach(signal => {
       process.on(signal, () => {
         this.logger.info(`Received ${signal}, initiating graceful shutdown`)
@@ -271,7 +350,11 @@ class ClusterManager {
   /**
    * Perform graceful shutdown
    */
+<<<<<<< HEAD
   async gracefulShutdown () {
+=======
+  async gracefulShutdown() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     if (this.isShuttingDown) {
       this.logger.warn('Shutdown already in progress')
       return
@@ -285,7 +368,11 @@ class ClusterManager {
     // Disconnect all workers
     for (const [workerId, workerInfo] of this.workers) {
       const { worker } = workerInfo
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
       shutdownPromises.push(
         new Promise((resolve) => {
           const timeout = setTimeout(() => {
@@ -320,7 +407,11 @@ class ClusterManager {
   /**
    * Setup health monitoring
    */
+<<<<<<< HEAD
   setupHealthMonitoring () {
+=======
+  setupHealthMonitoring() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     setInterval(() => {
       const healthInfo = {
         uptime: Date.now() - this.startTime,
@@ -334,7 +425,11 @@ class ClusterManager {
       // Check for unhealthy workers
       for (const [workerId, workerInfo] of this.workers) {
         const { worker } = workerInfo
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
         if (worker.isDead()) {
           this.logger.warn('Dead worker detected', { workerId })
           this.workers.delete(workerId)
@@ -346,7 +441,11 @@ class ClusterManager {
   /**
    * Get cluster statistics
    */
+<<<<<<< HEAD
   getStats () {
+=======
+  getStats() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     const workers = Array.from(this.workers.entries()).map(([id, info]) => ({
       id,
       pid: info.worker.process.pid,
@@ -368,9 +467,15 @@ class ClusterManager {
 /**
  * Start the cluster
  */
+<<<<<<< HEAD
 async function startCluster () {
   const clusterManager = new ClusterManager()
 
+=======
+async function startCluster() {
+  const clusterManager = new ClusterManager()
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   try {
     await clusterManager.initialize()
   } catch (error) {
@@ -385,4 +490,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 }
 
 export default ClusterManager
+<<<<<<< HEAD
 export { startCluster }
+=======
+export { startCluster }
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
