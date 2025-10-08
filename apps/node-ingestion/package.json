@@ -25,6 +25,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -93,6 +94,11 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --run",
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+>>>>>>> b95c5e5 (test: implement comprehensive unit tests for message processors)
     "benchmark": "node --enable-source-maps src/benchmark.js",
     "lint": "eslint src/ --ext .js",
     "lint:fix": "eslint src/ --ext .js --fix",
@@ -140,6 +146,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     "extensionsToTreatAsEsm": [".js"],
 <<<<<<< HEAD
@@ -173,6 +180,8 @@
 >>>>>>> b95c5e5 (test: implement comprehensive unit tests for message processors)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
+>>>>>>> b95c5e5 (test: implement comprehensive unit tests for message processors)
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/**/*.test.js",
