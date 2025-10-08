@@ -1,7 +1,11 @@
 /**
  * Main Application Entry Point
 <<<<<<< HEAD
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
  * 
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -18,7 +22,11 @@ import { setupErrorHandlers } from './errors/index.js'
  */
 class FinanceIngestionApp {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor () {
+=======
+  constructor() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -33,6 +41,7 @@ class FinanceIngestionApp {
   /**
    * Initialize the application
    */
+<<<<<<< HEAD
 <<<<<<< HEAD
   async initialize () {
     try {
@@ -50,6 +59,8 @@ class FinanceIngestionApp {
       setCorrelationId('startup')
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   async initialize() {
     try {
       // Load configuration
@@ -65,6 +76,9 @@ class FinanceIngestionApp {
       // Set correlation ID for startup
       setCorrelationId('startup')
       
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
       this.logger.info('Initializing Finance Ingestion System', {
         version: this.config.app.version,
@@ -77,8 +91,14 @@ class FinanceIngestionApp {
       // Validate configuration
       await this.validateConfiguration()
 <<<<<<< HEAD
+<<<<<<< HEAD
 
       this.logger.info('Application initialized successfully')
+=======
+      
+      this.logger.info('Application initialized successfully')
+      
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
       
       this.logger.info('Application initialized successfully')
@@ -94,7 +114,11 @@ class FinanceIngestionApp {
    * Start the application
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   async start () {
+=======
+  async start() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   async start() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -106,7 +130,11 @@ class FinanceIngestionApp {
     try {
       await this.initialize()
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
       
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -121,7 +149,11 @@ class FinanceIngestionApp {
 
       this.isStarted = true
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
       
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -133,6 +165,10 @@ class FinanceIngestionApp {
       // Keep the process alive
       this.keepAlive()
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+      
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
       
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -149,7 +185,11 @@ class FinanceIngestionApp {
    * Stop the application
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   async stop () {
+=======
+  async stop() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   async stop() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -164,7 +204,11 @@ class FinanceIngestionApp {
       // Stop services in reverse order
       const serviceNames = Array.from(this.services.keys()).reverse()
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
       
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -174,16 +218,22 @@ class FinanceIngestionApp {
 
       this.isStarted = false
 <<<<<<< HEAD
+<<<<<<< HEAD
 
       this.logger.info('Finance Ingestion System stopped successfully', {
         uptime: Date.now() - this.startTime
       })
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
       
       this.logger.info('Finance Ingestion System stopped successfully', {
         uptime: Date.now() - this.startTime
       })
       
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     } catch (error) {
       this.logger.error('Error during application shutdown', {
@@ -198,9 +248,15 @@ class FinanceIngestionApp {
    * Validate configuration
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   async validateConfiguration () {
     this.logger.info('Validating configuration')
 
+=======
+  async validateConfiguration() {
+    this.logger.info('Validating configuration')
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   async validateConfiguration() {
     this.logger.info('Validating configuration')
@@ -239,6 +295,7 @@ class FinanceIngestionApp {
    * Start core services
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   async startServices () {
     this.logger.info('Starting core services')
 
@@ -249,6 +306,8 @@ class FinanceIngestionApp {
       { name: 'websocket', start: () => this.startWebSocketService() },
       { name: 'processor', start: () => this.startProcessorService() }
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   async startServices() {
     this.logger.info('Starting core services')
 
@@ -261,6 +320,9 @@ class FinanceIngestionApp {
       { name: 'websocket', start: () => this.startWebSocketService() },
       { name: 'processor', start: () => this.startProcessorService() },
       { name: 'storage', start: () => this.startStorageService() }
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     ]
 
@@ -284,7 +346,11 @@ class FinanceIngestionApp {
    * Stop a service
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   async stopService (serviceName) {
+=======
+  async stopService(serviceName) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   async stopService(serviceName) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -296,6 +362,7 @@ class FinanceIngestionApp {
     try {
       this.logger.info(`Stopping ${serviceName} service`)
 <<<<<<< HEAD
+<<<<<<< HEAD
 
       if (service.stop && typeof service.stop === 'function') {
         await service.stop()
@@ -304,6 +371,8 @@ class FinanceIngestionApp {
       this.services.delete(serviceName)
       this.logger.info(`${serviceName} service stopped successfully`)
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
       
       if (service.stop && typeof service.stop === 'function') {
         await service.stop()
@@ -312,6 +381,9 @@ class FinanceIngestionApp {
       this.services.delete(serviceName)
       this.logger.info(`${serviceName} service stopped successfully`)
       
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     } catch (error) {
       this.logger.error(`Error stopping ${serviceName} service`, {
@@ -322,6 +394,7 @@ class FinanceIngestionApp {
   }
 
   /**
+<<<<<<< HEAD
 <<<<<<< HEAD
    * Service implementations
    */
@@ -353,17 +426,26 @@ class FinanceIngestionApp {
 
   async startMetricsService () {
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
    * Placeholder service implementations
    * These will be replaced with actual implementations in subsequent tasks
    */
   async startMetricsService() {
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     this.logger.info('Metrics service would start here (placeholder)')
     return { name: 'metrics', stop: async () => {} }
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   async startHealthService () {
+=======
+  async startHealthService() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   async startHealthService() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -371,6 +453,7 @@ class FinanceIngestionApp {
     return { name: 'health', stop: async () => {} }
   }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   async startWebSocketService () {
     const { initializeWebSocket } = await import('./websocket/index.js')
@@ -407,10 +490,19 @@ class FinanceIngestionApp {
 
   async startProcessorService() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
+  async startWebSocketService() {
+    this.logger.info('WebSocket service would start here (placeholder)')
+    return { name: 'websocket', stop: async () => {} }
+  }
+
+  async startProcessorService() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     this.logger.info('Processor service would start here (placeholder)')
     return { name: 'processor', stop: async () => {} }
   }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   /**
    * Setup graceful shutdown
@@ -423,6 +515,8 @@ class FinanceIngestionApp {
         this.logger.info(`Received ${signal}, initiating graceful shutdown`)
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   async startStorageService() {
     this.logger.info('Storage service would start here (placeholder)')
     return { name: 'storage', stop: async () => {} }
@@ -438,6 +532,9 @@ class FinanceIngestionApp {
       process.on(signal, async () => {
         this.logger.info(`Received ${signal}, initiating graceful shutdown`)
         
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
         try {
           await this.stop()
@@ -457,7 +554,11 @@ class FinanceIngestionApp {
    * Keep the process alive
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   keepAlive () {
+=======
+  keepAlive() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   keepAlive() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -478,7 +579,11 @@ class FinanceIngestionApp {
    * Get application status
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   getStatus () {
+=======
+  getStatus() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   getStatus() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -514,7 +619,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 export default app
 <<<<<<< HEAD
+<<<<<<< HEAD
 export { FinanceIngestionApp }
+=======
+export { FinanceIngestionApp }
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export { FinanceIngestionApp }
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)

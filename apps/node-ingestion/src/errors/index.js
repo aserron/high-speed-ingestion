@@ -1,7 +1,11 @@
 /**
  * Error Handling and Exception Management Framework
 <<<<<<< HEAD
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
  * 
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -17,9 +21,15 @@ import { getLogger } from '../logging/index.js'
  */
 export class FinanceIngestionError extends Error {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, errorCode = null, context = {}, cause = null) {
     super(message)
 
+=======
+  constructor(message, errorCode = null, context = {}, cause = null) {
+    super(message)
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(message, errorCode = null, context = {}, cause = null) {
     super(message)
@@ -32,7 +42,11 @@ export class FinanceIngestionError extends Error {
     this.cause = cause
     this.timestamp = new Date().toISOString()
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -41,7 +55,11 @@ export class FinanceIngestionError extends Error {
       Error.captureStackTrace(this, this.constructor)
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -55,7 +73,11 @@ export class FinanceIngestionError extends Error {
    * Convert error to structured object for logging
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   toJSON () {
+=======
+  toJSON() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   toJSON() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -67,6 +89,7 @@ export class FinanceIngestionError extends Error {
       context: this.context,
       stack: this.stack,
 <<<<<<< HEAD
+<<<<<<< HEAD
       cause: this.cause
         ? {
             type: this.cause.constructor.name,
@@ -74,10 +97,15 @@ export class FinanceIngestionError extends Error {
           }
         : null
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
       cause: this.cause ? {
         type: this.cause.constructor.name,
         message: this.cause.message
       } : null
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     }
   }
@@ -86,9 +114,15 @@ export class FinanceIngestionError extends Error {
    * Get a detailed string representation
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   toString () {
     const parts = [`${this.errorCode}: ${this.message}`]
 
+=======
+  toString() {
+    const parts = [`${this.errorCode}: ${this.message}`]
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   toString() {
     const parts = [`${this.errorCode}: ${this.message}`]
@@ -101,17 +135,23 @@ export class FinanceIngestionError extends Error {
       parts.push(`Context: ${contextStr}`)
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     if (this.cause) {
       parts.push(`Caused by: ${this.cause.message}`)
     }
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     
     if (this.cause) {
       parts.push(`Caused by: ${this.cause.message}`)
     }
     
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     return parts.join(' | ')
   }
@@ -122,17 +162,23 @@ export class FinanceIngestionError extends Error {
  */
 export class ConfigurationError extends FinanceIngestionError {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, configKey = null, configValue = null, options = {}) {
     const context = { ...options.context }
     if (configKey) context.configKey = configKey
     if (configValue !== null) context.configValue = String(configValue)
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   constructor(message, configKey = null, configValue = null, options = {}) {
     const context = { ...options.context }
     if (configKey) context.configKey = configKey
     if (configValue !== null) context.configValue = String(configValue)
     
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     super(message, 'CONFIG_ERROR', context, options.cause)
   }
@@ -143,7 +189,11 @@ export class ConfigurationError extends FinanceIngestionError {
  */
 export class ConnectionError extends FinanceIngestionError {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, connectionType = null, endpoint = null, retryCount = null, options = {}) {
+=======
+  constructor(message, connectionType = null, endpoint = null, retryCount = null, options = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(message, connectionType = null, endpoint = null, retryCount = null, options = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -152,7 +202,11 @@ export class ConnectionError extends FinanceIngestionError {
     if (endpoint) context.endpoint = endpoint
     if (retryCount !== null) context.retryCount = retryCount
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -165,7 +219,11 @@ export class ConnectionError extends FinanceIngestionError {
  */
 export class ProcessingError extends FinanceIngestionError {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, messageId = null, processingStage = null, messageData = null, options = {}) {
+=======
+  constructor(message, messageId = null, processingStage = null, messageData = null, options = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(message, messageId = null, processingStage = null, messageData = null, options = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -179,7 +237,11 @@ export class ProcessingError extends FinanceIngestionError {
       context.sequenceNumber = messageData.sequenceNumber
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -188,6 +250,7 @@ export class ProcessingError extends FinanceIngestionError {
 }
 
 /**
+<<<<<<< HEAD
 <<<<<<< HEAD
  * Alias for ProcessingError for backward compatibility
  */
@@ -203,17 +266,26 @@ export class MessageProcessingError extends ProcessingError {
 export class StorageError extends FinanceIngestionError {
   constructor (message, storageType = null, operation = null, affectedRecords = null, options = {}) {
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
  * Storage-related errors
  */
 export class StorageError extends FinanceIngestionError {
   constructor(message, storageType = null, operation = null, affectedRecords = null, options = {}) {
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     const context = { ...options.context }
     if (storageType) context.storageType = storageType
     if (operation) context.operation = operation
     if (affectedRecords !== null) context.affectedRecords = affectedRecords
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -226,7 +298,11 @@ export class StorageError extends FinanceIngestionError {
  */
 export class ValidationError extends FinanceIngestionError {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, fieldName = null, fieldValue = null, validationRule = null, options = {}) {
+=======
+  constructor(message, fieldName = null, fieldValue = null, validationRule = null, options = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(message, fieldName = null, fieldValue = null, validationRule = null, options = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -235,7 +311,11 @@ export class ValidationError extends FinanceIngestionError {
     if (fieldValue !== null) context.fieldValue = String(fieldValue)
     if (validationRule) context.validationRule = validationRule
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -248,7 +328,11 @@ export class ValidationError extends FinanceIngestionError {
  */
 export class BackpressureError extends FinanceIngestionError {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, queueSize = null, maxQueueSize = null, messageRate = null, options = {}) {
+=======
+  constructor(message, queueSize = null, maxQueueSize = null, messageRate = null, options = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(message, queueSize = null, maxQueueSize = null, messageRate = null, options = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -257,7 +341,11 @@ export class BackpressureError extends FinanceIngestionError {
     if (maxQueueSize !== null) context.maxQueueSize = maxQueueSize
     if (messageRate !== null) context.messageRate = messageRate
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -270,17 +358,23 @@ export class BackpressureError extends FinanceIngestionError {
  */
 export class MetricsError extends FinanceIngestionError {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, metricName = null, metricType = null, options = {}) {
     const context = { ...options.context }
     if (metricName) context.metricName = metricName
     if (metricType) context.metricType = metricType
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   constructor(message, metricName = null, metricType = null, options = {}) {
     const context = { ...options.context }
     if (metricName) context.metricName = metricName
     if (metricType) context.metricType = metricType
     
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     super(message, 'METRICS_ERROR', context, options.cause)
   }
@@ -291,7 +385,11 @@ export class MetricsError extends FinanceIngestionError {
  */
 export class TimeoutError extends FinanceIngestionError {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, operation = null, timeoutMs = null, elapsedMs = null, options = {}) {
+=======
+  constructor(message, operation = null, timeoutMs = null, elapsedMs = null, options = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(message, operation = null, timeoutMs = null, elapsedMs = null, options = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -300,7 +398,11 @@ export class TimeoutError extends FinanceIngestionError {
     if (timeoutMs !== null) context.timeoutMs = timeoutMs
     if (elapsedMs !== null) context.elapsedMs = elapsedMs
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -313,7 +415,11 @@ export class TimeoutError extends FinanceIngestionError {
  */
 export class ResourceError extends FinanceIngestionError {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, resourceType = null, currentUsage = null, limit = null, options = {}) {
+=======
+  constructor(message, resourceType = null, currentUsage = null, limit = null, options = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(message, resourceType = null, currentUsage = null, limit = null, options = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -322,7 +428,11 @@ export class ResourceError extends FinanceIngestionError {
     if (currentUsage !== null) context.currentUsage = currentUsage
     if (limit !== null) context.limit = limit
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -335,17 +445,23 @@ export class ResourceError extends FinanceIngestionError {
  */
 export class ClusterError extends FinanceIngestionError {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (message, workerId = null, operation = null, options = {}) {
     const context = { ...options.context }
     if (workerId !== null) context.workerId = workerId
     if (operation) context.operation = operation
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   constructor(message, workerId = null, operation = null, options = {}) {
     const context = { ...options.context }
     if (workerId !== null) context.workerId = workerId
     if (operation) context.operation = operation
     
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     super(message, 'CLUSTER_ERROR', context, options.cause)
   }
@@ -355,7 +471,11 @@ export class ClusterError extends FinanceIngestionError {
  * Convert generic errors to appropriate FinanceIngestionError subclass
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function convertError (error, context = {}) {
+=======
+export function convertError(error, context = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function convertError(error, context = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -372,6 +492,7 @@ export function convertError(error, context = {}) {
     return new ConnectionError(message, 'network', null, null, { context, cause: error })
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   if (error.code === 'ENOTFOUND') {
     return new ConnectionError(message, 'dns', null, null, { context, cause: error })
@@ -386,6 +507,8 @@ export function convertError(error, context = {}) {
   }
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   
   if (error.code === 'ENOTFOUND') {
     return new ConnectionError(message, 'dns', null, null, { context, cause: error })
@@ -399,6 +522,9 @@ export function convertError(error, context = {}) {
     return new ValidationError(message, null, null, null, { context, cause: error })
   }
   
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
   if (error.code === 'EMFILE' || error.code === 'ENOMEM') {
     return new ResourceError(message, 'system', null, null, { context, cause: error })
@@ -411,6 +537,7 @@ export function convertError(error, context = {}) {
 /**
  * Error handler function for centralized error processing
  */
+<<<<<<< HEAD
 <<<<<<< HEAD
 export function handleError (error, logger = null, context = {}, shouldRethrow = true) {
   // Convert to FinanceIngestionError if needed
@@ -425,6 +552,8 @@ export function handleError (error, logger = null, context = {}, shouldRethrow =
   }
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 export function handleError(error, logger = null, context = {}, shouldRethrow = true) {
   // Convert to FinanceIngestionError if needed
   const financeError = convertError(error, context)
@@ -437,6 +566,9 @@ export function handleError(error, logger = null, context = {}, shouldRethrow = 
     throw financeError
   }
   
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
   return financeError
 }
@@ -446,7 +578,11 @@ export function handleError(error, logger = null, context = {}, shouldRethrow = 
  */
 export class ErrorContext {
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (context = {}) {
+=======
+  constructor(context = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(context = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -457,7 +593,11 @@ export class ErrorContext {
    * Run function with error context
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   run (fn) {
+=======
+  run(fn) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   run(fn) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -472,7 +612,11 @@ export class ErrorContext {
    * Run async function with error context
    */
 <<<<<<< HEAD
+<<<<<<< HEAD
   async runAsync (fn) {
+=======
+  async runAsync(fn) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   async runAsync(fn) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -488,7 +632,11 @@ export class ErrorContext {
  * Async error handler wrapper
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function asyncErrorHandler (fn) {
+=======
+export function asyncErrorHandler(fn) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function asyncErrorHandler(fn) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -505,7 +653,11 @@ export function asyncErrorHandler(fn) {
  * Express/Fastify error handler middleware
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function errorHandlerMiddleware (error, request, reply, next) {
+=======
+export function errorHandlerMiddleware(error, request, reply, next) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function errorHandlerMiddleware(error, request, reply, next) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -522,7 +674,11 @@ export function errorHandlerMiddleware(error, request, reply, next) {
   // Send appropriate HTTP response
   const statusCode = getHttpStatusCode(financeError)
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -546,7 +702,11 @@ export function errorHandlerMiddleware(error, request, reply, next) {
  * Map error types to HTTP status codes
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 function getHttpStatusCode (error) {
+=======
+function getHttpStatusCode(error) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 function getHttpStatusCode(error) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -563,7 +723,11 @@ function getHttpStatusCode(error) {
  * Setup global error handlers
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function setupErrorHandlers () {
+=======
+export function setupErrorHandlers() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function setupErrorHandlers() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -574,7 +738,11 @@ export function setupErrorHandlers() {
     const financeError = convertError(error, { source: 'uncaughtException' })
     logger.error('Uncaught exception', financeError.toJSON())
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -588,17 +756,23 @@ export function setupErrorHandlers() {
   process.on('unhandledRejection', (reason, promise) => {
     const error = reason instanceof Error ? reason : new Error(String(reason))
 <<<<<<< HEAD
+<<<<<<< HEAD
     const financeError = convertError(error, {
       source: 'unhandledRejection',
       promise: promise.toString()
     })
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
     const financeError = convertError(error, { 
       source: 'unhandledRejection',
       promise: promise.toString()
     })
     
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     logger.error('Unhandled promise rejection', financeError.toJSON())
   })
@@ -619,7 +793,10 @@ export default {
   ConnectionError,
   ProcessingError,
 <<<<<<< HEAD
+<<<<<<< HEAD
   MessageProcessingError,
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
   StorageError,
@@ -636,7 +813,11 @@ export default {
   errorHandlerMiddleware,
   setupErrorHandlers
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 }
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)

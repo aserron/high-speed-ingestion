@@ -1,7 +1,11 @@
 /**
  * Command Line Interface
 <<<<<<< HEAD
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
  * 
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -22,7 +26,11 @@ const program = new Command()
  * Setup CLI program
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 function setupCLI () {
+=======
+function setupCLI() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 function setupCLI() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -119,20 +127,27 @@ function setupCLI() {
  * Run command implementation
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function runCommand (options) {
   // Initialize configuration and logging
   const config = getConfig()
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 async function runCommand(options) {
   // Initialize configuration and logging
   const config = getConfig()
   
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
   // Override configuration with CLI options
   if (options.host || options.port) {
     config.websocket.url = `wss://${options.host || 'localhost'}:${options.port || 8080}/market-data`
   }
+<<<<<<< HEAD
 <<<<<<< HEAD
 
   if (options.duration && parseInt(options.duration) > 0) {
@@ -144,6 +159,8 @@ async function runCommand(options) {
   }
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   
   if (options.duration && parseInt(options.duration) > 0) {
     config.benchmark.durationMs = parseInt(options.duration) * 1000
@@ -153,6 +170,9 @@ async function runCommand(options) {
     config.cluster.enabled = true
   }
   
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
   if (options.workers) {
     config.cluster.workers = parseInt(options.workers)
@@ -161,9 +181,15 @@ async function runCommand(options) {
   setupLogging(config)
   setupErrorHandlers()
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   const logger = getLogger('cli')
 
+=======
+  
+  const logger = getLogger('cli')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
   const logger = getLogger('cli')
@@ -189,6 +215,7 @@ async function runCommand(options) {
  * Cluster command implementation
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function clusterCommand (options) {
   const config = getConfig()
 
@@ -196,12 +223,17 @@ async function clusterCommand (options) {
   config.cluster.enabled = true
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 async function clusterCommand(options) {
   const config = getConfig()
   
   // Enable clustering
   config.cluster.enabled = true
   
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
   if (options.workers) {
     config.cluster.workers = parseInt(options.workers)
@@ -210,9 +242,15 @@ async function clusterCommand(options) {
   setupLogging(config)
   setupErrorHandlers()
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   const logger = getLogger('cli')
 
+=======
+  
+  const logger = getLogger('cli')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
   const logger = getLogger('cli')
@@ -229,9 +267,15 @@ async function clusterCommand(options) {
  * Benchmark command implementation
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function benchmarkCommand (options) {
   const config = getConfig()
 
+=======
+async function benchmarkCommand(options) {
+  const config = getConfig()
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 async function benchmarkCommand(options) {
   const config = getConfig()
@@ -244,9 +288,15 @@ async function benchmarkCommand(options) {
   setupLogging(config)
   setupErrorHandlers()
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   const logger = getLogger('cli')
 
+=======
+  
+  const logger = getLogger('cli')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
   const logger = getLogger('cli')
@@ -262,6 +312,7 @@ async function benchmarkCommand(options) {
   logger.info('Benchmark suite would start here')
   logger.info('This will be implemented in subsequent tasks')
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   if (options.output) {
     logger.info(`Would save results to ${options.output} in ${options.format} format`)
@@ -271,6 +322,8 @@ async function benchmarkCommand(options) {
   await new Promise(resolve => setTimeout(resolve, 2000))
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
   
   if (options.output) {
     logger.info(`Would save results to ${options.output} in ${options.format} format`)
@@ -279,6 +332,9 @@ async function benchmarkCommand(options) {
   // Simulate benchmark execution
   await new Promise(resolve => setTimeout(resolve, 2000))
   
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
   logger.info('Benchmark suite completed')
 }
@@ -286,6 +342,7 @@ async function benchmarkCommand(options) {
 /**
  * Validate config command implementation
  */
+<<<<<<< HEAD
 <<<<<<< HEAD
 async function validateConfigCommand () {
   try {
@@ -299,6 +356,8 @@ async function validateConfigCommand () {
     const errors = []
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 async function validateConfigCommand() {
   try {
     const config = getConfig()
@@ -310,13 +369,20 @@ async function validateConfigCommand() {
     
     const errors = []
     
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
     // Check WebSocket configuration
     if (!config.websocket.url.startsWith('ws://') && !config.websocket.url.startsWith('wss://')) {
       errors.push('WebSocket URL must start with ws:// or wss://')
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -325,7 +391,11 @@ async function validateConfigCommand() {
       errors.push('PostgreSQL database name is required')
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -334,7 +404,11 @@ async function validateConfigCommand() {
       errors.push('Redis port must be between 1 and 65535')
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -343,7 +417,11 @@ async function validateConfigCommand() {
       errors.push('Cluster workers must be between 0 and 32')
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -356,6 +434,10 @@ async function validateConfigCommand() {
       console.log('Configuration is valid ✓')
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -369,6 +451,7 @@ async function validateConfigCommand() {
  * Health check command implementation
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function healthCheckCommand () {
   const config = getConfig()
   setupLogging(config)
@@ -378,6 +461,8 @@ async function healthCheckCommand () {
   logger.info('Performing health checks...')
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 async function healthCheckCommand() {
   const config = getConfig()
   setupLogging(config)
@@ -386,6 +471,9 @@ async function healthCheckCommand() {
   
   logger.info('Performing health checks...')
   
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
   // Placeholder for health check implementation
   const checks = [
@@ -395,7 +483,11 @@ async function healthCheckCommand() {
     'System resources'
   ]
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -405,7 +497,11 @@ async function healthCheckCommand() {
     await new Promise(resolve => setTimeout(resolve, 500))
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -417,6 +513,7 @@ async function healthCheckCommand() {
  * Main CLI entry point
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function main () {
   try {
     const cli = setupCLI()
@@ -424,6 +521,8 @@ async function main () {
     // Parse command line arguments
     await cli.parseAsync(process.argv)
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 async function main() {
   try {
     const cli = setupCLI()
@@ -431,6 +530,9 @@ async function main() {
     // Parse command line arguments
     await cli.parseAsync(process.argv)
     
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
   } catch (error) {
     console.error('CLI error:', error.message)
@@ -452,7 +554,11 @@ export default {
   healthCheckCommand,
   main
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 }
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
