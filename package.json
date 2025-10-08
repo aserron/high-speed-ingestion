@@ -1,0 +1,44 @@
+{
+  "name": "finance-ingestion-benchmark",
+  "version": "1.0.0",
+  "description": "High-performance financial data ingestion benchmark comparing Python and Node.js implementations",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "benchmark": "turbo run benchmark",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "setup": "npm install && turbo run setup"
+  },
+  "devDependencies": {
+    "turbo": "^1.10.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/finance-ingestion-benchmark.git"
+  },
+  "keywords": [
+    "finance",
+    "ingestion",
+    "benchmark",
+    "python",
+    "nodejs",
+    "websocket",
+    "performance"
+  ],
+  "author": "Your Organization",
+  "license": "MIT"
+}
