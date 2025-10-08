@@ -3,7 +3,11 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
  * 
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -21,8 +25,14 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 // import { fileURLToPath } from 'url'
 // import { dirname } from 'path'
+=======
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
@@ -47,8 +57,13 @@ dotenv.config()
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 // const __filename = fileURLToPath(import.meta.url)
 // const __dirname = dirname(__filename)
+=======
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -84,7 +99,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -101,7 +120,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -120,12 +143,15 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     // Performance settings
     maxMessageSize: Joi.number().integer().min(1024).max(10 * 1024 * 1024).default(1024 * 1024),
     compressionEnabled: Joi.boolean().default(true),
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -137,6 +163,9 @@ const configSchema = Joi.object({
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -155,7 +184,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -172,7 +205,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -189,7 +226,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -222,7 +263,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -239,12 +284,15 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     // Performance settings
     socketKeepalive: Joi.boolean().default(true),
     keyPrefix: Joi.string().optional(),
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -256,6 +304,9 @@ const configSchema = Joi.object({
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -276,7 +327,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -294,7 +349,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -327,7 +386,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -344,7 +407,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -362,7 +429,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -387,7 +458,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -405,12 +480,15 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     // Test symbols
     symbols: Joi.array().items(Joi.string()).default(['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'META', 'NVDA', 'NFLX']),
     symbolRotationEnabled: Joi.boolean().default(true),
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -422,6 +500,9 @@ const configSchema = Joi.object({
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -436,7 +517,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -459,7 +544,11 @@ const configSchema = Joi.object({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 function loadConfigFromEnv () {
+=======
+function loadConfigFromEnv() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 function loadConfigFromEnv() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -582,7 +671,11 @@ function loadConfigFromEnv() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   function cleanValue (key, value) {
+=======
+  function cleanValue(key, value) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   function cleanValue(key, value) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -603,7 +696,11 @@ function loadConfigFromEnv() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -622,7 +719,11 @@ function loadConfigFromEnv() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 function createConfig () {
+=======
+function createConfig() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 function createConfig() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -657,7 +758,11 @@ let config = null
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function getConfig () {
+=======
+export function getConfig() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function getConfig() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -679,7 +784,11 @@ export function getConfig() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function reloadConfig () {
+=======
+export function reloadConfig() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function reloadConfig() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -699,7 +808,11 @@ export function reloadConfig() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function setConfig (newConfig) {
+=======
+export function setConfig(newConfig) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function setConfig(newConfig) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -718,7 +831,11 @@ export function setConfig(newConfig) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function getDatabaseUrl (cfg = getConfig()) {
+=======
+export function getDatabaseUrl(cfg = getConfig()) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function getDatabaseUrl(cfg = getConfig()) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -738,7 +855,11 @@ export function getDatabaseUrl(cfg = getConfig()) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function getRedisUrl (cfg = getConfig()) {
+=======
+export function getRedisUrl(cfg = getConfig()) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function getRedisUrl(cfg = getConfig()) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -759,7 +880,11 @@ export function getRedisUrl(cfg = getConfig()) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function isProduction (cfg = getConfig()) {
+=======
+export function isProduction(cfg = getConfig()) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function isProduction(cfg = getConfig()) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -778,7 +903,11 @@ export function isProduction(cfg = getConfig()) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function isDevelopment (cfg = getConfig()) {
+=======
+export function isDevelopment(cfg = getConfig()) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function isDevelopment(cfg = getConfig()) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -802,7 +931,11 @@ export default {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 }
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
