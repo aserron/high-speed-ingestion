@@ -17,7 +17,7 @@ from collections import deque
 import msgpack
 from enum import Enum
 
-from .exceptions import MessageProcessingError, ValidationError, BackpressureError
+from .exceptions import ProcessingError, ValidationError, BackpressureError
 from .logging import get_logger
 
 
