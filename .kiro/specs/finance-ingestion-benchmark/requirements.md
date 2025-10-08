@@ -4,6 +4,26 @@
 
 This project aims to build and benchmark two high-performance financial data ingestion systems - one in Python and one in Node.js - to compare their performance characteristics for real-time market data processing. The systems will handle high-frequency financial data streams with sub-millisecond latency requirements and provide comprehensive performance metrics for comparison.
 
+## Git Workflow
+
+main is the base branch
+
+We use Conventional Commits style commit messages.
+
+branch for features go with the feat/ suffix.
+
+Each task should be implemented in it's own branch, named feat/PXXTYY-<description>, P phase, T task, XX and YY zero padded numbers, and the description of the task.
+
+When working the task, each meaninfull change should be commited to the branch.
+
+When the task is completed, code review should be made, test should pass, no linter errors should be present.
+
+Then merge squash should be performed against main.
+
+Branches should be kept for historical record, NOT DELETED.
+
+
+
 ## Performance Targets Reference
 
 The performance targets in this specification are based on industry standards and research:
