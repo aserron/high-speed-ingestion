@@ -121,6 +121,15 @@ export class ProcessingError extends FinanceIngestionError {
 }
 
 /**
+ * Alias for ProcessingError for backward compatibility
+ */
+export class MessageProcessingError extends ProcessingError {
+  constructor (message, messageId = null, processingStage = null, messageData = null, options = {}) {
+    super(message, messageId, processingStage, messageData, options)
+  }
+}
+
+/**
  * Storage-related errors
  */
 export class StorageError extends FinanceIngestionError {
@@ -404,6 +413,7 @@ export default {
   ConfigurationError,
   ConnectionError,
   ProcessingError,
+  MessageProcessingError,
   StorageError,
   ValidationError,
   BackpressureError,
