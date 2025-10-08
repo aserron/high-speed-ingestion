@@ -1,6 +1,6 @@
 /**
  * Main Application Entry Point
- * 
+ *
  * Node.js Financial Data Ingestion System
  * High-performance real-time market data processing with clustering support
  */
@@ -13,7 +13,7 @@ import { setupErrorHandlers } from './errors/index.js'
  * Main application class
  */
 class FinanceIngestionApp {
-  constructor() {
+  constructor () {
     this.config = null
     this.logger = null
     this.isStarted = false
@@ -25,21 +25,21 @@ class FinanceIngestionApp {
   /**
    * Initialize the application
    */
-  async initialize() {
+  async initialize () {
     try {
       // Load configuration
       this.config = getConfig()
-      
+
       // Setup logging
       setupLogging(this.config)
       this.logger = getLogger('app')
-      
+
       // Setup error handlers
       setupErrorHandlers()
-      
+
       // Set correlation ID for startup
       setCorrelationId('startup')
-      
+
       this.logger.info('Initializing Finance Ingestion System', {
         version: this.config.app.version,
         environment: this.config.app.environment,
@@ -50,9 +50,8 @@ class FinanceIngestionApp {
 
       // Validate configuration
       await this.validateConfiguration()
-      
+
       this.logger.info('Application initialized successfully')
-      
     } catch (error) {
       console.error('Failed to initialize application:', error.message)
       throw error
@@ -62,7 +61,7 @@ class FinanceIngestionApp {
   /**
    * Start the application
    */
-  async start() {
+  async start () {
     if (this.isStarted) {
       this.logger.warn('Application already started')
       return
@@ -70,7 +69,7 @@ class FinanceIngestionApp {
 
     try {
       await this.initialize()
-      
+
       this.startTime = Date.now()
       this.logger.info('Starting Finance Ingestion System')
 
@@ -81,7 +80,7 @@ class FinanceIngestionApp {
       await this.startServices()
 
       this.isStarted = true
-      
+
       this.logger.info('Finance Ingestion System started successfully', {
         uptime: Date.now() - this.startTime,
         services: Array.from(this.services.keys())
@@ -89,7 +88,6 @@ class FinanceIngestionApp {
 
       // Keep the process alive
       this.keepAlive()
-      
     } catch (error) {
       this.logger.error('Failed to start application', {
         error: error.message,
@@ -102,7 +100,7 @@ class FinanceIngestionApp {
   /**
    * Stop the application
    */
-  async stop() {
+  async stop () {
     if (!this.isStarted || this.isShuttingDown) {
       return
     }
@@ -113,17 +111,16 @@ class FinanceIngestionApp {
     try {
       // Stop services in reverse order
       const serviceNames = Array.from(this.services.keys()).reverse()
-      
+
       for (const serviceName of serviceNames) {
         await this.stopService(serviceName)
       }
 
       this.isStarted = false
-      
+
       this.logger.info('Finance Ingestion System stopped successfully', {
         uptime: Date.now() - this.startTime
       })
-      
     } catch (error) {
       this.logger.error('Error during application shutdown', {
         error: error.message,
@@ -136,9 +133,9 @@ class FinanceIngestionApp {
   /**
    * Validate configuration
    */
-  async validateConfiguration() {
+  async validateConfiguration () {
     this.logger.info('Validating configuration')
-    
+
     const errors = []
 
     // Validate WebSocket configuration
@@ -171,18 +168,15 @@ class FinanceIngestionApp {
   /**
    * Start core services
    */
-  async startServices() {
+  async startServices () {
     this.logger.info('Starting core services')
 
-    // Placeholder service implementations
-    // These will be implemented in subsequent tasks
-    
     const services = [
+      { name: 'storage', start: () => this.startStorageService() },
       { name: 'metrics', start: () => this.startMetricsService() },
       { name: 'health', start: () => this.startHealthService() },
       { name: 'websocket', start: () => this.startWebSocketService() },
-      { name: 'processor', start: () => this.startProcessorService() },
-      { name: 'storage', start: () => this.startStorageService() }
+      { name: 'processor', start: () => this.startProcessorService() }
     ]
 
     for (const service of services) {
@@ -204,7 +198,7 @@ class FinanceIngestionApp {
   /**
    * Stop a service
    */
-  async stopService(serviceName) {
+  async stopService (serviceName) {
     const service = this.services.get(serviceName)
     if (!service) {
       return
@@ -212,14 +206,13 @@ class FinanceIngestionApp {
 
     try {
       this.logger.info(`Stopping ${serviceName} service`)
-      
+
       if (service.stop && typeof service.stop === 'function') {
         await service.stop()
       }
-      
+
       this.services.delete(serviceName)
       this.logger.info(`${serviceName} service stopped successfully`)
-      
     } catch (error) {
       this.logger.error(`Error stopping ${serviceName} service`, {
         error: error.message,
@@ -229,44 +222,64 @@ class FinanceIngestionApp {
   }
 
   /**
-   * Placeholder service implementations
-   * These will be replaced with actual implementations in subsequent tasks
+   * Service implementations
    */
-  async startMetricsService() {
+  async startStorageService () {
+    const { initializeStorage } = await import('./storage/index.js')
+
+    this.logger.info('Initializing storage layer')
+    const storageManager = await initializeStorage(this.config)
+
+    // Perform initial health check
+    const health = await storageManager.healthCheck()
+    if (!health.healthy) {
+      throw new Error(`Storage health check failed: ${JSON.stringify(health)}`)
+    }
+
+    this.logger.info('Storage service started successfully', {
+      backends: Object.keys(health.backends)
+    })
+
+    return {
+      name: 'storage',
+      manager: storageManager,
+      stop: async () => {
+        this.logger.info('Stopping storage service')
+        await storageManager.close()
+      }
+    }
+  }
+
+  async startMetricsService () {
     this.logger.info('Metrics service would start here (placeholder)')
     return { name: 'metrics', stop: async () => {} }
   }
 
-  async startHealthService() {
+  async startHealthService () {
     this.logger.info('Health service would start here (placeholder)')
     return { name: 'health', stop: async () => {} }
   }
 
-  async startWebSocketService() {
+  async startWebSocketService () {
     this.logger.info('WebSocket service would start here (placeholder)')
     return { name: 'websocket', stop: async () => {} }
   }
 
-  async startProcessorService() {
+  async startProcessorService () {
     this.logger.info('Processor service would start here (placeholder)')
     return { name: 'processor', stop: async () => {} }
-  }
-
-  async startStorageService() {
-    this.logger.info('Storage service would start here (placeholder)')
-    return { name: 'storage', stop: async () => {} }
   }
 
   /**
    * Setup graceful shutdown
    */
-  setupGracefulShutdown() {
+  setupGracefulShutdown () {
     const signals = ['SIGTERM', 'SIGINT', 'SIGUSR2']
-    
+
     signals.forEach(signal => {
       process.on(signal, async () => {
         this.logger.info(`Received ${signal}, initiating graceful shutdown`)
-        
+
         try {
           await this.stop()
           process.exit(0)
@@ -284,7 +297,7 @@ class FinanceIngestionApp {
   /**
    * Keep the process alive
    */
-  keepAlive() {
+  keepAlive () {
     // Log periodic status
     setInterval(() => {
       if (this.isStarted && !this.isShuttingDown) {
@@ -301,7 +314,7 @@ class FinanceIngestionApp {
   /**
    * Get application status
    */
-  getStatus() {
+  getStatus () {
     return {
       isStarted: this.isStarted,
       isShuttingDown: this.isShuttingDown,

@@ -1,6 +1,6 @@
 /**
  * Structured Logging Infrastructure
- * 
+ *
  * Provides high-performance structured logging with JSON output, correlation IDs,
  * and integration with the monitoring system for comprehensive observability.
  */
@@ -61,10 +61,10 @@ const textFormatter = winston.format.combine(
 /**
  * Format financial data types for consistent logging
  */
-function formatFinancialData(logEntry) {
+function formatFinancialData (logEntry) {
   // Format price and quantity fields with appropriate precision
   const financialFields = ['price', 'quantity', 'latencyNs', 'processingTimeNs']
-  
+
   for (const field of financialFields) {
     if (logEntry[field] !== undefined) {
       if (field.includes('Ns')) {
@@ -81,7 +81,7 @@ function formatFinancialData(logEntry) {
 /**
  * Create Winston logger instance
  */
-function createLogger() {
+function createLogger () {
   const config = getConfig()
   const { monitoring } = config
 
@@ -141,7 +141,7 @@ let logger = null
 /**
  * Get the global logger instance
  */
-export function getLogger(module = 'app') {
+export function getLogger (module = 'app') {
   if (!logger) {
     logger = createLogger()
   }
@@ -153,7 +153,7 @@ export function getLogger(module = 'app') {
 /**
  * Set correlation ID for the current async context
  */
-export function setCorrelationId(correlationId = null) {
+export function setCorrelationId (correlationId = null) {
   const id = correlationId || uuidv4()
   correlationStorage.enterWith({ correlationId: id })
   return id
@@ -162,14 +162,14 @@ export function setCorrelationId(correlationId = null) {
 /**
  * Get the current correlation ID
  */
-export function getCorrelationId() {
+export function getCorrelationId () {
   return correlationStorage.getStore()?.correlationId
 }
 
 /**
  * Run function with correlation ID context
  */
-export function withCorrelationId(correlationId, fn) {
+export function withCorrelationId (correlationId, fn) {
   const id = correlationId || uuidv4()
   return correlationStorage.run({ correlationId: id }, fn)
 }
@@ -178,14 +178,14 @@ export function withCorrelationId(correlationId, fn) {
  * Performance logger for specialized performance measurements
  */
 export class PerformanceLogger {
-  constructor(module = 'performance') {
+  constructor (module = 'performance') {
     this.logger = getLogger(module)
   }
 
   /**
    * Log latency measurement
    */
-  logLatency(operation, latencyNs, messageId = null, context = {}) {
+  logLatency (operation, latencyNs, messageId = null, context = {}) {
     this.logger.info('Latency measurement', {
       operation,
       latencyNs: latencyNs.toString(),
@@ -198,7 +198,7 @@ export class PerformanceLogger {
   /**
    * Log throughput measurement
    */
-  logThroughput(operation, messagesPerSecond, bytesPerSecond = null, windowSizeMs = null, context = {}) {
+  logThroughput (operation, messagesPerSecond, bytesPerSecond = null, windowSizeMs = null, context = {}) {
     const logData = {
       operation,
       messagesPerSecond,
@@ -219,7 +219,7 @@ export class PerformanceLogger {
   /**
    * Log resource usage measurement
    */
-  logResourceUsage(cpuPercent, memoryBytes, memoryPercent, context = {}) {
+  logResourceUsage (cpuPercent, memoryBytes, memoryPercent, context = {}) {
     this.logger.info('Resource usage', {
       cpuPercent,
       memoryBytes,
@@ -232,7 +232,7 @@ export class PerformanceLogger {
   /**
    * Log garbage collection statistics
    */
-  logGarbageCollection(gcStats, context = {}) {
+  logGarbageCollection (gcStats, context = {}) {
     this.logger.info('Garbage collection', {
       ...gcStats,
       ...context
@@ -244,7 +244,7 @@ export class PerformanceLogger {
  * Logging context manager for adding structured context
  */
 export class LoggingContext {
-  constructor(context = {}) {
+  constructor (context = {}) {
     this.context = context
     this.originalLogger = null
   }
@@ -252,7 +252,7 @@ export class LoggingContext {
   /**
    * Enter the logging context
    */
-  enter() {
+  enter () {
     // Store original logger and create child with context
     this.originalLogger = logger
     if (logger) {
@@ -264,7 +264,7 @@ export class LoggingContext {
   /**
    * Exit the logging context
    */
-  exit() {
+  exit () {
     // Restore original logger
     if (this.originalLogger) {
       logger = this.originalLogger
@@ -275,7 +275,7 @@ export class LoggingContext {
   /**
    * Run function with logging context
    */
-  run(fn) {
+  run (fn) {
     this.enter()
     try {
       return fn()
@@ -287,7 +287,7 @@ export class LoggingContext {
   /**
    * Run async function with logging context
    */
-  async runAsync(fn) {
+  async runAsync (fn) {
     this.enter()
     try {
       return await fn()
@@ -300,16 +300,9 @@ export class LoggingContext {
 /**
  * Setup logging infrastructure
  */
-export function setupLogging(config = null) {
-  if (config) {
-    // Temporarily set config for logger creation
-    const originalConfig = getConfig()
-    setConfig(config)
-    logger = createLogger()
-    setConfig(originalConfig)
-  } else {
-    logger = createLogger()
-  }
+export function setupLogging (config = null) {
+  // Create logger with provided or default config
+  logger = createLogger()
 
   // Handle uncaught exceptions and unhandled rejections
   process.on('uncaughtException', (error) => {
@@ -318,8 +311,8 @@ export function setupLogging(config = null) {
   })
 
   process.on('unhandledRejection', (reason, promise) => {
-    logger.error('Unhandled rejection', { 
-      reason: reason?.message || reason, 
+    logger.error('Unhandled rejection', {
+      reason: reason?.message || reason,
       stack: reason?.stack,
       promise: promise.toString()
     })
@@ -331,7 +324,7 @@ export function setupLogging(config = null) {
 /**
  * Create a child logger with additional context
  */
-export function createChildLogger(context, module = 'app') {
+export function createChildLogger (context, module = 'app') {
   const baseLogger = getLogger(module)
   return baseLogger.child(context)
 }
@@ -342,7 +335,7 @@ let performanceLogger = null
 /**
  * Get the global performance logger instance
  */
-export function getPerformanceLogger() {
+export function getPerformanceLogger () {
   if (!performanceLogger) {
     performanceLogger = new PerformanceLogger()
   }

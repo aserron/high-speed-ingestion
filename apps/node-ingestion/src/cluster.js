@@ -1,6 +1,6 @@
 /**
  * Native Clustering for Multi-Core Utilization
- * 
+ *
  * Implements Node.js cluster management for maximum CPU utilization
  * with proper worker lifecycle management, graceful shutdown, and
  * load balancing for the financial data ingestion system.
@@ -16,7 +16,7 @@ import { setupErrorHandlers, ClusterError } from './errors/index.js'
  * Cluster manager class
  */
 class ClusterManager {
-  constructor() {
+  constructor () {
     this.config = getConfig()
     this.logger = null
     this.workers = new Map()
@@ -28,11 +28,11 @@ class ClusterManager {
   /**
    * Initialize the cluster manager
    */
-  async initialize() {
+  async initialize () {
     // Setup logging first
     setupLogging(this.config)
     this.logger = getLogger('cluster-manager')
-    
+
     // Setup error handlers
     setupErrorHandlers()
 
@@ -55,7 +55,7 @@ class ClusterManager {
   /**
    * Start the primary process
    */
-  async startPrimary() {
+  async startPrimary () {
     this.logger.info('Starting cluster primary process', {
       pid: process.pid,
       clusterEnabled: this.config.cluster.enabled
@@ -94,7 +94,7 @@ class ClusterManager {
   /**
    * Start a single worker (no clustering)
    */
-  async startSingleWorker() {
+  async startSingleWorker () {
     try {
       const { default: app } = await import('./index.js')
       await app.start()
@@ -107,10 +107,10 @@ class ClusterManager {
   /**
    * Start a worker process
    */
-  async startWorker() {
+  async startWorker () {
     const workerId = process.env.WORKER_ID || cluster.worker.id
     const logger = getLogger(`worker-${workerId}`)
-    
+
     logger.info('Starting worker process', {
       workerId,
       pid: process.pid,
@@ -121,7 +121,7 @@ class ClusterManager {
       // Import and start the main application
       const { default: app } = await import('./index.js')
       await app.start()
-      
+
       logger.info('Worker process started successfully', {
         workerId,
         uptime: process.uptime()
@@ -139,7 +139,7 @@ class ClusterManager {
   /**
    * Fork a new worker
    */
-  async forkWorker() {
+  async forkWorker () {
     return new Promise((resolve, reject) => {
       const worker = cluster.fork()
       const workerId = worker.id
@@ -169,10 +169,10 @@ class ClusterManager {
       })
 
       worker.on('error', (error) => {
-        this.logger.error('Worker error', { 
-          workerId, 
+        this.logger.error('Worker error', {
+          workerId,
           error: error.message,
-          stack: error.stack 
+          stack: error.stack
         })
         reject(new ClusterError(`Worker ${workerId} error: ${error.message}`, workerId, 'start'))
       })
@@ -193,11 +193,11 @@ class ClusterManager {
   /**
    * Setup cluster event handlers
    */
-  setupClusterEventHandlers() {
+  setupClusterEventHandlers () {
     cluster.on('exit', (worker, code, signal) => {
       const workerId = worker.id
       const workerInfo = this.workers.get(workerId)
-      
+
       this.logger.warn('Worker exited', {
         workerId,
         pid: worker.process.pid,
@@ -223,12 +223,12 @@ class ClusterManager {
   /**
    * Restart a worker
    */
-  async restartWorker(workerId) {
+  async restartWorker (workerId) {
     const restartCount = this.restartCounts.get(workerId) || 0
-    
+
     if (restartCount >= this.config.cluster.maxRestarts) {
-      this.logger.error('Worker restart limit exceeded', { 
-        workerId, 
+      this.logger.error('Worker restart limit exceeded', {
+        workerId,
         restartCount,
         maxRestarts: this.config.cluster.maxRestarts
       })
@@ -236,7 +236,7 @@ class ClusterManager {
     }
 
     this.logger.info('Restarting worker', { workerId, restartCount })
-    
+
     // Increment restart count
     this.restartCounts.set(workerId, restartCount + 1)
 
@@ -247,9 +247,9 @@ class ClusterManager {
       await this.forkWorker()
       this.logger.info('Worker restarted successfully', { workerId })
     } catch (error) {
-      this.logger.error('Failed to restart worker', { 
-        workerId, 
-        error: error.message 
+      this.logger.error('Failed to restart worker', {
+        workerId,
+        error: error.message
       })
     }
   }
@@ -257,9 +257,9 @@ class ClusterManager {
   /**
    * Setup graceful shutdown
    */
-  setupGracefulShutdown() {
+  setupGracefulShutdown () {
     const signals = ['SIGTERM', 'SIGINT', 'SIGUSR2']
-    
+
     signals.forEach(signal => {
       process.on(signal, () => {
         this.logger.info(`Received ${signal}, initiating graceful shutdown`)
@@ -271,7 +271,7 @@ class ClusterManager {
   /**
    * Perform graceful shutdown
    */
-  async gracefulShutdown() {
+  async gracefulShutdown () {
     if (this.isShuttingDown) {
       this.logger.warn('Shutdown already in progress')
       return
@@ -285,7 +285,7 @@ class ClusterManager {
     // Disconnect all workers
     for (const [workerId, workerInfo] of this.workers) {
       const { worker } = workerInfo
-      
+
       shutdownPromises.push(
         new Promise((resolve) => {
           const timeout = setTimeout(() => {
@@ -320,7 +320,7 @@ class ClusterManager {
   /**
    * Setup health monitoring
    */
-  setupHealthMonitoring() {
+  setupHealthMonitoring () {
     setInterval(() => {
       const healthInfo = {
         uptime: Date.now() - this.startTime,
@@ -334,7 +334,7 @@ class ClusterManager {
       // Check for unhealthy workers
       for (const [workerId, workerInfo] of this.workers) {
         const { worker } = workerInfo
-        
+
         if (worker.isDead()) {
           this.logger.warn('Dead worker detected', { workerId })
           this.workers.delete(workerId)
@@ -346,7 +346,7 @@ class ClusterManager {
   /**
    * Get cluster statistics
    */
-  getStats() {
+  getStats () {
     const workers = Array.from(this.workers.entries()).map(([id, info]) => ({
       id,
       pid: info.worker.process.pid,
@@ -368,9 +368,9 @@ class ClusterManager {
 /**
  * Start the cluster
  */
-async function startCluster() {
+async function startCluster () {
   const clusterManager = new ClusterManager()
-  
+
   try {
     await clusterManager.initialize()
   } catch (error) {
