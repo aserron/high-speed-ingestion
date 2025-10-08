@@ -12,9 +12,9 @@
     "start": "node --enable-source-maps src/index.js",
     "dev": "node --enable-source-maps --inspect src/index.js",
     "cluster": "node --enable-source-maps src/cluster.js",
-    "test": "jest --run",
+    "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --run",
+    "test:coverage": "jest --coverage",
     "benchmark": "node --enable-source-maps src/benchmark.js",
     "lint": "eslint src/ --ext .js",
     "lint:fix": "eslint src/ --ext .js --fix",
@@ -55,7 +55,6 @@
   "jest": {
     "testEnvironment": "node",
     "transform": {},
-    "extensionsToTreatAsEsm": [".js"],
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/**/*.test.js",
