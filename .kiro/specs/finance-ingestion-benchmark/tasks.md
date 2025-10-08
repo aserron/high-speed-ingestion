@@ -63,7 +63,7 @@
 
 ## Phase 3: Core Components Implementation
 
-- [-] 7. Implement WebSocket connection management
+- [ ] 7. Implement WebSocket connection management
 - [-] 7.1 Create Python WebSocket connection manager
   - Implement WebSocket client with websockets library
   - Add connection health monitoring and heartbeat mechanism
