@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://finance-benchmark.com/schemas/performance-metrics.json",
+  "title": "Performance Metrics",
+  "description": "Schema for performance metrics and statistics",
+  "type": "object",
+  "required": ["timestamp", "latency", "throughput", "resources"],
+  "properties": {
+    "timestamp": {
+      "type": "number",
+      "description": "Timestamp when metrics were collected",
+      "minimum": 0
+    },
+    "latency": {
+      "type": "object",
+      "required": ["p50", "p95", "p99", "p999", "min", "max", "mean", "count"],
+      "properties": {
+        "p50": { "type": "number", "minimum": 0 },
+        "p95": { "type": "number", "minimum": 0 },
+        "p99": { "type": "number", "minimum": 0 },
+        "p999": { "type": "number", "minimum": 0 },
+        "min": { "type": "number", "minimum": 0 },
+        "max": { "type": "number", "minimum": 0 },
+        "mean": { "type": "number", "minimum": 0 },
+        "count": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "throughput": {
+      "type": "object",
+      "required": ["messagesPerSecond", "bytesPerSecond", "totalMessages", "totalBytes"],
+      "properties": {
+        "messagesPerSecond": { "type": "number", "minimum": 0 },
+        "bytesPerSecond": { "type": "number", "minimum": 0 },
+        "totalMessages": { "type": "number", "minimum": 0 },
+        "totalBytes": { "type": "number", "minimum": 0 },
+        "windowSizeMs": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "resources": {
+      "type": "object",
+      "required": ["cpuUsage", "memoryUsage", "memoryPercent", "networkIO"],
+      "properties": {
+        "cpuUsage": { "type": "number", "minimum": 0, "maximum": 100 },
+        "memoryUsage": { "type": "number", "minimum": 0 },
+        "memoryPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "networkIO": {
+          "type": "object",
+          "required": ["bytesReceived", "bytesSent", "packetsReceived", "packetsSent", "errors"],
+          "properties": {
+            "bytesReceived": { "type": "number", "minimum": 0 },
+            "bytesSent": { "type": "number", "minimum": 0 },
+            "packetsReceived": { "type": "number", "minimum": 0 },
+            "packetsSent": { "type": "number", "minimum": 0 },
+            "errors": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "gcStats": {
+          "type": "object",
+          "properties": {
+            "collections": { "type": "number", "minimum": 0 },
+            "totalTimeMs": { "type": "number", "minimum": 0 },
+            "avgTimeMs": { "type": "number", "minimum": 0 },
+            "maxTimeMs": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

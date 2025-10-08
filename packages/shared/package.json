@@ -1,0 +1,22 @@
+{
+  "name": "@finance-benchmark/shared",
+  "version": "1.0.0",
+  "description": "Shared schemas, types, and utilities for finance ingestion benchmark",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["finance", "benchmark", "schemas", "types"],
+  "author": "Finance Benchmark Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^18.0.0"
+  },
+  "dependencies": {
+    "ajv": "^8.12.0"
+  }
+}
