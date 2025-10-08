@@ -729,6 +729,7 @@ class FinanceIngestionApp {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   }
 
   async startProcessorService () {
@@ -776,6 +777,8 @@ class FinanceIngestionApp {
   async startWebSocketService() {
     this.logger.info('WebSocket service would start here (placeholder)')
     return { name: 'websocket', stop: async () => {} }
+=======
+>>>>>>> c4efaa2 (feat: implement Node.js WebSocket connection management)
   }
 
   async startProcessorService() {
