@@ -7,15 +7,21 @@ for the Python financial data ingestion system.
 """
 
 from .connection_manager import (
-    ConnectionManager,
+    WebSocketConnectionManager,
     ConnectionState,
     ConnectionStats,
-    WebSocketConnectionManager,
+    ReconnectionConfig,
+    HeartbeatConfig,
 )
 
+# Alias for backward compatibility
+ConnectionManager = WebSocketConnectionManager
+
 __all__ = [
-    'ConnectionManager',
+    'WebSocketConnectionManager',
+    'ConnectionManager',  # Alias
     'ConnectionState', 
     'ConnectionStats',
-    'WebSocketConnectionManager',
+    'ReconnectionConfig',
+    'HeartbeatConfig',
 ]
