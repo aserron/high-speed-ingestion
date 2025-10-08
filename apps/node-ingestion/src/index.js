@@ -261,8 +261,26 @@ class FinanceIngestionApp {
   }
 
   async startWebSocketService () {
-    this.logger.info('WebSocket service would start here (placeholder)')
-    return { name: 'websocket', stop: async () => {} }
+    const { initializeWebSocket } = await import('./websocket/index.js')
+
+    this.logger.info('Initializing WebSocket service')
+    const webSocketService = await initializeWebSocket(this.config)
+
+    // Perform initial health check
+    webSocketService.getHealth()
+
+    this.logger.info('WebSocket service started successfully', {
+      initialized: webSocketService.isInitialized
+    })
+
+    return {
+      name: 'websocket',
+      service: webSocketService,
+      stop: async () => {
+        this.logger.info('Stopping WebSocket service')
+        await webSocketService.close()
+      }
+    }
   }
 
   async startProcessorService () {
