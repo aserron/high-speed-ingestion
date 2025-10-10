@@ -20,11 +20,12 @@
 
 **Latest Commits:**
 
-- feat: implement REST API endpoints for both Python and Node.js
-- feat: complete Phase 3 and Phase 4 implementation  
-- docs: update requirements with Git workflow and mark completed tasks
+- feat(tasks): mark task 14.2 deployment automation as completed
+- feat(deployment): add comprehensive deployment automation and documentation
+- feat(python): implement main application with graceful shutdown handling
+- feat(docker): enhance production Docker Compose with health checks and graceful shutdown
 
-**Current Branch:** feat/P05T12-integration-tests
+**Current Branch:** feat/P06T14-deployment-automation
 
 ## Phase 1: Foundation and Infrastructure
 
