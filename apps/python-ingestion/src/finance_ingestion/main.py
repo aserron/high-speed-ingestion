@@ -10,9 +10,13 @@ import signal
 import sys
 import time
 <<<<<<< HEAD
+<<<<<<< HEAD
 import os
 =======
 >>>>>>> e208aed (feat(python): implement main application with graceful shutdown handling)
+=======
+import os
+>>>>>>> e1adc3f (fix(python): add missing os import in main.py)
 from typing import Optional, Dict, Any
 import logging
 
