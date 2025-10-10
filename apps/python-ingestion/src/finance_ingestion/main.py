@@ -46,33 +46,65 @@ class FinanceIngestionApp:
         self.tasks = []
         
     async def initialize(self):
-        """Initialize the application"""
-        # Setup logging first
-        setup_logging(self.config)
-        self.logger = get_logger('main-app')
-        
-        self.logger.info(
-            "Initializing Finance Ingestion Application",
-            version="1.0.0",
-            environment=self.config.get('environment', 'development'),
-            uvloop_available=UVLOOP_AVAILABLE
-        )
-        
-        # Initialize metrics collector
-        self.metrics_collector = get_metrics_collector(self.config.get('metrics', {}))
-        
-        # Initialize storage manager
-        self.storage_manager = StorageManager(self.config)
-        await self.storage_manager.initialize()
-        
-        # Initialize API server
-        self.api_server = get_api_server(self.config)
-        self.api_server.set_storage_manager(self.storage_manager)
-        
-        # Setup signal handlers for graceful shutdown
-        self._setup_signal_handlers()
-        
-        self.logger.info("Application initialization completed")
+        """Initialize the application with comprehensive error handling"""
+        try:
+            # Setup logging first
+            setup_logging(self.config)
+            self.logger = get_logger('main-app')
+            
+            self.logger.info(
+                "Initializing Finance Ingestion Application",
+                version="1.0.0",
+                environment=self.config.get('environment', 'development'),
+                uvloop_available=UVLOOP_AVAILABLE
+            )
+            
+            # Initialize metrics collector with error handling
+            try:
+                self.metrics_collector = get_metrics_collector(self.config.get('metrics', {}))
+                self.logger.info("Metrics collector initialized successfully")
+            except Exception as e:
+                self.logger.error("Failed to initialize metrics collector", error=str(e))
+                raise FinanceIngestionError(f"Metrics initialization failed: {e}")
+            
+            # Initialize storage manager with retry logic
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    self.storage_manager = StorageManager(self.config)
+                    await self.storage_manager.initialize()
+                    self.logger.info("Storage manager initialized successfully")
+                    break
+                except Exception as e:
+                    self.logger.warning(
+                        f"Storage initialization attempt {attempt + 1} failed", 
+                        error=str(e)
+                    )
+                    if attempt == max_retries - 1:
+                        self.logger.error("All storage initialization attempts failed")
+                        raise FinanceIngestionError(f"Storage initialization failed: {e}")
+                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+            
+            # Initialize API server with error handling
+            try:
+                self.api_server = get_api_server(self.config)
+                self.api_server.set_storage_manager(self.storage_manager)
+                self.logger.info("API server initialized successfully")
+            except Exception as e:
+                self.logger.error("Failed to initialize API server", error=str(e))
+                raise FinanceIngestionError(f"API server initialization failed: {e}")
+            
+            # Setup signal handlers for graceful shutdown
+            self._setup_signal_handlers()
+            
+            # Initialize error recovery mechanisms
+            self._setup_error_recovery()
+            
+            self.logger.info("Application initialization completed successfully")
+            
+        except Exception as e:
+            self.logger.error("Critical error during application initialization", error=str(e))
+            raise
         
     def _setup_signal_handlers(self):
         """Setup signal handlers for graceful shutdown"""
@@ -92,6 +124,84 @@ class FinanceIngestionApp:
         """Handle configuration reload signal"""
         self.logger.info("Received SIGUSR1, reloading configuration")
         # TODO: Implement configuration reload
+        
+    def _setup_error_recovery(self):
+        """Setup comprehensive error recovery mechanisms"""
+        self.logger.info("Setting up error recovery mechanisms")
+        
+        # Error recovery configuration
+        self.error_recovery_config = {
+            'max_consecutive_errors': 10,
+            'error_reset_interval': 300,  # 5 minutes
+            'circuit_breaker_threshold': 5,
+            'circuit_breaker_timeout': 60,  # 1 minute
+        }
+        
+        # Error tracking
+        self.consecutive_errors = 0
+        self.last_error_time = 0
+        self.circuit_breaker_open = False
+        self.circuit_breaker_open_time = 0
+        
+        self.logger.info("Error recovery mechanisms configured")
+    
+    async def _handle_component_error(self, component: str, error: Exception, recovery_action: Optional[callable] = None):
+        """Handle component errors with recovery logic"""
+        current_time = time.time()
+        
+        # Track consecutive errors
+        if current_time - self.last_error_time > self.error_recovery_config['error_reset_interval']:
+            self.consecutive_errors = 0
+        
+        self.consecutive_errors += 1
+        self.last_error_time = current_time
+        
+        self.logger.error(
+            f"Component error in {component}",
+            error=str(error),
+            consecutive_errors=self.consecutive_errors
+        )
+        
+        # Update error metrics
+        self.metrics_collector.increment_counter(
+            'component_errors_total',
+            labels={'component': component, 'error_type': type(error).__name__}
+        )
+        
+        # Circuit breaker logic
+        if self.consecutive_errors >= self.error_recovery_config['circuit_breaker_threshold']:
+            if not self.circuit_breaker_open:
+                self.logger.warning(f"Opening circuit breaker for {component}")
+                self.circuit_breaker_open = True
+                self.circuit_breaker_open_time = current_time
+                self.metrics_collector.increment_counter('circuit_breaker_opened_total')
+        
+        # Check if circuit breaker should be closed
+        if (self.circuit_breaker_open and 
+            current_time - self.circuit_breaker_open_time > self.error_recovery_config['circuit_breaker_timeout']):
+            self.logger.info(f"Closing circuit breaker for {component}")
+            self.circuit_breaker_open = False
+            self.consecutive_errors = 0
+            self.metrics_collector.increment_counter('circuit_breaker_closed_total')
+        
+        # Execute recovery action if provided and circuit breaker is closed
+        if recovery_action and not self.circuit_breaker_open:
+            try:
+                self.logger.info(f"Executing recovery action for {component}")
+                await recovery_action()
+                self.logger.info(f"Recovery action completed for {component}")
+            except Exception as recovery_error:
+                self.logger.error(
+                    f"Recovery action failed for {component}",
+                    error=str(recovery_error)
+                )
+        
+        # Shutdown if too many consecutive errors
+        if self.consecutive_errors >= self.error_recovery_config['max_consecutive_errors']:
+            self.logger.critical(
+                f"Maximum consecutive errors reached for {component}, initiating shutdown"
+            )
+            await self.shutdown()
         
     async def start(self):
         """Start the application"""
@@ -129,23 +239,102 @@ class FinanceIngestionApp:
             await self.cleanup()
     
     async def _run_ingestion_loop(self):
-        """Main ingestion loop (placeholder)"""
-        self.logger.info("Starting ingestion loop")
+        """Main ingestion loop with complete WebSocket to storage data flow"""
+        self.logger.info("Starting complete ingestion loop")
         
         try:
+            # Import components for integration
+            from .websocket.connection_manager import WebSocketConnectionManager
+            from .message_processor import MessageProcessor
+            
+            # Initialize WebSocket connection manager
+            websocket_config = self.config.get('websocket', {})
+            websocket_url = websocket_config.get('url', 'wss://localhost:8080/market-data')
+            
+            connection_manager = WebSocketConnectionManager(
+                url=websocket_url,
+                config=websocket_config
+            )
+            
+            # Initialize message processor
+            message_processor = MessageProcessor(
+                storage_manager=self.storage_manager,
+                metrics_collector=self.metrics_collector,
+                config=self.config.get('message_processor', {})
+            )
+            
+            # Set up message processing callback
+            async def process_message(message_data: bytes):
+                """Process incoming WebSocket message"""
+                try:
+                    # Record message receipt time for latency measurement
+                    receipt_time = time.perf_counter_ns()
+                    
+                    # Process the message through the message processor
+                    await message_processor.process_message(message_data, receipt_time)
+                    
+                    # Update metrics
+                    self.metrics_collector.increment_counter('messages_processed_total')
+                    
+                except Exception as e:
+                    self.logger.error("Error processing message", error=str(e))
+                    self.metrics_collector.increment_counter('message_processing_errors_total')
+            
+            # Set up connection event handlers
+            def on_connected():
+                self.logger.info("WebSocket connected successfully")
+                self.metrics_collector.increment_counter('websocket_connections_total')
+            
+            def on_disconnected(reason: str):
+                self.logger.warning("WebSocket disconnected", reason=reason)
+                self.metrics_collector.increment_counter('websocket_disconnections_total')
+            
+            def on_error(error: Exception):
+                self.logger.error("WebSocket error", error=str(error))
+                self.metrics_collector.increment_counter('websocket_errors_total')
+            
+            # Register event handlers
+            connection_manager.on_message = process_message
+            connection_manager.on_connected = on_connected
+            connection_manager.on_disconnected = on_disconnected
+            connection_manager.on_error = on_error
+            
+            # Start WebSocket connection
+            self.logger.info(f"Connecting to WebSocket: {websocket_url}")
+            await connection_manager.connect()
+            
+            # Main ingestion loop - keep connection alive and handle reconnections
             while not self.shutdown_event.is_set():
-                # Placeholder for actual ingestion logic
-                # This will be implemented in subsequent tasks
-                await asyncio.sleep(1)
-                
-                # Update metrics
-                self.metrics_collector.increment_counter('app_heartbeat_total')
+                try:
+                    # Check connection health
+                    if not connection_manager.is_connected():
+                        self.logger.warning("WebSocket connection lost, attempting reconnection")
+                        await connection_manager.reconnect()
+                    
+                    # Update heartbeat metrics
+                    self.metrics_collector.increment_counter('app_heartbeat_total')
+                    
+                    # Wait before next health check
+                    await asyncio.sleep(5)
+                    
+                except Exception as e:
+                    # Use comprehensive error handling
+                    await self._handle_component_error(
+                        'ingestion_loop', 
+                        e,
+                        recovery_action=lambda: connection_manager.reconnect()
+                    )
+                    await asyncio.sleep(1)  # Brief pause before retry
+            
+            # Graceful shutdown of WebSocket connection
+            self.logger.info("Shutting down WebSocket connection")
+            await connection_manager.disconnect()
                 
         except asyncio.CancelledError:
             self.logger.info("Ingestion loop cancelled")
             raise
         except Exception as e:
-            self.logger.error("Error in ingestion loop", error=str(e))
+            self.logger.error("Fatal error in ingestion loop", error=str(e))
             raise
     
     async def _health_monitoring_loop(self):

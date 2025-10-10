@@ -20,6 +20,18 @@ class FinanceIngestionApp {
     this.isShuttingDown = false
     this.startTime = null
     this.services = new Map()
+    
+    // Error recovery state
+    this.errorRecovery = {
+      maxConsecutiveErrors: 10,
+      errorResetInterval: 300000, // 5 minutes
+      circuitBreakerThreshold: 5,
+      circuitBreakerTimeout: 60000, // 1 minute
+      consecutiveErrors: 0,
+      lastErrorTime: 0,
+      circuitBreakerOpen: false,
+      circuitBreakerOpenTime: 0
+    }
   }
 
   /**
@@ -50,6 +62,9 @@ class FinanceIngestionApp {
 
       // Validate configuration
       await this.validateConfiguration()
+      
+      // Setup error recovery mechanisms
+      this.setupErrorRecovery()
 
       this.logger.info('Application initialized successfully')
     } catch (error) {
@@ -174,9 +189,9 @@ class FinanceIngestionApp {
     const services = [
       { name: 'storage', start: () => this.startStorageService() },
       { name: 'metrics', start: () => this.startMetricsService() },
-      { name: 'health', start: () => this.startHealthService() },
+      { name: 'processor', start: () => this.startProcessorService() },
       { name: 'websocket', start: () => this.startWebSocketService() },
-      { name: 'processor', start: () => this.startProcessorService() }
+      { name: 'health', start: () => this.startHealthService() }
     ]
 
     for (const service of services) {
@@ -261,31 +276,103 @@ class FinanceIngestionApp {
   }
 
   async startWebSocketService () {
-    const { initializeWebSocket } = await import('./websocket/index.js')
+    const { WebSocketConnectionManager } = await import('./websocket/index.js')
 
     this.logger.info('Initializing WebSocket service')
-    const webSocketService = await initializeWebSocket(this.config)
-
-    // Perform initial health check
-    webSocketService.getHealth()
-
+    
+    // Get processor service for message handling
+    const processorService = this.services.get('processor')
+    if (!processorService) {
+      throw new Error('Processor service must be started before WebSocket service')
+    }
+    
+    // Initialize WebSocket connection manager
+    const webSocketManager = new WebSocketConnectionManager({
+      url: this.config.websocket.url,
+      config: this.config.websocket,
+      logger: this.logger
+    })
+    
+    // Set up message processing callback
+    webSocketManager.onMessage = async (messageData) => {
+      try {
+        const receiptTime = process.hrtime.bigint()
+        await processorService.processor.processMessage(messageData, receiptTime)
+      } catch (error) {
+        this.logger.error('Error processing WebSocket message', {
+          error: error.message,
+          stack: error.stack
+        })
+      }
+    }
+    
+    // Set up connection event handlers
+    webSocketManager.onConnected = () => {
+      this.logger.info('WebSocket connected successfully')
+    }
+    
+    webSocketManager.onDisconnected = (reason) => {
+      this.logger.warn('WebSocket disconnected', { reason })
+    }
+    
+    webSocketManager.onError = (error) => {
+      this.logger.error('WebSocket error', {
+        error: error.message,
+        stack: error.stack
+      })
+    }
+    
+    // Start WebSocket connection
+    await webSocketManager.connect()
+    
     this.logger.info('WebSocket service started successfully', {
-      initialized: webSocketService.isInitialized
+      url: this.config.websocket.url,
+      connected: webSocketManager.isConnected()
     })
 
     return {
       name: 'websocket',
-      service: webSocketService,
+      manager: webSocketManager,
       stop: async () => {
         this.logger.info('Stopping WebSocket service')
-        await webSocketService.close()
+        await webSocketManager.disconnect()
       }
     }
   }
 
   async startProcessorService () {
-    this.logger.info('Processor service would start here (placeholder)')
-    return { name: 'processor', stop: async () => {} }
+    const { MessageProcessor } = await import('./message-processor/index.js')
+    
+    this.logger.info('Initializing message processor service')
+    
+    // Get storage manager from services
+    const storageService = this.services.get('storage')
+    if (!storageService) {
+      throw new Error('Storage service must be started before processor service')
+    }
+    
+    // Get metrics service (when implemented)
+    const metricsService = this.services.get('metrics')
+    
+    // Initialize message processor
+    const messageProcessor = new MessageProcessor({
+      storageManager: storageService.manager,
+      metricsCollector: metricsService?.collector,
+      config: this.config.messageProcessor || {}
+    })
+    
+    await messageProcessor.initialize()
+    
+    this.logger.info('Message processor service started successfully')
+    
+    return {
+      name: 'processor',
+      processor: messageProcessor,
+      stop: async () => {
+        this.logger.info('Stopping message processor service')
+        await messageProcessor.shutdown()
+      }
+    }
   }
 
   /**
@@ -330,6 +417,85 @@ class FinanceIngestionApp {
   }
 
   /**
+   * Handle component errors with recovery logic
+   */
+  async handleComponentError (component, error, recoveryAction = null) {
+    const currentTime = Date.now()
+    
+    // Reset consecutive errors if enough time has passed
+    if (currentTime - this.errorRecovery.lastErrorTime > this.errorRecovery.errorResetInterval) {
+      this.errorRecovery.consecutiveErrors = 0
+    }
+    
+    this.errorRecovery.consecutiveErrors++
+    this.errorRecovery.lastErrorTime = currentTime
+    
+    this.logger.error(`Component error in ${component}`, {
+      error: error.message,
+      stack: error.stack,
+      consecutiveErrors: this.errorRecovery.consecutiveErrors
+    })
+    
+    // Circuit breaker logic
+    if (this.errorRecovery.consecutiveErrors >= this.errorRecovery.circuitBreakerThreshold) {
+      if (!this.errorRecovery.circuitBreakerOpen) {
+        this.logger.warn(`Opening circuit breaker for ${component}`)
+        this.errorRecovery.circuitBreakerOpen = true
+        this.errorRecovery.circuitBreakerOpenTime = currentTime
+      }
+    }
+    
+    // Check if circuit breaker should be closed
+    if (this.errorRecovery.circuitBreakerOpen && 
+        currentTime - this.errorRecovery.circuitBreakerOpenTime > this.errorRecovery.circuitBreakerTimeout) {
+      this.logger.info(`Closing circuit breaker for ${component}`)
+      this.errorRecovery.circuitBreakerOpen = false
+      this.errorRecovery.consecutiveErrors = 0
+    }
+    
+    // Execute recovery action if provided and circuit breaker is closed
+    if (recoveryAction && !this.errorRecovery.circuitBreakerOpen) {
+      try {
+        this.logger.info(`Executing recovery action for ${component}`)
+        await recoveryAction()
+        this.logger.info(`Recovery action completed for ${component}`)
+      } catch (recoveryError) {
+        this.logger.error(`Recovery action failed for ${component}`, {
+          error: recoveryError.message,
+          stack: recoveryError.stack
+        })
+      }
+    }
+    
+    // Shutdown if too many consecutive errors
+    if (this.errorRecovery.consecutiveErrors >= this.errorRecovery.maxConsecutiveErrors) {
+      this.logger.critical(`Maximum consecutive errors reached for ${component}, initiating shutdown`)
+      await this.stop()
+      process.exit(1)
+    }
+  }
+
+  /**
+   * Setup comprehensive error recovery
+   */
+  setupErrorRecovery () {
+    this.logger.info('Setting up error recovery mechanisms')
+    
+    // Handle uncaught exceptions
+    process.on('uncaughtException', async (error) => {
+      await this.handleComponentError('uncaughtException', error)
+    })
+    
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', async (reason, promise) => {
+      const error = reason instanceof Error ? reason : new Error(String(reason))
+      await this.handleComponentError('unhandledRejection', error)
+    })
+    
+    this.logger.info('Error recovery mechanisms configured')
+  }
+
+  /**
    * Get application status
    */
   getStatus () {
@@ -338,6 +504,10 @@ class FinanceIngestionApp {
       isShuttingDown: this.isShuttingDown,
       uptime: this.startTime ? Date.now() - this.startTime : 0,
       services: Array.from(this.services.keys()),
+      errorRecovery: {
+        consecutiveErrors: this.errorRecovery.consecutiveErrors,
+        circuitBreakerOpen: this.errorRecovery.circuitBreakerOpen
+      },
       config: {
         environment: this.config?.app?.environment,
         version: this.config?.app?.version
