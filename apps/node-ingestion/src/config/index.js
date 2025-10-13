@@ -238,33 +238,74 @@ function loadConfigFromEnv () {
       maxRestarts: parseInt(process.env.CLUSTER_MAX_RESTARTS),
       gracefulShutdownTimeout: parseInt(process.env.CLUSTER_GRACEFUL_SHUTDOWN_TIMEOUT)
     },
-    redis: {
-      host: process.env.REDIS_HOST,
-      port: parseInt(process.env.REDIS_PORT),
-      password: process.env.REDIS_PASSWORD,
-      db: parseInt(process.env.REDIS_DB),
-      maxConnections: parseInt(process.env.REDIS_MAX_CONNECTIONS),
-      minConnections: parseInt(process.env.REDIS_MIN_CONNECTIONS),
-      acquireTimeoutMs: parseInt(process.env.REDIS_ACQUIRE_TIMEOUT_MS),
-      socketKeepalive: process.env.REDIS_SOCKET_KEEPALIVE !== 'false',
-      keyPrefix: process.env.REDIS_KEY_PREFIX,
-      retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY_ON_FAILOVER),
-      maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES_PER_REQUEST)
-    },
-    postgresql: {
-      host: process.env.POSTGRESQL_HOST,
-      port: parseInt(process.env.POSTGRESQL_PORT),
-      database: process.env.POSTGRESQL_DATABASE,
-      username: process.env.POSTGRESQL_USERNAME,
-      password: process.env.POSTGRESQL_PASSWORD,
-      maxConnections: parseInt(process.env.POSTGRESQL_MAX_CONNECTIONS),
-      minConnections: parseInt(process.env.POSTGRESQL_MIN_CONNECTIONS),
-      acquireTimeoutMs: parseInt(process.env.POSTGRESQL_ACQUIRE_TIMEOUT_MS),
-      idleTimeoutMs: parseInt(process.env.POSTGRESQL_IDLE_TIMEOUT_MS),
-      statementTimeoutMs: parseInt(process.env.POSTGRESQL_STATEMENT_TIMEOUT_MS),
-      queryTimeoutMs: parseInt(process.env.POSTGRESQL_QUERY_TIMEOUT_MS),
-      sslEnabled: process.env.POSTGRESQL_SSL_ENABLED === 'true'
-    },
+    redis: (() => {
+      // Parse REDIS_URL if provided, otherwise use individual variables
+      if (process.env.REDIS_URL) {
+        const url = new URL(process.env.REDIS_URL)
+        return {
+          host: url.hostname,
+          port: parseInt(url.port) || 6379,
+          password: url.password || process.env.REDIS_PASSWORD,
+          db: parseInt(url.pathname.slice(1)) || 0,
+          maxConnections: parseInt(process.env.REDIS_MAX_CONNECTIONS) || 10,
+          minConnections: parseInt(process.env.REDIS_MIN_CONNECTIONS) || 2,
+          acquireTimeoutMs: parseInt(process.env.REDIS_ACQUIRE_TIMEOUT_MS) || 5000,
+          socketKeepalive: process.env.REDIS_SOCKET_KEEPALIVE !== 'false',
+          keyPrefix: process.env.REDIS_KEY_PREFIX || 'finance:',
+          retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY_ON_FAILOVER) || 100,
+          maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES_PER_REQUEST) || 3
+        }
+      } else {
+        return {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT) || 6379,
+          password: process.env.REDIS_PASSWORD,
+          db: parseInt(process.env.REDIS_DB) || 0,
+          maxConnections: parseInt(process.env.REDIS_MAX_CONNECTIONS) || 10,
+          minConnections: parseInt(process.env.REDIS_MIN_CONNECTIONS) || 2,
+          acquireTimeoutMs: parseInt(process.env.REDIS_ACQUIRE_TIMEOUT_MS) || 5000,
+          socketKeepalive: process.env.REDIS_SOCKET_KEEPALIVE !== 'false',
+          keyPrefix: process.env.REDIS_KEY_PREFIX || 'finance:',
+          retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY_ON_FAILOVER) || 100,
+          maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES_PER_REQUEST) || 3
+        }
+      }
+    })(),
+    postgresql: (() => {
+      // Parse POSTGRES_URL if provided, otherwise use individual variables
+      if (process.env.POSTGRES_URL) {
+        const url = new URL(process.env.POSTGRES_URL)
+        return {
+          host: url.hostname,
+          port: parseInt(url.port) || 5432,
+          database: url.pathname.slice(1),
+          username: url.username,
+          password: url.password,
+          maxConnections: parseInt(process.env.POSTGRESQL_MAX_CONNECTIONS) || 20,
+          minConnections: parseInt(process.env.POSTGRESQL_MIN_CONNECTIONS) || 2,
+          acquireTimeoutMs: parseInt(process.env.POSTGRESQL_ACQUIRE_TIMEOUT_MS) || 5000,
+          idleTimeoutMs: parseInt(process.env.POSTGRESQL_IDLE_TIMEOUT_MS) || 30000,
+          statementTimeoutMs: parseInt(process.env.POSTGRESQL_STATEMENT_TIMEOUT_MS) || 30000,
+          queryTimeoutMs: parseInt(process.env.POSTGRESQL_QUERY_TIMEOUT_MS) || 30000,
+          sslEnabled: process.env.POSTGRESQL_SSL_ENABLED === 'true'
+        }
+      } else {
+        return {
+          host: process.env.POSTGRESQL_HOST || 'localhost',
+          port: parseInt(process.env.POSTGRESQL_PORT) || 5432,
+          database: process.env.POSTGRESQL_DATABASE || 'finance_benchmark',
+          username: process.env.POSTGRESQL_USERNAME || 'postgres',
+          password: process.env.POSTGRESQL_PASSWORD || 'postgres',
+          maxConnections: parseInt(process.env.POSTGRESQL_MAX_CONNECTIONS) || 20,
+          minConnections: parseInt(process.env.POSTGRESQL_MIN_CONNECTIONS) || 2,
+          acquireTimeoutMs: parseInt(process.env.POSTGRESQL_ACQUIRE_TIMEOUT_MS) || 5000,
+          idleTimeoutMs: parseInt(process.env.POSTGRESQL_IDLE_TIMEOUT_MS) || 30000,
+          statementTimeoutMs: parseInt(process.env.POSTGRESQL_STATEMENT_TIMEOUT_MS) || 30000,
+          queryTimeoutMs: parseInt(process.env.POSTGRESQL_QUERY_TIMEOUT_MS) || 30000,
+          sslEnabled: process.env.POSTGRESQL_SSL_ENABLED === 'true'
+        }
+      }
+    })(),
     buffer: {
       maxSize: parseInt(process.env.BUFFER_MAX_SIZE),
       flushIntervalMs: parseInt(process.env.BUFFER_FLUSH_INTERVAL_MS),
