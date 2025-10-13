@@ -45,7 +45,7 @@ Both systems process identical WebSocket market data feeds and provide comprehen
 
 1. **Clone and install dependencies:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/YOUR_USERNAME/finance-ingestion-benchmark.git
    cd finance-ingestion-benchmark
    npm install
    ```
