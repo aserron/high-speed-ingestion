@@ -15,8 +15,8 @@ WORKDIR /build
 # Copy package files first for better caching
 COPY package*.json ./
 
-# Install all dependencies (including devDependencies for building)
-RUN npm ci --only=production --no-audit --no-fund
+# Install all dependencies (production only)
+RUN npm install --only=production --no-audit --no-fund
 
 # Production stage - minimal runtime image
 FROM node:18-alpine as runtime

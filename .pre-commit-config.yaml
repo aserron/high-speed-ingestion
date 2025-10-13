@@ -1,0 +1,43 @@
+# Pre-commit hooks for code quality
+repos:
+  # Python hooks
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.6
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^apps/python-ingestion/
+      - id: ruff-format
+        files: ^apps/python-ingestion/
+
+  # JavaScript/Node.js hooks
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.54.0
+    hooks:
+      - id: eslint
+        files: ^apps/node-ingestion/.*\.(js|ts)$
+        additional_dependencies:
+          - eslint@8.54.0
+          - eslint-config-standard@17.1.0
+          - eslint-plugin-import@2.29.0
+          - eslint-plugin-node@11.1.0
+          - eslint-plugin-promise@6.1.1
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+  # Docker hooks
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        files: Dockerfile.*

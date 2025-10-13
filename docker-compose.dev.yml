@@ -14,7 +14,7 @@ services:
       - DEBUG=true
       - LOG_LEVEL=DEBUG
       - RELOAD=true
-    command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--loop", "uvloop"]
+    command: ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--loop", "uvloop"]
 
   node-ingestion:
     build:
@@ -42,8 +42,8 @@ services:
       - POSTGRES_DB=finance_benchmark_dev
     volumes:
       - postgres-dev-data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-      - ./scripts/dev-seed.sql:/docker-entrypoint-initdb.d/dev-seed.sql
+      - ./scripts/01-init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
+      - ./scripts/02-dev-seed.sql:/docker-entrypoint-initdb.d/02-dev-seed.sql
 
 volumes:
   postgres-dev-data:
