@@ -1,20 +1,29 @@
 {
-  "name": "finance-node-ingestion",
+  "name": "finance-ingestion-nodejs",
   "version": "1.0.0",
   "description": "High-performance Node.js financial data ingestion system",
-  "main": "src/cluster.js",
+  "main": "src/index.js",
   "type": "module",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "scripts": {
-    "start": "node --enable-source-maps src/cluster.js",
-    "dev": "node --enable-source-maps --inspect src/cluster.js",
+    "start": "node --enable-source-maps src/index.js",
+    "dev": "node --enable-source-maps --inspect src/index.js",
+    "cluster": "node --enable-source-maps src/cluster.js",
     "test": "jest --run",
     "test:watch": "jest --watch",
-    "benchmark": "node --enable-source-maps benchmarks/run.js",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix"
+    "test:coverage": "jest --coverage --run",
+    "benchmark": "node --enable-source-maps src/benchmark.js",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix",
+    "format": "prettier --write src/**/*.js",
+    "format:check": "prettier --check src/**/*.js",
+    "build": "echo 'No build step required for Node.js'",
+    "clean": "rm -rf coverage/ .nyc_output/ logs/",
+    "validate-config": "node --enable-source-maps src/cli.js validate-config",
+    "health-check": "node --enable-source-maps src/cli.js health-check"
   },
   "dependencies": {
     "ws": "^8.14.2",
@@ -25,24 +34,63 @@
     "prom-client": "^15.1.0",
     "winston": "^3.11.0",
     "dotenv": "^16.3.1",
-    "ajv": "^8.12.0"
+    "ajv": "^8.12.0",
+    "commander": "^11.1.0",
+    "joi": "^17.11.0",
+    "uuid": "^9.0.1",
+    "async-hooks": "^1.0.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "eslint": "^8.54.0",
     "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "prettier": "^3.1.0",
     "supertest": "^6.3.3",
-    "benchmark": "^2.1.4"
+    "benchmark": "^2.1.4",
+    "nodemon": "^3.0.2"
   },
   "jest": {
     "testEnvironment": "node",
     "transform": {},
     "extensionsToTreatAsEsm": [".js"],
-    "globals": {
-      "jest": {
-        "useESM": true
-      }
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js",
+      "!src/benchmark.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"],
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/?(*.)+(spec|test).js"
+    ]
+  },
+  "eslintConfig": {
+    "extends": ["standard"],
+    "env": {
+      "node": true,
+      "es2022": true,
+      "jest": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 2022,
+      "sourceType": "module"
+    },
+    "rules": {
+      "no-console": "warn",
+      "prefer-const": "error",
+      "no-var": "error"
     }
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "printWidth": 100
   },
   "keywords": [
     "finance",
@@ -50,8 +98,18 @@
     "websocket",
     "performance",
     "benchmark",
-    "nodejs"
+    "nodejs",
+    "clustering",
+    "real-time"
   ],
   "author": "Finance Benchmark Team",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/finance-ingestion-benchmark"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/finance-ingestion-benchmark/issues"
+  },
+  "homepage": "https://github.com/your-org/finance-ingestion-benchmark#readme"
 }
