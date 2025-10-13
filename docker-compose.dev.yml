@@ -1,0 +1,49 @@
+version: '3.8'
+
+# Development overrides for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  python-ingestion:
+    build:
+      target: runtime
+    volumes:
+      - ./apps/python-ingestion:/app
+      - /app/__pycache__  # Exclude pycache from volume mount
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+    command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--loop", "uvloop"]
+
+  node-ingestion:
+    build:
+      target: runtime
+    volumes:
+      - ./apps/node-ingestion:/app
+      - /app/node_modules  # Exclude node_modules from volume mount
+    environment:
+      - NODE_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=debug
+    command: ["node", "--enable-source-maps", "--inspect=0.0.0.0:9229", "src/cluster.js"]
+    ports:
+      - "9229:9229"  # Node.js debugger port
+
+  redis:
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 1gb --maxmemory-policy allkeys-lru --save 60 1000
+
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=finance_benchmark_dev
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./scripts/dev-seed.sql:/docker-entrypoint-initdb.d/dev-seed.sql
+
+volumes:
+  postgres-dev-data:

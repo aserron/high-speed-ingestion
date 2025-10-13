@@ -1,0 +1,57 @@
+{
+  "name": "finance-node-ingestion",
+  "version": "1.0.0",
+  "description": "High-performance Node.js financial data ingestion system",
+  "main": "src/cluster.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node --enable-source-maps src/cluster.js",
+    "dev": "node --enable-source-maps --inspect src/cluster.js",
+    "test": "jest --run",
+    "test:watch": "jest --watch",
+    "benchmark": "node --enable-source-maps benchmarks/run.js",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix"
+  },
+  "dependencies": {
+    "ws": "^8.14.2",
+    "fastify": "^4.24.3",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.3",
+    "msgpack5": "^6.0.2",
+    "prom-client": "^15.1.0",
+    "winston": "^3.11.0",
+    "dotenv": "^16.3.1",
+    "ajv": "^8.12.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.54.0",
+    "eslint-config-standard": "^17.1.0",
+    "supertest": "^6.3.3",
+    "benchmark": "^2.1.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {},
+    "extensionsToTreatAsEsm": [".js"],
+    "globals": {
+      "jest": {
+        "useESM": true
+      }
+    }
+  },
+  "keywords": [
+    "finance",
+    "ingestion",
+    "websocket",
+    "performance",
+    "benchmark",
+    "nodejs"
+  ],
+  "author": "Finance Benchmark Team",
+  "license": "MIT"
+}
