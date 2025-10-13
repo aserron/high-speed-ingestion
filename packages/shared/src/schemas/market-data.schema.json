@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://finance-benchmark.com/schemas/market-data.json",
+  "title": "Market Data Message",
+  "description": "Schema for financial market data messages",
+  "type": "object",
+  "required": ["messageId", "timestamp", "symbol", "messageType", "data", "sequenceNumber"],
+  "properties": {
+    "messageId": {
+      "type": "string",
+      "description": "Unique identifier for the message",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "timestamp": {
+      "type": "number",
+      "description": "Timestamp in nanoseconds since epoch",
+      "minimum": 0
+    },
+    "symbol": {
+      "type": "string",
+      "description": "Financial instrument symbol",
+      "pattern": "^[A-Z0-9._-]{1,20}$"
+    },
+    "messageType": {
+      "type": "string",
+      "enum": ["TRADE", "QUOTE", "BOOK_UPDATE"],
+      "description": "Type of market data message"
+    },
+    "data": {
+      "type": "object",
+      "required": ["price", "quantity", "side", "exchange"],
+      "properties": {
+        "price": {
+          "type": "number",
+          "description": "Price of the instrument",
+          "minimum": 0,
+          "multipleOf": 0.00000001
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity/volume",
+          "minimum": 0,
+          "multipleOf": 0.00000001
+        },
+        "side": {
+          "type": "string",
+          "enum": ["BUY", "SELL"],
+          "description": "Side of the trade/quote"
+        },
+        "exchange": {
+          "type": "string",
+          "description": "Exchange identifier",
+          "minLength": 1,
+          "maxLength": 20
+        }
+      },
+      "additionalProperties": false
+    },
+    "sequenceNumber": {
+      "type": "number",
+      "description": "Sequence number for message ordering",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false
+}
