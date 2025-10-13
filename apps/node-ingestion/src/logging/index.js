@@ -7,7 +7,11 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
  * 
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -96,11 +100,14 @@ const textFormatter = winston.format.combine(
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 function formatFinancialData (logEntry) {
   // Format price and quantity fields with appropriate precision
   const financialFields = ['price', 'quantity', 'latencyNs', 'processingTimeNs']
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -123,6 +130,9 @@ function formatFinancialData(logEntry) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -159,7 +169,11 @@ function formatFinancialData(logEntry) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 function createLogger () {
+=======
+function createLogger() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 function createLogger() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -247,7 +261,11 @@ let logger = null
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function getLogger (module = 'app') {
+=======
+export function getLogger(module = 'app') {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function getLogger(module = 'app') {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -287,7 +305,11 @@ export function getLogger(module = 'app') {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function setCorrelationId (correlationId = null) {
+=======
+export function setCorrelationId(correlationId = null) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function setCorrelationId(correlationId = null) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -324,7 +346,11 @@ export function setCorrelationId(correlationId = null) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function getCorrelationId () {
+=======
+export function getCorrelationId() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function getCorrelationId() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -359,7 +385,11 @@ export function getCorrelationId() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function withCorrelationId (correlationId, fn) {
+=======
+export function withCorrelationId(correlationId, fn) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function withCorrelationId(correlationId, fn) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -396,7 +426,11 @@ export class PerformanceLogger {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (module = 'performance') {
+=======
+  constructor(module = 'performance') {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(module = 'performance') {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -431,7 +465,11 @@ export class PerformanceLogger {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   logLatency (operation, latencyNs, messageId = null, context = {}) {
+=======
+  logLatency(operation, latencyNs, messageId = null, context = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   logLatency(operation, latencyNs, messageId = null, context = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -472,7 +510,11 @@ export class PerformanceLogger {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   logThroughput (operation, messagesPerSecond, bytesPerSecond = null, windowSizeMs = null, context = {}) {
+=======
+  logThroughput(operation, messagesPerSecond, bytesPerSecond = null, windowSizeMs = null, context = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   logThroughput(operation, messagesPerSecond, bytesPerSecond = null, windowSizeMs = null, context = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -521,7 +563,11 @@ export class PerformanceLogger {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   logResourceUsage (cpuPercent, memoryBytes, memoryPercent, context = {}) {
+=======
+  logResourceUsage(cpuPercent, memoryBytes, memoryPercent, context = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   logResourceUsage(cpuPercent, memoryBytes, memoryPercent, context = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -562,7 +608,11 @@ export class PerformanceLogger {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   logGarbageCollection (gcStats, context = {}) {
+=======
+  logGarbageCollection(gcStats, context = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   logGarbageCollection(gcStats, context = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -602,7 +652,11 @@ export class LoggingContext {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   constructor (context = {}) {
+=======
+  constructor(context = {}) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   constructor(context = {}) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -638,7 +692,11 @@ export class LoggingContext {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   enter () {
+=======
+  enter() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   enter() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -678,7 +736,11 @@ export class LoggingContext {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   exit () {
+=======
+  exit() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   exit() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -717,7 +779,11 @@ export class LoggingContext {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   run (fn) {
+=======
+  run(fn) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   run(fn) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -757,7 +823,11 @@ export class LoggingContext {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   async runAsync (fn) {
+=======
+  async runAsync(fn) {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   async runAsync(fn) {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -798,10 +868,13 @@ export class LoggingContext {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function setupLogging (config = null) {
   // Create logger with provided or default config
   logger = createLogger()
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -830,6 +903,9 @@ export function setupLogging(config = null) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -858,8 +934,13 @@ export function setupLogging(config = null) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     logger.error('Unhandled rejection', {
       reason: reason?.message || reason,
+=======
+    logger.error('Unhandled rejection', { 
+      reason: reason?.message || reason, 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     logger.error('Unhandled rejection', { 
       reason: reason?.message || reason, 
@@ -906,7 +987,11 @@ export function setupLogging(config = null) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function createChildLogger (context, module = 'app') {
+=======
+export function createChildLogger(context, module = 'app') {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function createChildLogger(context, module = 'app') {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -945,7 +1030,11 @@ let performanceLogger = null
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export function getPerformanceLogger () {
+=======
+export function getPerformanceLogger() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 export function getPerformanceLogger() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -990,7 +1079,11 @@ export default {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 }
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
