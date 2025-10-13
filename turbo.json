@@ -28,6 +28,17 @@
     },
     "setup": {
       "cache": false
+    },
+    "format": {
+      "outputs": []
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "start": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
