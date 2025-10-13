@@ -1,0 +1,41 @@
+version: '3.8'
+
+# Linting services for development
+services:
+  python-lint:
+    build:
+      context: ./apps/python-ingestion
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - ./apps/python-ingestion:/app
+    working_dir: /app
+    command: >
+      sh -c "
+        pip install ruff black isort mypy &&
+        echo '🔍 Running Python linting...' &&
+        ruff check src/ --output-format=github &&
+        black --check src/ &&
+        isort --check-only src/ &&
+        mypy src/ --ignore-missing-imports &&
+        echo '✅ Python linting complete!'
+      "
+    profiles: ["lint"]
+
+  node-lint:
+    build:
+      context: ./apps/node-ingestion
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - ./apps/node-ingestion:/app
+    working_dir: /app
+    command: >
+      sh -c "
+        npm install &&
+        echo '🔍 Running Node.js linting...' &&
+        npx eslint src/ --ext .js --format=stylish &&
+        npx prettier --check src/ &&
+        echo '✅ Node.js linting complete!'
+      "
+    profiles: ["lint"]
