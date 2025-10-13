@@ -1,0 +1,83 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#1d4ed8;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:0.4" />
+    </linearGradient>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#heroGradient)"/>
+  
+  <!-- Grid pattern -->
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="400" height="300" fill="url(#grid)"/>
+  
+  <!-- Python logo representation -->
+  <g transform="translate(80, 80)">
+    <circle cx="0" cy="0" r="30" fill="#3776ab" opacity="0.9"/>
+    <text x="0" y="8" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Py</text>
+    <text x="0" y="-40" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">Python</text>
+  </g>
+  
+  <!-- Node.js logo representation -->
+  <g transform="translate(320, 80)">
+    <circle cx="0" cy="0" r="30" fill="#339933" opacity="0.9"/>
+    <text x="0" y="8" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">JS</text>
+    <text x="0" y="-40" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">Node.js</text>
+  </g>
+  
+  <!-- VS symbol -->
+  <g transform="translate(200, 80)">
+    <text x="0" y="8" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="20" font-weight="bold">VS</text>
+  </g>
+  
+  <!-- Performance chart -->
+  <g transform="translate(50, 180)">
+    <!-- Chart background -->
+    <rect x="0" y="0" width="300" height="80" fill="rgba(255,255,255,0.1)" rx="8"/>
+    
+    <!-- Chart lines -->
+    <path d="M20 60 L80 40 L140 35 L200 45 L260 30 L280 25" 
+          stroke="#3b82f6" stroke-width="3" fill="none" filter="url(#glow)"/>
+    <path d="M20 65 L80 45 L140 38 L200 42 L260 28 L280 22" 
+          stroke="#10b981" stroke-width="3" fill="none" filter="url(#glow)"/>
+    
+    <!-- Chart labels -->
+    <text x="10" y="75" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="10">Latency</text>
+    <text x="250" y="75" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="10">Throughput</text>
+  </g>
+  
+  <!-- Data flow arrows -->
+  <g transform="translate(200, 120)">
+    <path d="M-80 0 L-40 0" stroke="rgba(255,255,255,0.6)" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <path d="M40 0 L80 0" stroke="rgba(255,255,255,0.6)" stroke-width="2" marker-end="url(#arrowhead)"/>
+  </g>
+  
+  <!-- Arrow marker -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="rgba(255,255,255,0.6)"/>
+    </marker>
+  </defs>
+  
+  <!-- Performance metrics -->
+  <g transform="translate(200, 250)">
+    <text x="0" y="0" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">
+      Sub-millisecond Latency • 10K+ msg/s • Real-time Processing
+    </text>
+  </g>
+</svg>
