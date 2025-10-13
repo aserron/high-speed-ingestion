@@ -1,0 +1,297 @@
+name: Performance Regression Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths: 
+      - 'apps/**'
+      - 'benchmarks/**'
+      - 'tests/performance/**'
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_duration:
+        description: 'Test duration multiplier (0.1 for quick tests, 1.0 for full tests)'
+        required: false
+        default: '0.5'
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  regression-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: finance_benchmark
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Need full history for baseline comparison
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          apps/node-ingestion/package-lock.json
+          package-lock.json
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r tests/performance/requirements.txt
+        
+        # Install Python application dependencies
+        cd apps/python-ingestion
+        pip install -r requirements.txt
+        cd ../..
+
+    - name: Install Node.js dependencies
+      run: |
+        npm install
+        
+        # Install Node.js application dependencies
+        cd apps/node-ingestion
+        npm install
+        cd ../..
+
+    - name: Wait for services
+      run: |
+        echo "Waiting for services to be ready..."
+        sleep 10
+        
+        # Test Redis connection
+        redis-cli -h localhost -p 6379 ping
+        
+        # Test PostgreSQL connection
+        PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d finance_benchmark -c "SELECT 1;"
+
+    - name: Setup database schema
+      run: |
+        # Initialize database schema
+        PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d finance_benchmark -f packages/shared/schema.sql || true
+
+    - name: Download baseline metrics
+      uses: actions/cache@v3
+      with:
+        path: tests/performance/baselines
+        key: performance-baselines-${{ github.repository }}-${{ github.ref_name }}
+        restore-keys: |
+          performance-baselines-${{ github.repository }}-main
+          performance-baselines-${{ github.repository }}-
+
+    - name: Adjust test configuration for CI
+      run: |
+        cd tests/performance
+        
+        # Create CI-specific configuration with shorter test durations
+        python3 -c "
+        import json
+        
+        with open('regression_config.json', 'r') as f:
+            config = json.load(f)
+        
+        # Reduce test durations for CI (unless full test requested)
+        duration_multiplier = float('${{ github.event.inputs.test_duration || '0.5' }}')
+        
+        for scenario in config['test_scenarios']:
+            scenario['duration_seconds'] = int(scenario['duration_seconds'] * duration_multiplier)
+            # Ensure minimum duration of 30 seconds
+            scenario['duration_seconds'] = max(30, scenario['duration_seconds'])
+        
+        # Adjust thresholds to be more lenient in CI environment
+        config['regression_detection']['latency_degradation_threshold_percent'] = 25
+        config['regression_detection']['throughput_degradation_threshold_percent'] = 15
+        config['regression_detection']['memory_increase_threshold_percent'] = 30
+        
+        with open('regression_config_ci.json', 'w') as f:
+            json.dump(config, f, indent=2)
+        "
+
+    - name: Run performance regression tests
+      id: regression_tests
+      run: |
+        cd tests/performance
+        
+        # Set environment variables
+        export PYTHONPATH="../../apps/python-ingestion/src:$PYTHONPATH"
+        export NODE_PATH="../../apps/node-ingestion/node_modules:$NODE_PATH"
+        export REDIS_HOST=localhost
+        export POSTGRES_HOST=localhost
+        export POSTGRES_PASSWORD=postgres
+        
+        # Run regression tests with CI configuration
+        python3 regression_runner.py --config regression_config_ci.json || echo "regression_failed=true" >> $GITHUB_OUTPUT
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: regression-test-results-${{ github.run_number }}
+        path: |
+          tests/performance/results/
+          tests/performance/baselines/
+        retention-days: 30
+
+    - name: Parse test results
+      id: parse_results
+      if: always()
+      run: |
+        cd tests/performance/results
+        
+        # Find the latest report file
+        REPORT_FILE=$(ls -t regression_report_*.json | head -n1)
+        
+        if [ -f "$REPORT_FILE" ]; then
+          # Extract summary information
+          TOTAL_TESTS=$(jq -r '.summary.total_tests' "$REPORT_FILE")
+          PASSED_TESTS=$(jq -r '.summary.passed_tests' "$REPORT_FILE")
+          FAILED_TESTS=$(jq -r '.summary.failed_tests' "$REPORT_FILE")
+          TOTAL_REGRESSIONS=$(jq -r '.summary.total_regressions' "$REPORT_FILE")
+          TOTAL_IMPROVEMENTS=$(jq -r '.summary.total_improvements' "$REPORT_FILE")
+          
+          echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+          echo "passed_tests=$PASSED_TESTS" >> $GITHUB_OUTPUT
+          echo "failed_tests=$FAILED_TESTS" >> $GITHUB_OUTPUT
+          echo "total_regressions=$TOTAL_REGRESSIONS" >> $GITHUB_OUTPUT
+          echo "total_improvements=$TOTAL_IMPROVEMENTS" >> $GITHUB_OUTPUT
+          
+          # Create summary for PR comment
+          echo "## 🧪 Performance Regression Test Results" > ../pr_comment.md
+          echo "" >> ../pr_comment.md
+          echo "| Metric | Value |" >> ../pr_comment.md
+          echo "|--------|-------|" >> ../pr_comment.md
+          echo "| Total Tests | $TOTAL_TESTS |" >> ../pr_comment.md
+          echo "| Passed | $PASSED_TESTS ✅ |" >> ../pr_comment.md
+          echo "| Failed | $FAILED_TESTS ❌ |" >> ../pr_comment.md
+          echo "| Regressions | $TOTAL_REGRESSIONS |" >> ../pr_comment.md
+          echo "| Improvements | $TOTAL_IMPROVEMENTS 🚀 |" >> ../pr_comment.md
+          echo "" >> ../pr_comment.md
+          
+          if [ "$FAILED_TESTS" -gt 0 ]; then
+            echo "### ❌ Performance Regressions Detected" >> ../pr_comment.md
+            echo "" >> ../pr_comment.md
+            
+            # Extract failed test details
+            jq -r '.results[] | select(.passed == false) | "- **\(.test_name)** (\(.implementation)): \(.regressions | join(", "))"' "$REPORT_FILE" >> ../pr_comment.md
+            echo "" >> ../pr_comment.md
+          fi
+          
+          if [ "$TOTAL_IMPROVEMENTS" -gt 0 ]; then
+            echo "### 🚀 Performance Improvements" >> ../pr_comment.md
+            echo "" >> ../pr_comment.md
+            
+            # Extract improvements
+            jq -r '.results[] | select(.improvements | length > 0) | "- **\(.test_name)** (\(.implementation)): \(.improvements | join(", "))"' "$REPORT_FILE" >> ../pr_comment.md
+            echo "" >> ../pr_comment.md
+          fi
+          
+          echo "📊 [View detailed results](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> ../pr_comment.md
+        else
+          echo "No test results found"
+          echo "total_tests=0" >> $GITHUB_OUTPUT
+          echo "failed_tests=1" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Comment PR with results
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request' && always()
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'tests/performance/pr_comment.md';
+          
+          if (fs.existsSync(path)) {
+            const comment = fs.readFileSync(path, 'utf8');
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const existingComment = comments.find(comment => 
+              comment.body.includes('🧪 Performance Regression Test Results')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+          }
+
+    - name: Update baseline cache
+      uses: actions/cache/save@v3
+      if: github.ref == 'refs/heads/main' && steps.parse_results.outputs.failed_tests == '0'
+      with:
+        path: tests/performance/baselines
+        key: performance-baselines-${{ github.repository }}-${{ github.ref_name }}-${{ github.run_number }}
+
+    - name: Fail job on regressions
+      if: steps.parse_results.outputs.failed_tests > 0
+      run: |
+        echo "Performance regressions detected: ${{ steps.parse_results.outputs.failed_tests }} test(s) failed"
+        echo "Total regressions: ${{ steps.parse_results.outputs.total_regressions }}"
+        exit 1
+
+    - name: Success summary
+      if: steps.parse_results.outputs.failed_tests == 0
+      run: |
+        echo "✅ All performance regression tests passed!"
+        echo "Total tests: ${{ steps.parse_results.outputs.total_tests }}"
+        echo "Improvements: ${{ steps.parse_results.outputs.total_improvements }}"

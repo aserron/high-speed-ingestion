@@ -1,0 +1,67 @@
+{
+  "baseline_thresholds": {
+    "latency": {
+      "p50_ms": 0.5,
+      "p95_ms": 1.0,
+      "p99_ms": 2.0,
+      "p999_ms": 5.0
+    },
+    "throughput": {
+      "min_messages_per_second": 8000,
+      "target_messages_per_second": 10000
+    },
+    "resources": {
+      "max_memory_mb": 200,
+      "max_cpu_percent": 80
+    },
+    "stability": {
+      "max_memory_growth_percent": 10,
+      "max_error_rate_percent": 0.1
+    }
+  },
+  "test_scenarios": [
+    {
+      "name": "baseline_load",
+      "description": "Standard load test for baseline performance",
+      "duration_seconds": 300,
+      "message_rate": 1000,
+      "burst_enabled": false
+    },
+    {
+      "name": "high_throughput",
+      "description": "High throughput test to verify maximum capacity",
+      "duration_seconds": 180,
+      "message_rate": 10000,
+      "burst_enabled": false
+    },
+    {
+      "name": "burst_load",
+      "description": "Burst load test simulating market open conditions",
+      "duration_seconds": 600,
+      "message_rate": 2000,
+      "burst_enabled": true,
+      "burst_rate": 15000,
+      "burst_duration": 30,
+      "burst_interval": 120
+    },
+    {
+      "name": "stability_test",
+      "description": "Long-running stability test for memory leak detection",
+      "duration_seconds": 3600,
+      "message_rate": 5000,
+      "burst_enabled": false
+    }
+  ],
+  "regression_detection": {
+    "latency_degradation_threshold_percent": 15,
+    "throughput_degradation_threshold_percent": 10,
+    "memory_increase_threshold_percent": 20,
+    "error_rate_increase_threshold_percent": 5
+  },
+  "reporting": {
+    "output_format": "json",
+    "include_charts": true,
+    "alert_on_regression": true,
+    "store_baseline": true
+  }
+}
