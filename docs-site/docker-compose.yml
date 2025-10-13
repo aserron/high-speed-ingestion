@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.docs.rule=Host(`docs.finance-ingestion-benchmark.dev`)"
+      - "traefik.http.routers.docs.tls=true"
+      - "traefik.http.routers.docs.tls.certresolver=letsencrypt"
+      - "traefik.http.services.docs.loadbalancer.server.port=80"
+
+  # Optional: Analytics service
+  analytics:
+    image: plausible/analytics:latest
+    environment:
+      - BASE_URL=https://analytics.finance-ingestion-benchmark.dev
+      - SECRET_KEY_BASE=${PLAUSIBLE_SECRET_KEY_BASE}
+    ports:
+      - "8001:8000"
+    depends_on:
+      - analytics-db
+      - analytics-events-db
+    restart: unless-stopped
+
+  analytics-db:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=plausible
+    volumes:
+      - analytics-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  analytics-events-db:
+    image: clickhouse/clickhouse-server:22.6-alpine
+    volumes:
+      - analytics-events-data:/var/lib/clickhouse
+      - ./clickhouse/clickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro
+      - ./clickhouse/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    restart: unless-stopped
+
+volumes:
+  analytics-db-data:
+  analytics-events-data:

@@ -3,7 +3,11 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
  *
+=======
+ * 
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
  * 
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -32,7 +36,11 @@ const program = new Command()
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 function setupCLI () {
+=======
+function setupCLI() {
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 function setupCLI() {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -137,11 +145,14 @@ function setupCLI() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function runCommand (options) {
   // Initialize configuration and logging
   const config = getConfig()
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -152,6 +163,9 @@ async function runCommand(options) {
   
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -164,6 +178,7 @@ async function runCommand(options) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   if (options.duration && parseInt(options.duration) > 0) {
     config.benchmark.durationMs = parseInt(options.duration) * 1000
@@ -174,6 +189,8 @@ async function runCommand(options) {
   }
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -189,6 +206,9 @@ async function runCommand(options) {
   
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -203,9 +223,15 @@ async function runCommand(options) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   const logger = getLogger('cli')
 
+=======
+  
+  const logger = getLogger('cli')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
   const logger = getLogger('cli')
@@ -243,6 +269,7 @@ async function runCommand(options) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function clusterCommand (options) {
   const config = getConfig()
 
@@ -250,6 +277,8 @@ async function clusterCommand (options) {
   config.cluster.enabled = true
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -262,6 +291,9 @@ async function clusterCommand(options) {
   
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -276,9 +308,15 @@ async function clusterCommand(options) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   const logger = getLogger('cli')
 
+=======
+  
+  const logger = getLogger('cli')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
   const logger = getLogger('cli')
@@ -307,9 +345,15 @@ async function clusterCommand(options) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function benchmarkCommand (options) {
   const config = getConfig()
 
+=======
+async function benchmarkCommand(options) {
+  const config = getConfig()
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 async function benchmarkCommand(options) {
   const config = getConfig()
@@ -334,9 +378,15 @@ async function benchmarkCommand(options) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   const logger = getLogger('cli')
 
+=======
+  
+  const logger = getLogger('cli')
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
   const logger = getLogger('cli')
@@ -364,6 +414,7 @@ async function benchmarkCommand(options) {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   if (options.output) {
     logger.info(`Would save results to ${options.output} in ${options.format} format`)
@@ -373,6 +424,8 @@ async function benchmarkCommand(options) {
   await new Promise(resolve => setTimeout(resolve, 2000))
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -387,6 +440,9 @@ async function benchmarkCommand(options) {
   
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -398,6 +454,7 @@ async function benchmarkCommand(options) {
 /**
  * Validate config command implementation
  */
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -417,6 +474,8 @@ async function validateConfigCommand () {
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 async function validateConfigCommand() {
   try {
     const config = getConfig()
@@ -430,6 +489,9 @@ async function validateConfigCommand() {
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -442,7 +504,11 @@ async function validateConfigCommand() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -459,7 +525,11 @@ async function validateConfigCommand() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -476,7 +546,11 @@ async function validateConfigCommand() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -493,7 +567,11 @@ async function validateConfigCommand() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -514,6 +592,10 @@ async function validateConfigCommand() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
     
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -535,6 +617,7 @@ async function validateConfigCommand() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function healthCheckCommand () {
   const config = getConfig()
   setupLogging(config)
@@ -544,6 +627,8 @@ async function healthCheckCommand () {
   logger.info('Performing health checks...')
 
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -558,6 +643,9 @@ async function healthCheckCommand() {
   
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -573,7 +661,11 @@ async function healthCheckCommand() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -591,7 +683,11 @@ async function healthCheckCommand() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
   
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -611,6 +707,7 @@ async function healthCheckCommand() {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function main () {
   try {
     const cli = setupCLI()
@@ -618,6 +715,8 @@ async function main () {
     // Parse command line arguments
     await cli.parseAsync(process.argv)
 =======
+=======
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
@@ -631,6 +730,9 @@ async function main() {
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
+=======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)
@@ -658,7 +760,11 @@ export default {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b42d439 (feat: implement Node.js foundation framework)
 =======
 }
 >>>>>>> b42d439 (feat: implement Node.js foundation framework)

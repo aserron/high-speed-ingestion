@@ -1,0 +1,23 @@
+{
+  "name": "finance-ingestion-docs",
+  "version": "1.0.0",
+  "description": "Documentation site for Finance Ingestion Benchmark",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "serve": "vitepress serve"
+  },
+  "devDependencies": {
+    "vitepress": "^1.0.0-rc.31",
+    "mermaid": "^10.6.1",
+    "vue": "^3.3.8"
+  },
+  "dependencies": {
+    "medium-zoom": "^1.0.8",
+    "chart.js": "^4.4.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^2.30.0"
+  }
+}
