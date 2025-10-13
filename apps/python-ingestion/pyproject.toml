@@ -5,119 +5,78 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "finance-ingestion-python"
 version = "1.0.0"
-description = "High-performance financial data ingestion system in Python"
-authors = [
-    {name = "Finance Benchmark Team", email = "team@finance-benchmark.com"}
-]
-readme = "README.md"
+description = "High-performance Python financial data ingestion system"
+authors = [{name = "Finance Team", email = "team@example.com"}]
 license = {text = "MIT"}
+readme = "README.md"
 requires-python = ">=3.11"
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Financial and Insurance Industry",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Office/Business :: Financial",
-    "Topic :: System :: Networking",
-]
-
 dependencies = [
-    # Async runtime with uvloop for maximum performance
     "uvloop>=0.19.0",
-    
-    # WebSocket client
     "websockets>=12.0",
-    
-    # High-performance serialization
     "msgpack>=1.0.7",
-    
-    # Database drivers
-    "asyncpg>=0.29.0",  # PostgreSQL async driver
-    "redis[hiredis]>=5.0.1",  # Redis with C extension
-    
-    # Configuration management
+    "asyncpg>=0.29.0",
+    "redis[hiredis]>=5.0.1",
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
-    
-    # Structured logging
     "structlog>=23.2.0",
-    
-    # Metrics and monitoring
+    "python-json-logger>=2.0.7",
     "prometheus-client>=0.19.0",
-    
-    # HTTP server for API endpoints
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
-    
-    # Utilities
-    "click>=8.1.7",  # CLI interface
-    "python-json-logger>=2.0.7",  # JSON logging
+    "click>=8.1.7",
 ]
 
 [project.optional-dependencies]
 dev = [
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
-    "black>=23.11.0",
+    "black>=23.0.0",
     "isort>=5.12.0",
-    "flake8>=6.1.0",
-    "mypy>=1.7.0",
-    "pre-commit>=3.6.0",
-]
-
-benchmark = [
-    "psutil>=5.9.6",  # System resource monitoring
-    "numpy>=1.25.0",  # Statistical calculations
-    "matplotlib>=3.8.0",  # Plotting for reports
 ]
 
 [project.scripts]
 finance-ingestion = "finance_ingestion.cli:main"
 
-[project.urls]
-Homepage = "https://github.com/your-org/finance-ingestion-benchmark"
-Repository = "https://github.com/your-org/finance-ingestion-benchmark"
-Issues = "https://github.com/your-org/finance-ingestion-benchmark/issues"
+# Ruff configuration
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-dir]
-"" = "src"
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["B011"]
 
 # Black configuration
 [tool.black]
 line-length = 100
 target-version = ['py311']
 include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
 # isort configuration
 [tool.isort]
 profile = "black"
 line_length = 100
 multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
 
-# mypy configuration
+# MyPy configuration
 [tool.mypy]
 python_version = "3.11"
 warn_return_any = true
@@ -133,7 +92,7 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
-# pytest configuration
+# Pytest configuration
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers --strict-config"
@@ -142,17 +101,11 @@ asyncio_mode = "auto"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
-    "benchmark: marks tests as benchmark tests",
 ]
 
-# Coverage configuration
 [tool.coverage.run]
 source = ["src"]
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "*/__pycache__/*",
-]
+omit = ["tests/*", "*/tests/*"]
 
 [tool.coverage.report]
 exclude_lines = [

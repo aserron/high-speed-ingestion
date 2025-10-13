@@ -141,11 +141,8 @@ class ClusterManager {
    */
   async forkWorker () {
     return new Promise((resolve, reject) => {
-      const worker = cluster.fork()
+      const worker = cluster.fork({ WORKER_ID: cluster.worker?.id || 'primary' })
       const workerId = worker.id
-
-      // Set worker environment
-      worker.process.env.WORKER_ID = workerId
 
       // Track worker
       this.workers.set(workerId, {
