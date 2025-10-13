@@ -17,28 +17,10 @@
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "docker:logs": "docker-compose logs -f",
-    "setup": "npm install && turbo run setup",
-    "setup:dev": "node scripts/setup-dev.js || powershell -ExecutionPolicy Bypass -File scripts/setup-dev.ps1",
-    "format": "turbo run format",
-    "type-check": "turbo run type-check",
-    "start": "turbo run start",
-    "start:python": "turbo run start --filter=python-ingestion",
-    "start:node": "turbo run start --filter=node-ingestion",
-    "benchmark:compare": "turbo run benchmark && node scripts/compare-results.js"
-=======
-=======
->>>>>>> 7378f2f (feat(tests): implement performance regression testing system)
     "setup": "npm install && turbo run setup",
     "test:regression": "cd tests/performance && python regression_runner.py",
     "test:regression:quick": "cd tests/performance && python regression_runner.py --config regression_config_quick.json",
     "test:regression:ci": "cd tests/performance && python regression_runner.py --config regression_config_ci.json"
-<<<<<<< HEAD
->>>>>>> 7378f2f (feat(tests): implement performance regression testing system)
-=======
->>>>>>> 7378f2f (feat(tests): implement performance regression testing system)
   },
   "devDependencies": {
     "turbo": "^1.10.0"
@@ -49,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aserron/high-speed-ingestion.git"
+    "url": "git+https://github.com/your-org/finance-ingestion-benchmark.git"
   },
   "keywords": [
     "finance",
@@ -60,6 +42,6 @@
     "websocket",
     "performance"
   ],
-  "author": "aserron",
+  "author": "Your Organization",
   "license": "MIT"
 }
