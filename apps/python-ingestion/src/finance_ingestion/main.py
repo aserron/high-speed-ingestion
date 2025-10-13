@@ -9,7 +9,10 @@ import asyncio
 import signal
 import sys
 import time
+<<<<<<< HEAD
 import os
+=======
+>>>>>>> e208aed (feat(python): implement main application with graceful shutdown handling)
 from typing import Optional, Dict, Any
 import logging
 
