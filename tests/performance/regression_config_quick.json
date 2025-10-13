@@ -1,0 +1,46 @@
+{
+  "baseline_thresholds": {
+    "latency": {
+      "p50_ms": 0.5,
+      "p95_ms": 1.0,
+      "p99_ms": 2.0,
+      "p999_ms": 5.0
+    },
+    "throughput": {
+      "min_messages_per_second": 5000,
+      "target_messages_per_second": 8000
+    },
+    "resources": {
+      "max_memory_mb": 200,
+      "max_cpu_percent": 80
+    }
+  },
+  "test_scenarios": [
+    {
+      "name": "quick_baseline",
+      "description": "Quick baseline test for development",
+      "duration_seconds": 60,
+      "message_rate": 1000,
+      "burst_enabled": false
+    },
+    {
+      "name": "quick_throughput",
+      "description": "Quick throughput test",
+      "duration_seconds": 30,
+      "message_rate": 5000,
+      "burst_enabled": false
+    }
+  ],
+  "regression_detection": {
+    "latency_degradation_threshold_percent": 20,
+    "throughput_degradation_threshold_percent": 15,
+    "memory_increase_threshold_percent": 25,
+    "error_rate_increase_threshold_percent": 10
+  },
+  "reporting": {
+    "output_format": "json",
+    "include_charts": false,
+    "alert_on_regression": true,
+    "store_baseline": true
+  }
+}
