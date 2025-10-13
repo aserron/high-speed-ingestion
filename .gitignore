@@ -125,3 +125,12 @@ grafana-data/
 
 # Turborepo
 .turbo/
+
+# VitePress
+docs-site/.vitepress/cache/
+docs-site/.vitepress/dist/
+docs-site/node_modules/
+
+# Performance Testing Results
+tests/performance/results/
+tests/performance/baselines/
