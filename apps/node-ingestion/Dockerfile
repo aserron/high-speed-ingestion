@@ -9,11 +9,21 @@ RUN apk add --no-cache \
     g++ \
     libc6-compat
 
+# Create user and group with same IDs as runtime stage
+RUN addgroup -g 1001 -S nodejs \
+    && adduser -S appuser -u 1001 -G nodejs
+
 # Set working directory
 WORKDIR /build
 
 # Copy package files first for better caching
 COPY package*.json ./
+
+# Change ownership to appuser before npm install
+RUN chown -R appuser:nodejs /build
+
+# Switch to appuser for npm install
+USER appuser
 
 # Install all dependencies (production only)
 RUN npm install --only=production --no-audit --no-fund
@@ -35,11 +45,14 @@ ENV NODE_ENV=production \
 # Set working directory
 WORKDIR /app
 
-# Copy node_modules from builder stage
-COPY --from=builder --chown=appuser:nodejs /build/node_modules ./node_modules
+# Copy node_modules from builder stage (already owned by appuser)
+COPY --from=builder /build/node_modules ./node_modules
 
 # Copy application code
 COPY --chown=appuser:nodejs . .
+
+# Create logs directory with proper permissions
+RUN mkdir -p logs && chown appuser:nodejs logs
 
 # Switch to non-root user
 USER appuser
@@ -54,5 +67,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start application with clustering
-CMD ["node", "--enable-source-maps", "src/cluster.js"]
+# Start application (mode can be controlled via APP_MODE environment variable)
+CMD ["node", "--enable-source-maps", "src/app.js"]

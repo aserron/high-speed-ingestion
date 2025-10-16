@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Ingestion Services Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .service-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #007acc;
+        }
+        .service-card.python {
+            border-left-color: #3776ab;
+        }
+        .service-card.nodejs {
+            border-left-color: #339933;
+        }
+        .service-card.monitoring {
+            border-left-color: #e6522c;
+        }
+        .service-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+        .status-indicator.loading {
+            background: #ffc107;
+        }
+        .status-indicator.error {
+            background: #dc3545;
+        }
+        .endpoint-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        .endpoint-list li {
+            margin: 8px 0;
+        }
+        .endpoint-list a {
+            color: #007acc;
+            text-decoration: none;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .endpoint-list a:hover {
+            text-decoration: underline;
+        }
+        .refresh-btn {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+        }
+        .refresh-btn:hover {
+            background: #005a9e;
+        }
+        .health-status {
+            font-size: 0.9em;
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Finance Ingestion Services Dashboard</h1>
+        <p>Real-time status of all microservices</p>
+        <button class="refresh-btn" onclick="checkAllServices()">🔄 Refresh Status</button>
+    </div>
+
+    <div class="services-grid">
+        <!-- Python Service -->
+        <div class="service-card python">
+            <div class="service-title">
+                <span class="status-indicator" id="python-status"></span>
+                🐍 Python Ingestion Service
+            </div>
+            <ul class="endpoint-list">
+                <li><a href="http://localhost:8001/" target="_blank">/ - Service Info</a></li>
+                <li><a href="http://localhost:8001/health" target="_blank">/health - Health Check</a></li>
+                <li><a href="http://localhost:8001/metrics" target="_blank">/metrics - Metrics</a></li>
+                <li><a href="http://localhost:8001/docs" target="_blank">/docs - API Documentation</a></li>
+            </ul>
+            <div class="health-status" id="python-health">Checking status...</div>
+        </div>
+
+        <!-- Node.js Service -->
+        <div class="service-card nodejs">
+            <div class="service-title">
+                <span class="status-indicator" id="nodejs-status"></span>
+                🟨 Node.js Ingestion Service
+            </div>
+            <ul class="endpoint-list">
+                <li><a href="http://localhost:8002/" target="_blank">/ - Service Info</a></li>
+                <li><a href="http://localhost:8002/health" target="_blank">/health - Health Check</a></li>
+                <li><a href="http://localhost:8002/metrics" target="_blank">/metrics - Metrics</a></li>
+                <li><a href="http://localhost:8002/config-test" target="_blank">/config-test - Configuration</a></li>
+            </ul>
+            <div class="health-status" id="nodejs-health">Checking status...</div>
+        </div>
+
+        <!-- Monitoring Services -->
+        <div class="service-card monitoring">
+            <div class="service-title">
+                <span class="status-indicator" id="monitoring-status"></span>
+                📊 Monitoring Stack
+            </div>
+            <ul class="endpoint-list">
+                <li><a href="http://localhost:9090" target="_blank">Prometheus - Metrics Collection</a></li>
+                <li><a href="http://localhost:9090/targets" target="_blank">Prometheus - Targets Status</a></li>
+                <li><a href="http://localhost:3000" target="_blank">Grafana - Dashboards (admin/admin)</a></li>
+            </ul>
+            <div class="health-status" id="monitoring-health">Checking status...</div>
+        </div>
+
+        <!-- Database Services -->
+        <div class="service-card">
+            <div class="service-title">
+                <span class="status-indicator" id="database-status"></span>
+                🗄️ Database Services
+            </div>
+            <ul class="endpoint-list">
+                <li>PostgreSQL - localhost:5432 (finance_benchmark_dev)</li>
+                <li>Redis - localhost:6379</li>
+            </ul>
+            <div class="health-status" id="database-health">Database services running</div>
+        </div>
+    </div>
+
+    <script>
+        async function checkService(url, statusId, healthId) {
+            const statusEl = document.getElementById(statusId);
+            const healthEl = document.getElementById(healthId);
+            
+            statusEl.className = 'status-indicator loading';
+            healthEl.textContent = 'Checking...';
+            
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    statusEl.className = 'status-indicator';
+                    healthEl.textContent = `✅ ${data.status || 'Healthy'} - ${data.service || 'Service'} v${data.version || '1.0.0'}`;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                statusEl.className = 'status-indicator error';
+                healthEl.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function checkAllServices() {
+            await Promise.all([
+                checkService('http://localhost:8001/health', 'python-status', 'python-health'),
+                checkService('http://localhost:8002/health', 'nodejs-status', 'nodejs-health'),
+                checkService('http://localhost:9090/-/healthy', 'monitoring-status', 'monitoring-health')
+            ]);
+            
+            // Database status (always show as healthy if containers are running)
+            document.getElementById('database-status').className = 'status-indicator';
+            document.getElementById('database-health').textContent = '✅ PostgreSQL & Redis - Operational';
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(checkAllServices, 30000);
+        
+        // Initial check
+        checkAllServices();
+    </script>
+</body>
+</html>

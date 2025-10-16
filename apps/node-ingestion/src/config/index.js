@@ -6,8 +6,9 @@
  * financial data ingestion system.
  */
 
-// import { fileURLToPath } from 'url'
-// import { dirname } from 'path'
+console.warn('importing joi')
+
+// ES Modules
 import Joi from 'joi'
 import dotenv from 'dotenv'
 
