@@ -2,16 +2,18 @@
   "name": "finance-ingestion-nodejs",
   "version": "1.0.0",
   "description": "High-performance Node.js financial data ingestion system",
-  "main": "src/index.js",
+  "main": "src/app.js",
   "type": "module",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
   },
   "scripts": {
-    "start": "node --enable-source-maps src/index.js",
-    "dev": "node --enable-source-maps --inspect src/index.js",
-    "cluster": "node --enable-source-maps src/cluster.js",
+    "start": "node --enable-source-maps src/app.js",
+    "start:simple": "APP_MODE=simple node --enable-source-maps src/app.js",
+    "start:full": "APP_MODE=full node --enable-source-maps src/app.js",
+    "start:cluster": "APP_MODE=cluster node --enable-source-maps src/app.js",
+    "dev": "APP_MODE=full node --enable-source-maps --inspect src/app.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

@@ -36,6 +36,7 @@ services:
       dockerfile: Dockerfile
     container_name: finance-node-ingestion
     environment:
+      - APP_MODE=full
       - REDIS_URL=redis://redis:6379
       - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/finance_benchmark
       - LOG_LEVEL=info
@@ -44,8 +45,8 @@ services:
       - postgres
     ports:
       - "8002:8000"
-    volumes:
-      - ./apps/node-ingestion:/app
+    # volumes:
+    #   - ./apps/node-ingestion:/app
     deploy:
       resources:
         limits:
