@@ -7,15 +7,11 @@
 
 - [x] 1.1 Create infrastructure directory structure
 
-
-
   - Create infrastructure/docker/, infrastructure/monitoring/, and infrastructure/docs/ directories
   - Set up subdirectories for prometheus, grafana, and alerts under monitoring
   - _Requirements: 1.1, 1.2, 1.3_
 
 - [x] 1.2 Create base Docker Compose configuration
-
-
 
   - Extract common services (Redis, PostgreSQL, Prometheus, Grafana) into docker-compose.base.yml
   - Define shared networks and volumes in base configuration
@@ -35,14 +31,12 @@
 
 - [x] 2.2 Create production Docker override configuration
 
-
   - Create docker-compose.prod.yml with production-optimized settings
   - Remove development volumes and set production resource limits
   - Configure production logging and health checks
   - _Requirements: 2.2, 4.3_
 
 - [x] 2.3 Create environment variable templates
-
 
   - Create .env.dev.template and .env.prod.template files
   - Document all required environment variables for each environment
@@ -55,19 +49,22 @@
 
 - [x] 3.1 Organize Prometheus configuration
 
-
   - Move prometheus.yml to infrastructure/monitoring/prometheus/
   - Create alert rules directory and basic alerting rules
   - Update service discovery configuration for new structure
   - _Requirements: 3.1, 4.2_
 
-- [ ] 3.2 Set up Grafana configuration structure
+- [x] 3.2 Set up Grafana configuration structure
+
+
   - Create grafana dashboards and provisioning directories
   - Set up dashboard provisioning configuration
   - Create basic dashboards for finance ingestion monitoring
   - _Requirements: 3.2_
 
-- [ ] 3.3 Configure alerting system
+- [x] 3.3 Configure alerting system
+
+
   - Create alertmanager configuration in infrastructure/monitoring/alerts/
   - Set up basic alert rules for service health and performance
   - _Requirements: 3.3_
@@ -79,13 +76,13 @@
 
 - [x] 4.1 Update npm scripts for new Docker structure
 
-
   - Modify docker:up, docker:down, and docker:build scripts to use new file locations
   - Add environment-specific scripts (docker:dev, docker:prod)
   - Ensure existing scripts continue to work for backward compatibility
   - _Requirements: 5.1, 5.2_
 
-- [ ] 4.2 Update Docker Compose file references
+- [x] 4.2 Update Docker Compose file references
+
   - Update all references to docker-compose.yml to use new base + override structure
   - Modify service configurations to work with new file organization
   - _Requirements: 2.4, 5.2_
@@ -95,7 +92,9 @@
   - Document the new infrastructure structure and usage
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 5.1 Create deployment documentation
+- [x] 5.1 Create deployment documentation
+
+
   - Write infrastructure/docs/deployment.md with setup instructions
   - Document environment-specific deployment procedures
   - Include troubleshooting guide for common issues
