@@ -116,6 +116,22 @@ services:
     networks:
       - finance-network
 
+  # Dashboard for service monitoring
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      dockerfile: Dockerfile
+    container_name: finance-dashboard
+    ports:
+      - "8080:8080"
+    depends_on:
+      - python-ingestion
+      - node-ingestion
+      - prometheus
+      - grafana
+    networks:
+      - finance-network
+
 volumes:
   redis-data:
   postgres-data:

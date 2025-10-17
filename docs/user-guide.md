@@ -31,6 +31,7 @@ cd finance-ingestion-benchmark
 ./scripts/deploy.sh status
 
 # 4. View dashboards
+open http://localhost:8080  # Service monitoring dashboard
 open http://localhost:3000  # Grafana (admin/admin)
 open http://localhost:8001/docs  # Python API docs
 open http://localhost:8002/docs  # Node.js API docs
@@ -151,6 +152,7 @@ curl http://localhost:8002/health  # Node.js service
 | **PostgreSQL** | 5432 | Historical data storage | postgresql://localhost:5432 |
 | **Prometheus** | 9090 | Metrics collection | http://localhost:9090 |
 | **Grafana** | 3000 | Visualization dashboards | http://localhost:3000 |
+| **Dashboard** | 8080 | Service monitoring dashboard | http://localhost:8080 |
 
 ### Starting Individual Services
 
