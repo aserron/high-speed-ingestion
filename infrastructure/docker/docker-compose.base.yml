@@ -2,7 +2,7 @@ version: '3.8'
 
 # Base services configuration
 # This file contains all service definitions and should be extended by environment-specific overrides
-# Usage: docker-compose -f infrastructure/docker/docker-compose.base.yml -f docker-compose.dev.yml up
+# Usage: docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up
 
 services:
   # Python ingestion service

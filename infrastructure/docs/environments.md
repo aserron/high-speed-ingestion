@@ -32,7 +32,7 @@ The finance ingestion benchmark supports multiple deployment environments with d
 npm run docker:dev
 
 # Or manually
-docker-compose -f infrastructure/docker/docker-compose.base.yml -f docker-compose.dev.yml up -d
+docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up -d
 ```
 
 ### Features
@@ -66,7 +66,7 @@ ENABLE_DEBUG_PORTS=true
 npm run docker:prod
 
 # Or manually
-docker-compose -f infrastructure/docker/docker-compose.base.yml -f docker-compose.prod.yml up -d
+docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml up -d
 ```
 
 ### Features

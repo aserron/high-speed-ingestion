@@ -12,7 +12,7 @@ This guide covers deploying the finance ingestion benchmark infrastructure using
 npm run docker:dev
 
 # Or using Docker Compose directly
-docker-compose -f infrastructure/docker/docker-compose.base.yml -f docker-compose.dev.yml up -d
+docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up -d
 ```
 
 ### Production Environment
@@ -21,7 +21,7 @@ docker-compose -f infrastructure/docker/docker-compose.base.yml -f docker-compos
 npm run docker:prod
 
 # Or using Docker Compose directly
-docker-compose -f infrastructure/docker/docker-compose.base.yml -f docker-compose.prod.yml up -d
+docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml up -d
 ```
 
 ## Environment Setup

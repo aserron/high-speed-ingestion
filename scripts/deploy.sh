@@ -11,8 +11,8 @@ set -euo pipefail
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
-PROD_COMPOSE_FILE="$PROJECT_ROOT/docker-compose.prod.yml"
+COMPOSE_FILE="$PROJECT_ROOT/infrastructure/docker/docker-compose.base.yml"
+PROD_COMPOSE_FILE="$PROJECT_ROOT/infrastructure/docker/docker-compose.prod.yml"
 LOG_FILE="$PROJECT_ROOT/logs/deployment.log"
 
 # Colors for output

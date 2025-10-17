@@ -13,8 +13,8 @@ param(
 # Configuration
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
-$ComposeFile = Join-Path $ProjectRoot "docker-compose.yml"
-$ProdComposeFile = Join-Path $ProjectRoot "docker-compose.prod.yml"
+$ComposeFile = Join-Path $ProjectRoot "infrastructure/docker/docker-compose.base.yml"
+$ProdComposeFile = Join-Path $ProjectRoot "infrastructure/docker/docker-compose.prod.yml"
 $LogDir = Join-Path $ProjectRoot "logs"
 $LogFile = Join-Path $LogDir "deployment.log"
 
