@@ -115,7 +115,9 @@
   - Update any references to old file locations
   - _Requirements: 6.1, 6.3_
 
-- [ ] 6.1 Update README.md infrastructure section
+- [x] 6.1 Update README.md infrastructure section
+
+
   - Update project structure documentation to show new infrastructure directory
   - Update quick start guide to reference new Docker commands
   - Update development setup instructions
@@ -132,7 +134,9 @@
   - Ensure backward compatibility is maintained
   - _Requirements: 5.3, 4.2_
 
-- [ ] 7.1 Test development environment setup
+- [x] 7.1 Test development environment setup
+
+
   - Verify docker:up works with new development configuration
   - Test hot-reload functionality and development features
   - Validate all services start correctly and can communicate
@@ -155,7 +159,9 @@
   - Clean up any temporary or backup files created during migration
   - _Requirements: 1.4_
 
-- [ ] 8.1 Remove original Docker Compose file
+- [x] 8.1 Remove original Docker Compose file
+
+
   - Delete the original docker-compose.yml from project root
   - Remove monitoring/prometheus.yml file
   - _Requirements: 1.4_

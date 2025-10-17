@@ -23,12 +23,17 @@ Both systems process identical WebSocket market data feeds and provide comprehen
 ```
 ├── apps/
 │   ├── python-ingestion/     # Python implementation
-│   └── node-ingestion/       # Node.js implementation
+│   ├── node-ingestion/       # Node.js implementation
+│   └── dashboard/            # Monitoring dashboard
 ├── packages/
 │   └── shared/               # Shared schemas and utilities
+├── infrastructure/           # Infrastructure configurations
+│   ├── docker/              # Docker Compose configurations
+│   ├── monitoring/          # Prometheus, Grafana, alerts
+│   └── docs/                # Infrastructure documentation
 ├── tests/                    # Integration and benchmark tests
 ├── docs/                     # Documentation and specifications
-├── docker-compose.yml        # Development environment
+├── docker-compose*.yml       # Environment-specific configurations
 └── turbo.json               # Monorepo build configuration
 ```
 
@@ -52,7 +57,7 @@ Both systems process identical WebSocket market data feeds and provide comprehen
 
 2. **Start development environment:**
    ```bash
-   npm run docker:up    # Start Redis and PostgreSQL
+   npm run docker:dev   # Start all services with development settings
    npm run setup        # Initialize both applications
    ```
 
@@ -63,14 +68,21 @@ Both systems process identical WebSocket market data feeds and provide comprehen
 
 ### Available Scripts
 
+**Development:**
 - `npm run build` - Build both applications
+- `npm run dev` - Start both implementations in development mode
 - `npm run test` - Run all tests
 - `npm run benchmark` - Execute performance benchmarks
 - `npm run lint` - Lint all code
 - `npm run clean` - Clean build artifacts
-- `npm run docker:build` - Build Docker images
-- `npm run docker:up` - Start infrastructure services
+
+**Infrastructure:**
+- `npm run docker:dev` - Start development environment with hot-reload
+- `npm run docker:prod` - Start production environment
+- `npm run docker:up` - Start services (backward compatibility)
 - `npm run docker:down` - Stop all services
+- `npm run docker:logs` - View service logs
+- `npm run docker:clean` - Clean up containers and volumes
 
 ## Architecture
 
@@ -125,8 +137,26 @@ Results are automatically generated with side-by-side comparisons and performanc
 - Implement identical functionality in both platforms
 - Add comprehensive metrics for all new features
 
+## Infrastructure
+
+### Monitoring Stack
+
+- **Grafana**: http://localhost:3000 (admin/admin) - Metrics visualization and dashboards
+- **Prometheus**: http://localhost:9090 - Metrics collection and alerting
+- **Dashboard**: http://localhost:8080 - Real-time service monitoring
+
+### Environment Configuration
+
+The project supports multiple deployment environments:
+
+- **Development**: Hot-reload, debug ports, verbose logging
+- **Production**: Optimized resources, health checks, graceful shutdown
+
+See [Infrastructure Documentation](infrastructure/docs/deployment.md) for detailed setup instructions.
+
 ## Documentation
 
+- [Infrastructure Deployment Guide](infrastructure/docs/deployment.md)
 - [Requirements Specification](.kiro/specs/finance-ingestion-benchmark/requirements.md)
 - [Technical Design](.kiro/specs/finance-ingestion-benchmark/design.md)
 - [Implementation Tasks](.kiro/specs/finance-ingestion-benchmark/tasks.md)
