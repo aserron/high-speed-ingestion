@@ -40,7 +40,7 @@
 - Multiple PowerShell automation scripts
 
 #### 3. **Project Management Tools**
-- `create_github_project.ps1` - GitHub project setup
+- `scripts/utils/github/create_github_project.ps1` - GitHub project setup
 - `pr-merge-sequence.md` - Merge workflow documentation
 - `branch-analysis.md` - Branch naming analysis
 

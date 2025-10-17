@@ -125,3 +125,7 @@ grafana-data/
 
 # Turborepo
 .turbo/
+
+
+# all caches
+*-cache*/

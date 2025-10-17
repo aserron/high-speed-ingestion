@@ -19,7 +19,7 @@ Write-Host "🎯 Step 1: Creating GitHub Project with Epic/Task/Issue structure.
 Write-Host "This will create approximately 130+ issues organized in 6 epics" -ForegroundColor Gray
 
 try {
-    & .\create_github_project.ps1
+    & .\scripts\utils\github\create_github_project.ps1
     Write-Host "✅ GitHub Project creation completed" -ForegroundColor Green
 } catch {
     Write-Host "❌ Failed to create GitHub Project: $_" -ForegroundColor Red
@@ -31,7 +31,7 @@ Write-Host "🔄 Step 2: Creating historical development branch and pull request
 Write-Host "This will create 15+ PRs with proper conventional commits and SEMVER tags" -ForegroundColor Gray
 
 try {
-    & .\create_historical_prs.ps1
+    & .\scripts\utils\github\create_historical_prs.ps1
     Write-Host "✅ Historical PR creation completed" -ForegroundColor Green
 } catch {
     Write-Host "❌ Failed to create historical PRs: $_" -ForegroundColor Red

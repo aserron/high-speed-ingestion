@@ -56,7 +56,7 @@ To preserve the correct development history, PRs must be merged in **chronologic
 ### **Step 1: Create Missing PRs (Draft)**
 ```bash
 # Run the script to create missing PRs as drafts
-.\create_missing_prs.ps1
+.\scripts\utils\github\create_missing_prs.ps1
 ```
 
 ### **Step 2: Check Existing PR Status**
