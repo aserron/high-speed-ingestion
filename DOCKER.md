@@ -58,6 +58,7 @@ make prod-build
 | PostgreSQL | localhost:5432 | localhost:5432 | Historical data storage |
 | Prometheus | http://localhost:9090 | http://localhost:9090 | Metrics collection |
 | Grafana | http://localhost:3000 | http://localhost:3000 | Dashboards (admin/admin) |
+| Dashboard | http://localhost:8080 | http://localhost:8080 | Service monitoring dashboard |
 | Node.js Debugger | localhost:9229 | N/A | Development debugging |
 
 ## Docker Images
