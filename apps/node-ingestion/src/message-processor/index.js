@@ -11,7 +11,7 @@
 import msgpack from 'msgpack5'
 import { EventEmitter } from 'events'
 import { performance } from 'perf_hooks'
-import { createLogger } from '../logging/index.js'
+import { getLogger } from '../logging/index.js'
 import { 
   MessageProcessingError, 
   ValidationError, 
@@ -181,7 +181,7 @@ export class MessageProcessor extends EventEmitter {
     this.validationErrors = 0
     this.processingErrors = 0
 
-    this.logger = createLogger('MessageProcessor')
+    this.logger = getLogger('MessageProcessor')
     this.logger.info(`MessageProcessor initialized`, {
       maxBatchSize,
       batchTimeoutMs,

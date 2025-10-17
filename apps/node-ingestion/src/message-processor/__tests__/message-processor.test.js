@@ -26,9 +26,24 @@ import {
   MessageProcessingError
 } from '../../errors/index.js'
 
+// Mock the config to avoid validation errors during tests
+jest.mock('../../config/index.js', () => ({
+  getConfig: jest.fn(() => ({
+    app: {
+      name: 'test-app',
+      version: '1.0.0',
+      environment: 'testing'
+    },
+    monitoring: {
+      logLevel: 'info',
+      logFormat: 'text'
+    }
+  }))
+}))
+
 // Mock the logger to avoid console output during tests
 jest.mock('../../logging/index.js', () => ({
-  createLogger: jest.fn(() => ({
+  getLogger: jest.fn(() => ({
     info: jest.fn(),
     debug: jest.fn(),
     warn: jest.fn(),

@@ -14,63 +14,59 @@
     "start:full": "APP_MODE=full node --enable-source-maps src/app.js",
     "start:cluster": "APP_MODE=cluster node --enable-source-maps src/app.js",
     "dev": "APP_MODE=full node --enable-source-maps --inspect src/app.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" jest",
+    "test:watch": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" jest --watch",
+    "test:coverage": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" jest --coverage",
+    "test:debug": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --inspect-brk\" jest --runInBand --no-cache",
+    "test:ci": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" jest --coverage --ci --watchAll=false --passWithNoTests",
+    "test:unit": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" jest --testPathPattern='\\.(test|spec)\\.(m)?js$'",
+    "test:integration": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" jest --testPathPattern='integration'",
+    "test:changed": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" jest --onlyChanged",
+    "test:related": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" jest --findRelatedTests",
     "benchmark": "node --enable-source-maps src/benchmark.js",
-    "lint": "eslint src/ --ext .js",
-    "lint:fix": "eslint src/ --ext .js --fix",
-    "format": "prettier --write src/**/*.js",
-    "format:check": "prettier --check src/**/*.js",
+    "lint": "eslint src/ --ext .js,.mjs",
+    "lint:fix": "eslint src/ --ext .js,.mjs --fix",
+    "format": "prettier --write src/**/*.{js,mjs}",
+    "format:check": "prettier --check src/**/*.{js,mjs}",
     "build": "echo 'No build step required for Node.js'",
     "clean": "rm -rf coverage/ .nyc_output/ logs/",
     "validate-config": "node --enable-source-maps src/cli.js validate-config",
     "health-check": "node --enable-source-maps src/cli.js health-check"
   },
   "dependencies": {
-    "ws": "^8.14.2",
+    "ajv": "^8.12.0",
+    "async-hooks": "^1.0.0",
+    "commander": "^11.1.0",
+    "dotenv": "^16.3.1",
     "fastify": "^4.24.3",
     "ioredis": "^5.3.2",
-    "pg": "^8.11.3",
-    "msgpack5": "^6.0.2",
-    "prom-client": "^15.1.0",
-    "winston": "^3.11.0",
-    "dotenv": "^16.3.1",
-    "ajv": "^8.12.0",
-    "commander": "^11.1.0",
     "joi": "^17.11.0",
+    "msgpack5": "^6.0.2",
+    "pg": "^8.11.3",
+    "prom-client": "^15.1.0",
     "uuid": "^9.0.1",
-    "async-hooks": "^1.0.0"
+    "winston": "^3.11.0",
+    "ws": "^8.14.2"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
+    "@types/jest": "^30.0.0",
+    "benchmark": "^2.1.4",
+    "cross-env": "^10.1.0",
     "eslint": "^8.54.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
     "prettier": "^3.1.0",
-    "supertest": "^6.3.3",
-    "benchmark": "^2.1.4",
-    "nodemon": "^3.0.2"
+    "supertest": "^6.3.3"
   },
-  "jest": {
-    "testEnvironment": "node",
-    "transform": {},
-    "collectCoverageFrom": [
-      "src/**/*.js",
-      "!src/**/*.test.js",
-      "!src/benchmark.js"
-    ],
-    "coverageDirectory": "coverage",
-    "coverageReporters": ["text", "lcov", "html"],
-    "testMatch": [
-      "**/__tests__/**/*.js",
-      "**/?(*.)+(spec|test).js"
-    ]
-  },
+
   "eslintConfig": {
-    "extends": ["standard"],
+    "extends": [
+      "standard"
+    ],
     "env": {
       "node": true,
       "es2022": true,
