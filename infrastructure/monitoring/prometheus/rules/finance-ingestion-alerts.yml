@@ -1,0 +1,47 @@
+groups:
+  - name: finance-ingestion-alerts
+    rules:
+      - alert: ServiceDown
+        expr: up{job=~"python-ingestion|node-ingestion"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Finance ingestion service is down"
+          description: "{{ $labels.job }} has been down for more than 30 seconds."
+
+      - alert: HighProcessingLatency
+        expr: histogram_quantile(0.95, rate(processing_duration_seconds_bucket[5m])) > 0.001
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High processing latency detected"
+          description: "{{ $labels.job }} 95th percentile latency is {{ $value }}s"
+
+      - alert: LowMessageRate
+        expr: rate(messages_processed_total[5m]) < 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low message processing rate"
+          description: "{{ $labels.job }} is processing only {{ $value }} messages/sec"
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 30 seconds."
+
+      - alert: PostgresDown
+        expr: up{job="postgres"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL has been down for more than 30 seconds."

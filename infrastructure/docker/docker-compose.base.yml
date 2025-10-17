@@ -1,10 +1,14 @@
 version: '3.8'
 
+# Base services configuration
+# This file contains all service definitions and should be extended by environment-specific overrides
+# Usage: docker-compose -f infrastructure/docker/docker-compose.base.yml -f docker-compose.dev.yml up
+
 services:
   # Python ingestion service
   python-ingestion:
     build:
-      context: ./apps/python-ingestion
+      context: ../../apps/python-ingestion
       dockerfile: Dockerfile
     container_name: finance-python-ingestion
     environment:
@@ -16,8 +20,6 @@ services:
       - postgres
     ports:
       - "8001:8000"
-    volumes:
-      - ./apps/python-ingestion:/app
     deploy:
       resources:
         limits:
@@ -32,7 +34,7 @@ services:
   # Node.js ingestion service
   node-ingestion:
     build:
-      context: ./apps/node-ingestion
+      context: ../../apps/node-ingestion
       dockerfile: Dockerfile
     container_name: finance-node-ingestion
     environment:
@@ -45,8 +47,6 @@ services:
       - postgres
     ports:
       - "8002:8000"
-    # volumes:
-    #   - ./apps/node-ingestion:/app
     deploy:
       resources:
         limits:
@@ -82,7 +82,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./scripts/01-init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
+      - ../../scripts/01-init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
     networks:
       - finance-network
 
@@ -93,7 +93,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -119,7 +119,7 @@ services:
   # Dashboard for service monitoring
   dashboard:
     build:
-      context: ./apps/dashboard
+      context: ../../apps/dashboard
       dockerfile: Dockerfile
     container_name: finance-dashboard
     ports:
