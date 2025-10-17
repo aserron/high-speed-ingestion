@@ -5,12 +5,22 @@ This module provides the FastAPI app instance that uvicorn can import directly.
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create a minimal working FastAPI app
 app = FastAPI(
     title="Finance Ingestion API",
     description="High-performance financial market data ingestion system",
     version="1.0.0"
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
 )
 
 @app.get("/")
