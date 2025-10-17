@@ -15,7 +15,8 @@ scrape_configs:
   # Python ingestion service
   - job_name: 'python-ingestion'
     static_configs:
-      - targets: ['python-ingestion:8000']
+      # - targets: ['python-ingestion:8000']
+      - targets: ['localhost:8001']
     metrics_path: '/metrics'
     scrape_interval: 5s
     scrape_timeout: 4s
@@ -23,7 +24,8 @@ scrape_configs:
   # Node.js ingestion service  
   - job_name: 'node-ingestion'
     static_configs:
-      - targets: ['node-ingestion:8000']
+      # - targets: ['node-ingestion:8000']
+      - targets: ['localhost:8002']
     metrics_path: '/metrics'
     scrape_interval: 5s
     scrape_timeout: 4s
