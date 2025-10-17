@@ -196,7 +196,7 @@ const configSchema = Joi.object({
 /**
  * Load configuration from environment variables with nested support
  */
-function loadConfigFromEnv () {
+function loadConfigFromEnv() {
   const config = {
     app: {
       name: process.env.APP_NAME,
@@ -348,7 +348,7 @@ function loadConfigFromEnv () {
   }
 
   // Remove undefined values and filter out NaN numbers to let Joi apply defaults
-  function cleanValue (key, value) {
+  function cleanValue(key, value) {
     if (value === undefined || value === null || value === '') {
       return undefined
     }
@@ -364,7 +364,7 @@ function loadConfigFromEnv () {
 /**
  * Validate and create configuration
  */
-function createConfig () {
+function createConfig() {
   const envConfig = loadConfigFromEnv()
   const { error, value } = configSchema.validate(envConfig, {
     allowUnknown: false,
@@ -387,7 +387,7 @@ let config = null
 /**
  * Get the global configuration instance
  */
-export function getConfig () {
+export function getConfig() {
   if (!config) {
     config = createConfig()
   }
@@ -397,7 +397,7 @@ export function getConfig () {
 /**
  * Reload configuration (primarily for testing)
  */
-export function reloadConfig () {
+export function reloadConfig() {
   config = null
   return getConfig()
 }
@@ -405,14 +405,14 @@ export function reloadConfig () {
 /**
  * Set configuration (primarily for testing)
  */
-export function setConfig (newConfig) {
+export function setConfig(newConfig) {
   config = newConfig
 }
 
 /**
  * Get database connection URL
  */
-export function getDatabaseUrl (cfg = getConfig()) {
+export function getDatabaseUrl(cfg = getConfig()) {
   const { postgresql } = cfg
   return `postgresql://${postgresql.username}:${postgresql.password}@${postgresql.host}:${postgresql.port}/${postgresql.database}`
 }
@@ -420,7 +420,7 @@ export function getDatabaseUrl (cfg = getConfig()) {
 /**
  * Get Redis connection URL
  */
-export function getRedisUrl (cfg = getConfig()) {
+export function getRedisUrl(cfg = getConfig()) {
   const { redis } = cfg
   const auth = redis.password ? `:${redis.password}@` : ''
   return `redis://${auth}${redis.host}:${redis.port}/${redis.db}`
@@ -429,14 +429,14 @@ export function getRedisUrl (cfg = getConfig()) {
 /**
  * Check if running in production environment
  */
-export function isProduction (cfg = getConfig()) {
+export function isProduction(cfg = getConfig()) {
   return cfg.app.environment === 'production'
 }
 
 /**
  * Check if running in development environment
  */
-export function isDevelopment (cfg = getConfig()) {
+export function isDevelopment(cfg = getConfig()) {
   return cfg.app.environment === 'development'
 }
 

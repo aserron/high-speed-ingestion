@@ -49,6 +49,26 @@ class SimpleApp {
     res.end(JSON.stringify(data, null, 2))
   }
 
+  proxyPrometheus(res) {
+    const proxyReq = http.request({
+      hostname: 'localhost',
+      port: 9090,
+      path: '/-/healthy',
+      method: 'GET'
+    }, (proxyRes) => {
+      let data = ''
+      proxyRes.on('data', chunk => data += chunk)
+      proxyRes.on('end', () => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' })
+        res.end(data)
+      })
+    })
+    proxyReq.on('error', () => {
+      this.sendJSON(res, { error: 'Prometheus not available' }, 503)
+    })
+    proxyReq.end()
+  }
+
   async start() {
     this.server = http.createServer((req, res) => {
       const parsedUrl = url.parse(req.url, true)
@@ -96,6 +116,11 @@ class SimpleApp {
               message: 'Simple mode - no complex config needed',
               env: process.env.NODE_ENV || 'development'
             })
+            break
+
+          case '/prometheus-health':
+            // Simple proxy to Prometheus health endpoint with CORS
+            this.proxyPrometheus(res)
             break
 
           default:
