@@ -41,7 +41,9 @@
   - Configure production logging and health checks
   - _Requirements: 2.2, 4.3_
 
-- [ ] 2.3 Create environment variable templates
+- [x] 2.3 Create environment variable templates
+
+
   - Create .env.dev.template and .env.prod.template files
   - Document all required environment variables for each environment
   - _Requirements: 4.4_
@@ -75,7 +77,9 @@
   - Ensure backward compatibility with existing workflows
   - _Requirements: 2.4, 5.1, 5.2_
 
-- [ ] 4.1 Update npm scripts for new Docker structure
+- [x] 4.1 Update npm scripts for new Docker structure
+
+
   - Modify docker:up, docker:down, and docker:build scripts to use new file locations
   - Add environment-specific scripts (docker:dev, docker:prod)
   - Ensure existing scripts continue to work for backward compatibility
