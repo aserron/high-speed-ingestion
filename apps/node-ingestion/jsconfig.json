@@ -5,60 +5,42 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "target": "ES2022",
-    
+
     // Enable all modern JavaScript features
     "allowJs": true,
     "checkJs": false,
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": false,
-    
+
     // Path resolution
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@config/*": ["src/config/*"],
-      "@utils/*": ["src/utils/*"],
-      "@tests/*": ["src/**/__tests__/*"]
+      "@tests/*": [
+        "src/__tests__/*",
+        "src/components/__tests__/*",
+        "src/utils/__tests__/*"
+      ]
     },
-    
+
     // Modern JavaScript support
     "lib": ["ES2022", "DOM"],
     "experimentalDecorators": true,
     "useDefineForClassFields": true,
-    
-    // Strict type checking (for better IDE support)
+
+    // Strict type checking (disabled for this JS project)
     "strict": false,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    
+
     // Module detection
     "moduleDetection": "force"
   },
-  
   // Include patterns
-  "include": [
-    "src/**/*",
-    "**/*.js",
-    "**/*.mjs",
-    "jest.config.mjs",
-    "jest.setup.mjs"
-  ],
-  
+  "include": ["src/**/*", "**/*.mjs", "jest.config.mjs", "jest.setup.mjs"],
   // Exclude patterns
-  "exclude": [
-    "node_modules",
-    "coverage",
-    "dist",
-    "build",
-    ".jest-cache"
-  ],
-  
+  "exclude": ["node_modules", "coverage", "dist", "build", ".jest-cache"],
   // Type acquisition for better intellisense
   "typeAcquisition": {
     "enable": true,
-    "include": [
-      "jest",
-      "node"
-    ]
+    "include": ["jest", "node"]
   }
 }
