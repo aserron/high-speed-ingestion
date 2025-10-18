@@ -263,13 +263,30 @@ export function convertError(error, context = {}) {
 }
 
 /**
- * Error handler function for centralized error processing
+ * Async error handler function for centralized error processing
+ * Enhanced to properly handle async operations and lazy imports
+ * 
+ * @param {Error} error - The error to handle and process
+ * @param {Object} logger - Optional logger instance (will create if null)
+ * @param {Object} context - Additional context for error enrichment
+ * @param {boolean} shouldRethrow - Whether to rethrow after processing
+ * @returns {Promise<FinanceIngestionError>} Processed error object
+ * 
+ * @async Supports lazy logger import to avoid circular dependencies
+ * @errorHandling Converts all errors to standardized FinanceIngestionError
+ * @performance Lazy loading pattern reduces initialization overhead
  */
 export async function handleError(error, logger = null, context = {}, shouldRethrow = true) {
   // Convert to FinanceIngestionError if needed
   const financeError = convertError(error, context)
 
-  // Log the error
+  /**
+   * Lazy logger initialization with async import
+   * Prevents circular dependency issues while maintaining functionality
+   * 
+   * @pattern Lazy loading to break circular dependencies
+   * @async Dynamic import ensures proper module resolution
+   */
   if (!logger) {
     // Lazy import to avoid circular dependency
     const { getLogger } = await import('../logging/index.js')
@@ -316,13 +333,22 @@ export class ErrorContext {
 }
 
 /**
- * Async error handler wrapper
+ * Async error handler wrapper with enhanced error processing
+ * Properly handles async error processing chain with await
+ * 
+ * @param {Function} fn - Async function to wrap with error handling
+ * @returns {Function} Wrapped function with comprehensive error handling
+ * 
+ * @async Ensures proper async error propagation and processing
+ * @errorHandling Integrates with centralized error handling system
+ * @pattern Higher-order function for consistent error handling across modules
  */
 export function asyncErrorHandler(fn) {
   return async (...args) => {
     try {
       return await fn(...args)
     } catch (error) {
+      // Properly await async error handler to ensure complete processing
       await handleError(error)
     }
   }

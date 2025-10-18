@@ -251,10 +251,24 @@ export class MarketDataStorageInterface extends TimeSeriesStorageInterface {
       this.insertDataPoints(series, dataPoints)
     )
 
-    // Use Promise.allSettled for better error resilience
+    /**
+     * Resilient batch processing using Promise.allSettled()
+     * Improved error handling pattern that allows partial success scenarios
+     * 
+     * @performance Concurrent data insertion reduces total processing time
+     * @resilience Continues processing even when individual insertions fail
+     * @monitoring Detailed failure tracking for operational visibility
+     * @returns {Array} Successfully inserted results, excluding failures
+     */
     const results = await Promise.allSettled(promises)
     
-    // Check for any failures and log them
+    /**
+     * Comprehensive failure analysis and logging
+     * Provides detailed error context for debugging and monitoring
+     * 
+     * @errorHandling Graceful degradation with structured error reporting
+     * @observability Tracks failure rates and error patterns
+     */
     const failures = results.filter(result => result.status === 'rejected')
     if (failures.length > 0) {
       this.logger?.warn('Some data point insertions failed', {
@@ -264,7 +278,7 @@ export class MarketDataStorageInterface extends TimeSeriesStorageInterface {
       })
     }
     
-    // Return successful results
+    // Return successful results only, filtering out failures
     return results
       .filter(result => result.status === 'fulfilled')
       .map(result => result.value)
