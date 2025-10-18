@@ -45,7 +45,8 @@
   - Remove duplicate error logging code
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 2.2 Consolidate utility functions
+- [-] 2.2 Consolidate utility functions
+
   - Merge duplicate helper functions
   - Remove redundant validation logic
   - Simplify repeated configuration patterns
