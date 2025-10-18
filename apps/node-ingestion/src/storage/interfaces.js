@@ -251,7 +251,23 @@ export class MarketDataStorageInterface extends TimeSeriesStorageInterface {
       this.insertDataPoints(series, dataPoints)
     )
 
-    return await Promise.all(promises)
+    // Use Promise.allSettled for better error resilience
+    const results = await Promise.allSettled(promises)
+    
+    // Check for any failures and log them
+    const failures = results.filter(result => result.status === 'rejected')
+    if (failures.length > 0) {
+      this.logger?.warn('Some data point insertions failed', {
+        failureCount: failures.length,
+        totalCount: results.length,
+        errors: failures.map(f => f.reason?.message)
+      })
+    }
+    
+    // Return successful results
+    return results
+      .filter(result => result.status === 'fulfilled')
+      .map(result => result.value)
   }
 
   /**

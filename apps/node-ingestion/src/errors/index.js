@@ -265,7 +265,7 @@ export function convertError(error, context = {}) {
 /**
  * Error handler function for centralized error processing
  */
-export function handleError(error, logger = null, context = {}, shouldRethrow = true) {
+export async function handleError(error, logger = null, context = {}, shouldRethrow = true) {
   // Convert to FinanceIngestionError if needed
   const financeError = convertError(error, context)
 
@@ -323,7 +323,7 @@ export function asyncErrorHandler(fn) {
     try {
       return await fn(...args)
     } catch (error) {
-      handleError(error)
+      await handleError(error)
     }
   }
 }

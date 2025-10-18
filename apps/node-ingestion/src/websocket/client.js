@@ -132,11 +132,19 @@ export class WebSocketClient extends EventEmitter {
    * Connect to WebSocket server
    */
   async connect () {
-    if (!this.isInitialized) {
-      await this.initialize()
-    }
+    try {
+      if (!this.isInitialized) {
+        await this.initialize()
+      }
 
-    return await this.connectionManager.connect()
+      return await this.connectionManager.connect()
+    } catch (error) {
+      this.logger.error('Failed to connect to WebSocket server', {
+        error: error.message,
+        stack: error.stack
+      })
+      throw error
+    }
   }
 
   /**
@@ -282,11 +290,20 @@ export class WebSocketClient extends EventEmitter {
       timestamp: Date.now()
     }
 
-    await this.send(subscriptionMessage)
+    try {
+      await this.send(subscriptionMessage)
 
-    // Track subscriptions for reconnection
-    for (const symbol of symbols) {
-      this.subscriptions.add(`${messageType}:${symbol}`)
+      // Track subscriptions for reconnection
+      for (const symbol of symbols) {
+        this.subscriptions.add(`${messageType}:${symbol}`)
+      }
+    } catch (error) {
+      this.logger.error('Failed to subscribe to symbols', {
+        symbols,
+        messageType,
+        error: error.message
+      })
+      throw error
     }
 
     this.logger.info('Subscribed to symbols', {
@@ -311,11 +328,20 @@ export class WebSocketClient extends EventEmitter {
       timestamp: Date.now()
     }
 
-    await this.send(unsubscriptionMessage)
+    try {
+      await this.send(unsubscriptionMessage)
 
-    // Remove from tracked subscriptions
-    for (const symbol of symbols) {
-      this.subscriptions.delete(`${messageType}:${symbol}`)
+      // Remove from tracked subscriptions
+      for (const symbol of symbols) {
+        this.subscriptions.delete(`${messageType}:${symbol}`)
+      }
+    } catch (error) {
+      this.logger.error('Failed to unsubscribe from symbols', {
+        symbols,
+        messageType,
+        error: error.message
+      })
+      throw error
     }
 
     this.logger.info('Unsubscribed from symbols', {
@@ -350,17 +376,31 @@ export class WebSocketClient extends EventEmitter {
       subscriptionGroups.get(messageType).push(symbol)
     }
 
-    // Re-subscribe for each message type
-    for (const [messageType, symbols] of subscriptionGroups) {
-      try {
-        await this.subscribe(symbols, messageType)
-      } catch (error) {
-        this.logger.error('Failed to re-establish subscription', {
-          messageType,
-          symbols,
-          error: error.message
-        })
+    // Re-subscribe for each message type in parallel for better performance
+    const resubscribePromises = Array.from(subscriptionGroups.entries()).map(
+      async ([messageType, symbols]) => {
+        try {
+          await this.subscribe(symbols, messageType)
+        } catch (error) {
+          this.logger.error('Failed to re-establish subscription', {
+            messageType,
+            symbols,
+            error: error.message
+          })
+          throw error
+        }
       }
+    )
+
+    // Use Promise.allSettled to handle partial failures gracefully
+    const results = await Promise.allSettled(resubscribePromises)
+    
+    const failures = results.filter(result => result.status === 'rejected')
+    if (failures.length > 0) {
+      this.logger.warn('Some subscription re-establishments failed', {
+        failureCount: failures.length,
+        totalCount: results.length
+      })
     }
   }
 

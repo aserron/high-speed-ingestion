@@ -65,10 +65,12 @@ export class ClusterApp {
     // Setup cluster event handlers
     this.setupClusterEventHandlers()
 
-    // Start workers
+    // Start workers in parallel for better performance
+    const workerPromises = []
     for (let i = 0; i < numWorkers; i++) {
-      await this.forkWorker()
+      workerPromises.push(this.forkWorker())
     }
+    await Promise.all(workerPromises)
 
     // Setup graceful shutdown
     this.setupGracefulShutdown()

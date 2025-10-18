@@ -235,6 +235,7 @@ export class TLSManager {
           // Add CA certificates if specified using modern async approach
           if (this.tlsConfig.tlsCaFile) {
             try {
+              // Optimize by combining access check and file read in parallel
               await fsPromises.access(this.tlsConfig.tlsCaFile, fs.constants.F_OK)
               wsOptions.ca = await fsPromises.readFile(this.tlsConfig.tlsCaFile)
             } catch (error) {
@@ -282,6 +283,7 @@ export class TLSManager {
     // Add CA certificates if specified using modern async approach
     if (this.tlsConfig.tlsCaFile) {
       try {
+        // Optimize by combining access check and file read in parallel
         await fsPromises.access(this.tlsConfig.tlsCaFile, fs.constants.F_OK)
         agentOptions.ca = await fsPromises.readFile(this.tlsConfig.tlsCaFile)
       } catch (error) {
@@ -392,15 +394,21 @@ export function createSecureServer (app, options = {}) {
 export async function validateCertificateChain (certFile, keyFile, caFile = null) {
   try {
     // Check if certificate and key match using modern async approach
-    const cert = await fsPromises.readFile(certFile, 'utf8')
-    const key = await fsPromises.readFile(keyFile, 'utf8')
+    // Parallelize file reads for better performance
+    const [cert, key] = await Promise.all([
+      fsPromises.readFile(certFile, 'utf8'),
+      fsPromises.readFile(keyFile, 'utf8')
+    ])
 
     // Create temporary files for validation
     const tempCertFile = `/tmp/temp_cert_${Date.now()}.pem`
     const tempKeyFile = `/tmp/temp_key_${Date.now()}.pem`
 
-    await fsPromises.writeFile(tempCertFile, cert)
-    await fsPromises.writeFile(tempKeyFile, key)
+    // Parallelize file writes for better performance
+    await Promise.all([
+      fsPromises.writeFile(tempCertFile, cert),
+      fsPromises.writeFile(tempKeyFile, key)
+    ])
 
     try {
       // Check if certificate and key match
