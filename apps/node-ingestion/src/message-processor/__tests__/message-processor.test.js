@@ -198,21 +198,28 @@ describe('MessageProcessor', () => {
     })
 
     test('should measure latency with artificial delay', async () => {
-      // Mock the msgpack decode to add artificial delay
+      // Mock the msgpack decode to add artificial delay for benchmarking
       const originalDecode = processor.msgpack.decode
+      const ARTIFICIAL_DELAY_NS = 5_000_000 // 5ms - clearly defined for fintech benchmarking
+      
       processor.msgpack.decode = jest.fn((data) => {
-        // Add 1ms delay
-        const start = Date.now()
-        while (Date.now() - start < 1) {
-          // Busy wait for 1ms
+        // Add precise 5ms delay using high-resolution timer for fintech timing accuracy
+        const start = process.hrtime.bigint()
+        while (Number(process.hrtime.bigint() - start) < ARTIFICIAL_DELAY_NS) {
+          // Busy wait for exact delay duration
         }
         return originalDecode.call(processor.msgpack, data)
       })
 
       const result = await processor.processMessage(validMessageBytes)
 
-      // Latency should reflect the added delay (should be > 1ms)
-      expect(result.processingLatencyNs).toBeGreaterThan(1_000_000) // > 1ms
+      // For fintech data pipeline: latency must be >= artificial delay (5ms)
+      // Allow 10% tolerance for system timing variations in production environments
+      const MIN_EXPECTED_LATENCY_NS = ARTIFICIAL_DELAY_NS * 0.9 // 4.5ms minimum
+      const MAX_EXPECTED_LATENCY_NS = ARTIFICIAL_DELAY_NS * 2.0 // 10ms maximum (reasonable upper bound)
+      
+      expect(result.processingLatencyNs).toBeGreaterThanOrEqual(MIN_EXPECTED_LATENCY_NS)
+      expect(result.processingLatencyNs).toBeLessThan(MAX_EXPECTED_LATENCY_NS)
       expect(result.success).toBe(true)
 
       // Restore original method
