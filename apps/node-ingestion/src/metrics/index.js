@@ -21,25 +21,21 @@ try {
   // Create mock prometheus client for when prom-client is not available
   promClient = {
     Counter: class MockCounter {
-      constructor() {}
       inc() {}
       labels() { return this }
     },
     Histogram: class MockHistogram {
-      constructor() {}
       observe() {}
       labels() { return this }
       startTimer() { return () => {} }
     },
     Gauge: class MockGauge {
-      constructor() {}
       set() {}
       inc() {}
       dec() {}
       labels() { return this }
     },
     Summary: class MockSummary {
-      constructor() {}
       observe() {}
       labels() { return this }
     },

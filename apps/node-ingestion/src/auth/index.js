@@ -96,6 +96,14 @@ export class RateLimiter {
 export class AuthenticationManager {
   constructor() {
     this.logger = getLogger('auth')
+    this.prodConfig = null
+    this.authConfig = null
+    this.rateLimiter = null
+    this.initialized = false
+  }
+
+  async initialize() {
+    if (this.initialized) return
     
     // Load authentication configuration
     try {
@@ -116,6 +124,8 @@ export class AuthenticationManager {
     } else {
       this.rateLimiter = null
     }
+    
+    this.initialized = true
   }
   
   getClientId(req) {

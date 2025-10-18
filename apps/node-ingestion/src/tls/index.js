@@ -48,6 +48,13 @@ export class TLSCertificateInfo {
 export class TLSManager {
   constructor() {
     this.logger = getLogger('tls')
+    this.prodConfig = null
+    this.tlsConfig = null
+    this.initialized = false
+  }
+
+  async initialize() {
+    if (this.initialized) return
     
     // Load TLS configuration
     try {
@@ -58,6 +65,8 @@ export class TLSManager {
       this.logger.warn('Production config not available, TLS disabled')
       this.tlsConfig = null
     }
+    
+    this.initialized = true
   }
   
   /**

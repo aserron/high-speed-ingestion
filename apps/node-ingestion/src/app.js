@@ -614,7 +614,7 @@ async function main() {
 
   try {
     switch (mode) {
-      case APP_MODES.SIMPLE:
+      case APP_MODES.SIMPLE: {
         const simpleApp = new SimpleApp()
         await simpleApp.start()
         
@@ -622,16 +622,19 @@ async function main() {
         process.on('SIGTERM', () => simpleApp.stop())
         process.on('SIGINT', () => simpleApp.stop())
         break
+      }
 
-      case APP_MODES.FULL:
+      case APP_MODES.FULL: {
         const fullApp = new FullApp()
         await fullApp.start()
         break
+      }
 
-      case APP_MODES.CLUSTER:
+      case APP_MODES.CLUSTER: {
         const clusterApp = new ClusterApp()
         await clusterApp.start()
         break
+      }
 
       default:
         throw new Error(`Unknown application mode: ${mode}`)
