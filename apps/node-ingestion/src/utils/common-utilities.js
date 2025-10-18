@@ -8,6 +8,8 @@
 
 // Internal modules
 import { ValidationError, StorageError } from '../errors/index.js'
+import { getConfig } from '../config/index.js'
+import { getLogger } from '../logging/index.js'
 
 /**
  * Singleton pattern utility
@@ -142,6 +144,14 @@ export const validators = {
  * Configuration utilities
  */
 export const configUtils = {
+  /**
+   * Standard configuration and logger initialization pattern
+   */
+  initializeService (config, loggerName) {
+    const serviceConfig = config || getConfig()
+    const logger = getLogger(loggerName)
+    return { config: serviceConfig, logger }
+  },
   /**
    * Get configuration with fallback
    */

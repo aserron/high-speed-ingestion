@@ -10,6 +10,7 @@
 // Internal modules
 import { ValidationError } from '../../errors/index.js'
 import { getLogger } from '../../logging/index.js'
+import { validators, jsonUtils } from '../../utils/common-utilities.js'
 
 // Relative modules
 import { MarketDataStorageInterface } from '../interfaces.js'
@@ -204,9 +205,7 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
    * Insert multiple time-series data points
    */
   async insertDataPoints (series, dataPoints) {
-    if (!Array.isArray(dataPoints) || dataPoints.length === 0) {
-      throw new ValidationError('Data points must be a non-empty array', 'dataPoints', dataPoints)
-    }
+    validators.array(dataPoints, 'dataPoints', 1)
 
     const pipeline = this.redisAdapter.connectionManager.pipeline()
 
@@ -216,7 +215,7 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
       pipeline.setex(
         key,
         this.cacheConfig.realtimeDataTtl,
-        JSON.stringify({
+        jsonUtils.safeStringify({
           timestamp: point.timestamp,
           value: point.value,
           tags: point.tags || {}
@@ -368,9 +367,7 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
    * Store multiple ticks in batch
    */
   async storeTicks (ticks) {
-    if (!Array.isArray(ticks) || ticks.length === 0) {
-      throw new ValidationError('Ticks must be a non-empty array', 'ticks', ticks)
-    }
+    validators.array(ticks, 'ticks', 1)
 
     const results = []
     const symbolGroups = new Map()

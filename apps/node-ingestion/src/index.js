@@ -9,7 +9,7 @@
 import { getConfig } from './config/index.js'
 import { setupLogging, getLogger, setCorrelationId } from './logging/index.js'
 import { setupErrorHandlers } from './errors/index.js'
-import { asyncUtils, errorUtils } from './utils/common-utilities.js'
+import { asyncUtils, errorUtils, jsonUtils } from './utils/common-utilities.js'
 
 /**
  * Main application class
@@ -250,7 +250,7 @@ class FinanceIngestionApp {
     // Perform initial health check
     const health = await storageManager.healthCheck()
     if (!health.healthy) {
-      throw new Error(`Storage health check failed: ${JSON.stringify(health)}`)
+      throw new Error(`Storage health check failed: ${jsonUtils.safeStringify(health, 'health check failed')}`)
     }
 
     this.logger.info('Storage service started successfully', {

@@ -8,7 +8,6 @@
 // Internal modules
 import { ValidationError, StorageError } from '../../errors/index.js'
 import { getLogger } from '../../logging/index.js'
-import { handleJsonParseError, handleSerializationError } from '../../utils/error-handlers.js'
 import { validators, jsonUtils } from '../../utils/common-utilities.js'
 
 // Relative modules
@@ -56,7 +55,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
   async set (key, value, options = {}) {
     validators.key(key)
 
-    const serializedValue = handleSerializationError(value)
+    const serializedValue = jsonUtils.stringifyWithValidation(value, 'value')
     const expirationMs = options.ttl ? options.ttl * 1000 : options.expirationMs
     return await this.connectionManager.set(key, serializedValue, expirationMs)
   }
@@ -73,16 +72,14 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
       return null
     }
 
-    return handleJsonParseError(value, value)
+    return jsonUtils.safeParse(value, value)
   }
 
   /**
    * Delete key(s)
    */
   async delete (...keys) {
-    if (keys.length === 0) {
-      throw new ValidationError('At least one key is required', 'keys', keys)
-    }
+    validators.array(keys, 'keys', 1)
 
     return await this.connectionManager.del(...keys)
   }
@@ -91,9 +88,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
    * Check if key exists
    */
   async exists (...keys) {
-    if (keys.length === 0) {
-      throw new ValidationError('At least one key is required', 'keys', keys)
-    }
+    validators.array(keys, 'keys', 1)
 
     return await this.connectionManager.exists(...keys)
   }
@@ -204,9 +199,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
   }
 
   async hget (key, field) {
-    if (!key || !field) {
-      throw new ValidationError('Key and field are required', 'key/field', { key, field })
-    }
+    validators.keyField(key, field)
 
     const value = await this.connectionManager.hget(key, field)
 
@@ -214,11 +207,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
       return null
     }
 
-    try {
-      return JSON.parse(value)
-    } catch (error) {
-      return value
-    }
+    return jsonUtils.safeParse(value, value)
   }
 
   async hgetall (key) {
@@ -255,51 +244,29 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
    * List operations
    */
   async lpush (key, ...values) {
-    if (!key || values.length === 0) {
-      throw new ValidationError('Key and at least one value are required', 'key/values', {
-        key,
-        values
-      })
-    }
+    validators.key(key)
+    validators.array(values, 'values', 1)
 
-    const serializedValues = values.map((value) => {
-      try {
-        return typeof value === 'string' ? value : JSON.stringify(value)
-      } catch (error) {
-        throw new ValidationError('All values must be serializable', 'value', value, {
-          cause: error
-        })
-      }
-    })
+    const serializedValues = values.map((value) => 
+      jsonUtils.stringifyWithValidation(value, 'value')
+    )
 
     return await this.connectionManager.lpush(key, ...serializedValues)
   }
 
   async rpush (key, ...values) {
-    if (!key || values.length === 0) {
-      throw new ValidationError('Key and at least one value are required', 'key/values', {
-        key,
-        values
-      })
-    }
+    validators.key(key)
+    validators.array(values, 'values', 1)
 
-    const serializedValues = values.map((value) => {
-      try {
-        return typeof value === 'string' ? value : JSON.stringify(value)
-      } catch (error) {
-        throw new ValidationError('All values must be serializable', 'value', value, {
-          cause: error
-        })
-      }
-    })
+    const serializedValues = values.map((value) => 
+      jsonUtils.stringifyWithValidation(value, 'value')
+    )
 
     return await this.connectionManager.rpush(key, ...serializedValues)
   }
 
   async lpop (key) {
-    if (!key) {
-      throw new ValidationError('Key is required', 'key', key)
-    }
+    validators.key(key)
 
     const value = await this.connectionManager.lpop(key)
 
@@ -307,17 +274,11 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
       return null
     }
 
-    try {
-      return JSON.parse(value)
-    } catch (error) {
-      return value
-    }
+    return jsonUtils.safeParse(value, value)
   }
 
   async rpop (key) {
-    if (!key) {
-      throw new ValidationError('Key is required', 'key', key)
-    }
+    validators.key(key)
 
     const value = await this.connectionManager.rpop(key)
 
@@ -325,11 +286,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
       return null
     }
 
-    try {
-      return JSON.parse(value)
-    } catch (error) {
-      return value
-    }
+    return jsonUtils.safeParse(value, value)
   }
 
   async llen (key) {
@@ -341,19 +298,11 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
   }
 
   async lrange (key, start, stop) {
-    if (!key) {
-      throw new ValidationError('Key is required', 'key', key)
-    }
+    validators.key(key)
 
     const values = await this.connectionManager.lrange(key, start, stop)
 
-    return values.map((value) => {
-      try {
-        return JSON.parse(value)
-      } catch (error) {
-        return value
-      }
-    })
+    return values.map((value) => jsonUtils.safeParse(value, value))
   }
 
   /**

@@ -9,7 +9,7 @@
 import http from 'http'
 
 // Internal modules
-import { envUtils } from '../utils/common-utilities.js'
+import { envUtils, jsonUtils } from '../utils/common-utilities.js'
 
 /**
  * Simple HTTP server for basic functionality
@@ -23,7 +23,7 @@ export class SimpleApp {
 
   sendJSON (res, data, statusCode = 200) {
     res.writeHead(statusCode, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify(data, null, 2))
+    res.end(jsonUtils.safeStringify(data, '{}'))
   }
 
   proxyPrometheus (res) {

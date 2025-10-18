@@ -13,8 +13,7 @@ import { EventEmitter } from 'events'
 import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
 import { ConnectionError } from '../errors/index.js'
-import { handleJsonParseError } from '../utils/error-handlers.js'
-import { validators, errorUtils } from '../utils/common-utilities.js'
+import { validators, errorUtils, jsonUtils } from '../utils/common-utilities.js'
 
 // Relative modules
 import { WebSocketConnectionManager, ConnectionState } from './connection-manager.js'
@@ -163,7 +162,7 @@ export class WebSocketClient extends EventEmitter {
       let parsedMessage = data
       if (!isBinary && this.options.messageFormat === 'json') {
         if (typeof data === 'string') {
-          parsedMessage = handleJsonParseError(data, data, this.logger)
+          parsedMessage = jsonUtils.safeParse(data, data)
         }
       }
 
@@ -262,7 +261,7 @@ export class WebSocketClient extends EventEmitter {
 
     // Format message based on configuration
     if (this.options.messageFormat === 'json' && typeof message === 'object') {
-      payload = JSON.stringify(message)
+      payload = jsonUtils.safeStringify(message, message)
     }
 
     return await this.connectionManager.send(payload, options)

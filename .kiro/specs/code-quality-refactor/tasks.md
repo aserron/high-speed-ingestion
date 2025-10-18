@@ -51,7 +51,11 @@
 
 
 
-- [ ] 2.2 Consolidate utility functions
+- [x] 2.2 Consolidate utility functions
+
+
+
+
   - Merge duplicate helper functions across modules
   - Remove redundant validation logic
   - Simplify repeated configuration patterns
@@ -59,6 +63,7 @@
 
 - [ ] 3. Update to modern JavaScript practices
   - Replace deprecated APIs with modern equivalents
+
 
 
   - Improve async/await patterns
@@ -102,9 +107,11 @@
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
 - [ ] 5.1 Apply consistent formatting
+  - use esling cli for linting
+  - use prettier cli for nodejs formatting
   - Ensure all code follows Prettier/ESLint rules
-  - Use consistent indentation and spacing
-  - Apply consistent quote usage patterns
+    - Use consistent indentation and spacing
+    - Apply consistent quote usage patterns
   - _Requirements: 2.1, 2.2, 2.6_
 
 - [ ] 5.2 Follow language conventions

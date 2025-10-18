@@ -650,7 +650,7 @@ export class WebSocketConnectionManager extends EventEmitter {
       if (Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
         payload = data
       } else if (typeof data === 'object') {
-        payload = JSON.stringify(data)
+        payload = jsonUtils.safeStringify(data, String(data))
       } else {
         payload = String(data)
       }

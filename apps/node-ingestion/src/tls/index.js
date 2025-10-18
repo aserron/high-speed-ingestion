@@ -6,7 +6,7 @@
  */
 
 // External dependencies
-import fs from 'fs'
+import fs, { promises as fsPromises } from 'fs'
 import https from 'https'
 import http from 'http'
 import crypto from 'crypto'
@@ -109,15 +109,14 @@ export class TLSManager {
   }
 
   /**
-   * Get certificate information
+   * Get certificate information (async)
    */
-  getCertificateInfo (certFile) {
-    if (!fs.existsSync(certFile)) {
-      return null
-    }
-
+  async getCertificateInfo (certFile) {
     try {
-      const certData = fs.readFileSync(certFile, 'utf8')
+      // Use fs.promises.access instead of existsSync
+      await fsPromises.access(certFile, fs.constants.F_OK)
+
+      const certData = await fsPromises.readFile(certFile, 'utf8')
       const cert = new crypto.X509Certificate(certData)
 
       return new TLSCertificateInfo({
@@ -135,9 +134,9 @@ export class TLSManager {
   }
 
   /**
-   * Validate TLS configuration
+   * Validate TLS configuration (async)
    */
-  validateTlsConfiguration () {
+  async validateTlsConfiguration () {
     if (!this.tlsConfig) {
       return {
         enabled: false,
@@ -157,11 +156,10 @@ export class TLSManager {
     const issues = []
     const warnings = []
 
-    // Check certificate files
-    if (!fs.existsSync(this.tlsConfig.tlsCertFile)) {
-      issues.push(`Certificate file not found: ${this.tlsConfig.tlsCertFile}`)
-    } else {
-      const certInfo = this.getCertificateInfo(this.tlsConfig.tlsCertFile)
+    // Check certificate files using modern async approach
+    try {
+      await fsPromises.access(this.tlsConfig.tlsCertFile, fs.constants.F_OK)
+      const certInfo = await this.getCertificateInfo(this.tlsConfig.tlsCertFile)
       if (certInfo) {
         if (!certInfo.isValid) {
           issues.push('Certificate is not valid (expired or not yet valid)')
@@ -169,15 +167,23 @@ export class TLSManager {
           warnings.push(`Certificate expires in ${certInfo.daysUntilExpiry} days`)
         }
       }
+    } catch (error) {
+      issues.push(`Certificate file not found: ${this.tlsConfig.tlsCertFile}`)
     }
 
-    if (!fs.existsSync(this.tlsConfig.tlsKeyFile)) {
+    try {
+      await fsPromises.access(this.tlsConfig.tlsKeyFile, fs.constants.F_OK)
+    } catch (error) {
       issues.push(`Private key file not found: ${this.tlsConfig.tlsKeyFile}`)
     }
 
     // Check CA file if specified
-    if (this.tlsConfig.tlsCaFile && !fs.existsSync(this.tlsConfig.tlsCaFile)) {
-      issues.push(`CA file not found: ${this.tlsConfig.tlsCaFile}`)
+    if (this.tlsConfig.tlsCaFile) {
+      try {
+        await fsPromises.access(this.tlsConfig.tlsCaFile, fs.constants.F_OK)
+      } catch (error) {
+        issues.push(`CA file not found: ${this.tlsConfig.tlsCaFile}`)
+      }
     }
 
     // Try to create HTTPS options
@@ -209,40 +215,43 @@ export class TLSManager {
       message,
       issues,
       warnings,
-      certificateInfo: fs.existsSync(this.tlsConfig.tlsCertFile)
-        ? this.getCertificateInfo(this.tlsConfig.tlsCertFile)
-        : null
+      certificateInfo: await this.getCertificateInfo(this.tlsConfig.tlsCertFile)
     }
   }
 
   /**
    * Create secure WebSocket connection
    */
-  createSecureWebSocketConnection (url, options = {}) {
-    return new Promise((resolve, reject) => {
-      try {
-        // Configure TLS options for WebSocket client
-        const wsOptions = { ...options }
+  async createSecureWebSocketConnection (url, options = {}) {
+    try {
+      // Configure TLS options for WebSocket client
+      const wsOptions = { ...options }
 
-        if (url.startsWith('wss://') && this.tlsConfig) {
-          // Add TLS configuration
-          if (this.tlsConfig.websocketTlsEnabled) {
-            wsOptions.rejectUnauthorized = this.tlsConfig.websocketVerifySsl
+      if (url.startsWith('wss://') && this.tlsConfig) {
+        // Add TLS configuration
+        if (this.tlsConfig.websocketTlsEnabled) {
+          wsOptions.rejectUnauthorized = this.tlsConfig.websocketVerifySsl
 
-            // Add CA certificates if specified
-            if (this.tlsConfig.tlsCaFile && fs.existsSync(this.tlsConfig.tlsCaFile)) {
-              wsOptions.ca = fs.readFileSync(this.tlsConfig.tlsCaFile)
+          // Add CA certificates if specified using modern async approach
+          if (this.tlsConfig.tlsCaFile) {
+            try {
+              await fsPromises.access(this.tlsConfig.tlsCaFile, fs.constants.F_OK)
+              wsOptions.ca = await fsPromises.readFile(this.tlsConfig.tlsCaFile)
+            } catch (error) {
+              this.logger.warn(`CA file not accessible: ${this.tlsConfig.tlsCaFile}`)
             }
           }
         }
+      }
 
-        // Add security headers
-        wsOptions.headers = {
-          'User-Agent': 'FinanceIngestion/1.0',
-          'X-Client-Version': '1.0.0',
-          ...wsOptions.headers
-        }
+      // Add security headers
+      wsOptions.headers = {
+        'User-Agent': 'FinanceIngestion/1.0',
+        'X-Client-Version': '1.0.0',
+        ...wsOptions.headers
+      }
 
+      return new Promise((resolve, reject) => {
         const ws = new WebSocket(url, wsOptions)
 
         ws.on('open', () => resolve(ws))
@@ -250,17 +259,17 @@ export class TLSManager {
           this.logger.error(`WebSocket connection failed: ${error.message}`)
           reject(error)
         })
-      } catch (error) {
-        this.logger.error(`Failed to create secure WebSocket connection: ${error.message}`)
-        reject(error)
-      }
-    })
+      })
+    } catch (error) {
+      this.logger.error(`Failed to create secure WebSocket connection: ${error.message}`)
+      throw error
+    }
   }
 
   /**
-   * Create secure HTTPS agent
+   * Create secure HTTPS agent (async)
    */
-  createSecureHttpsAgent (options = {}) {
+  async createSecureHttpsAgent (options = {}) {
     if (!this.tlsConfig || !this.tlsConfig.websocketTlsEnabled) {
       return new https.Agent(options)
     }
@@ -270,9 +279,14 @@ export class TLSManager {
       rejectUnauthorized: this.tlsConfig.websocketVerifySsl
     }
 
-    // Add CA certificates if specified
-    if (this.tlsConfig.tlsCaFile && fs.existsSync(this.tlsConfig.tlsCaFile)) {
-      agentOptions.ca = fs.readFileSync(this.tlsConfig.tlsCaFile)
+    // Add CA certificates if specified using modern async approach
+    if (this.tlsConfig.tlsCaFile) {
+      try {
+        await fsPromises.access(this.tlsConfig.tlsCaFile, fs.constants.F_OK)
+        agentOptions.ca = await fsPromises.readFile(this.tlsConfig.tlsCaFile)
+      } catch (error) {
+        this.logger.warn(`CA file not accessible: ${this.tlsConfig.tlsCaFile}`)
+      }
     }
 
     return new https.Agent(agentOptions)
@@ -373,20 +387,20 @@ export function createSecureServer (app, options = {}) {
 }
 
 /**
- * Validate certificate chain
+ * Validate certificate chain (async)
  */
-export function validateCertificateChain (certFile, keyFile, caFile = null) {
+export async function validateCertificateChain (certFile, keyFile, caFile = null) {
   try {
-    // Check if certificate and key match
-    const cert = fs.readFileSync(certFile, 'utf8')
-    const key = fs.readFileSync(keyFile, 'utf8')
+    // Check if certificate and key match using modern async approach
+    const cert = await fsPromises.readFile(certFile, 'utf8')
+    const key = await fsPromises.readFile(keyFile, 'utf8')
 
     // Create temporary files for validation
     const tempCertFile = `/tmp/temp_cert_${Date.now()}.pem`
     const tempKeyFile = `/tmp/temp_key_${Date.now()}.pem`
 
-    fs.writeFileSync(tempCertFile, cert)
-    fs.writeFileSync(tempKeyFile, key)
+    await fsPromises.writeFile(tempCertFile, cert)
+    await fsPromises.writeFile(tempKeyFile, key)
 
     try {
       // Check if certificate and key match
@@ -402,8 +416,13 @@ export function validateCertificateChain (certFile, keyFile, caFile = null) {
       }
 
       // Verify certificate chain if CA is provided
-      if (caFile && fs.existsSync(caFile)) {
-        execSync(`openssl verify -CAfile ${caFile} ${tempCertFile}`, { stdio: 'inherit' })
+      if (caFile) {
+        try {
+          await fsPromises.access(caFile, fs.constants.F_OK)
+          execSync(`openssl verify -CAfile ${caFile} ${tempCertFile}`, { stdio: 'inherit' })
+        } catch (error) {
+          return { valid: false, error: `CA file not accessible: ${caFile}` }
+        }
       }
 
       return { valid: true }

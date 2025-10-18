@@ -7,7 +7,7 @@
  */
 
 import { ValidationError } from '../errors/index.js'
-import { validationUtils } from '../utils/common-utilities.js'
+import { validationUtils, jsonUtils } from '../utils/common-utilities.js'
 
 /**
  * Base storage interface that all storage implementations must follow
@@ -318,7 +318,7 @@ export class StorageFactory {
    * Create or get storage instance
    */
   static async createStorage (type, config = null) {
-    const key = `${type}_${JSON.stringify(config)}`
+    const key = `${type}_${jsonUtils.safeStringify(config, 'null')}`
 
     if (this.storageInstances.has(key)) {
       return this.storageInstances.get(key)
