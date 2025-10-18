@@ -45,7 +45,7 @@
 - `branch-analysis.md` - Branch naming analysis
 
 #### 4. **Enhanced Documentation Site**
-- Complete VitePress documentation site (`docs-site/`)
+- Complete VitePress documentation site (`apps/docs-site/`)
 - Interactive components and modern UI
 - Comprehensive API documentation
 

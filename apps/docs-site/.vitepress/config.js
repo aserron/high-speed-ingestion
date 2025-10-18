@@ -157,7 +157,7 @@ export default defineConfig({
       },
 
       editLink: {
-        pattern: 'https://github.com/finance-ingestion-benchmark/edit/main/docs-site/:path',
+        pattern: 'https://github.com/finance-ingestion-benchmark/edit/main/apps/docs-site/:path',
         text: 'Edit this page on GitHub'
       },
 

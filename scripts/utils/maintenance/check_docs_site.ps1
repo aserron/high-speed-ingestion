@@ -2,7 +2,7 @@
 Write-Host "🔍 Checking docs-site for conflicts and issues..." -ForegroundColor Green
 
 # Check if docs-site directory exists
-if (-not (Test-Path "docs-site")) {
+if (-not (Test-Path "apps/docs-site")) {
     Write-Host "❌ docs-site directory not found" -ForegroundColor Red
     exit 1
 }
@@ -10,11 +10,11 @@ if (-not (Test-Path "docs-site")) {
 Write-Host "✅ docs-site directory exists" -ForegroundColor Green
 
 # Check package.json
-if (Test-Path "docs-site/package.json") {
+if (Test-Path "apps/docs-site/package.json") {
     Write-Host "✅ package.json found" -ForegroundColor Green
     
     # Check for dependency conflicts
-    $packageJson = Get-Content "docs-site/package.json" | ConvertFrom-Json
+    $packageJson = Get-Content "apps/docs-site/package.json" | ConvertFrom-Json
     Write-Host "📦 Dependencies:" -ForegroundColor Cyan
     
     if ($packageJson.dependencies) {
@@ -34,11 +34,11 @@ if (Test-Path "docs-site/package.json") {
 }
 
 # Check VitePress config
-if (Test-Path "docs-site/.vitepress/config.js") {
+if (Test-Path "apps/docs-site/.vitepress/config.js") {
     Write-Host "✅ VitePress config found" -ForegroundColor Green
     
     # Check for syntax issues in config
-    $configContent = Get-Content "docs-site/.vitepress/config.js" -Raw
+    $configContent = Get-Content "apps/docs-site/.vitepress/config.js" -Raw
     
     # Basic syntax checks
     if ($configContent -match "export default") {
@@ -118,11 +118,11 @@ Write-Host "  • Custom theme and components detected" -ForegroundColor White
 
 Write-Host ""
 Write-Host "🚀 To test the site:" -ForegroundColor Green
-Write-Host "  1. cd docs-site" -ForegroundColor White
+Write-Host "  1. cd apps/docs-site" -ForegroundColor White
 Write-Host "  2. npm install" -ForegroundColor White
 Write-Host "  3. npm run dev" -ForegroundColor White
 
 Write-Host ""
 Write-Host "🔧 To build for production:" -ForegroundColor Green
-Write-Host "  1. cd docs-site" -ForegroundColor White
+Write-Host "  1. cd apps/docs-site" -ForegroundColor White
 Write-Host "  2. npm run build" -ForegroundColor White

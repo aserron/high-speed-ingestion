@@ -41,7 +41,7 @@
     }
   ],
   "functions": {
-    "docs-site/api/feedback.js": {
+    "apps/docs-site/api/feedback.js": {
       "runtime": "nodejs18.x"
     }
   }
