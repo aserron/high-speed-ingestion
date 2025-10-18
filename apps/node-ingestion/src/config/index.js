@@ -6,11 +6,12 @@
  * financial data ingestion system.
  */
 
-console.warn('importing joi')
-
-// ES Modules
-import Joi from 'joi'
+// External dependencies
 import dotenv from 'dotenv'
+import Joi from 'joi'
+
+// Internal modules
+import { envUtils } from '../utils/common-utilities.js'
 
 // Load environment variables
 dotenv.config()
@@ -34,7 +35,9 @@ const configSchema = Joi.object({
 
   // WebSocket configuration
   websocket: Joi.object({
-    url: Joi.string().uri({ scheme: ['ws', 'wss'] }).default('wss://localhost:8080/market-data'),
+    url: Joi.string()
+      .uri({ scheme: ['ws', 'wss'] })
+      .default('wss://localhost:8080/market-data'),
     protocols: Joi.array().items(Joi.string()).optional(),
     headers: Joi.object().pattern(Joi.string(), Joi.string()).optional(),
 
@@ -51,7 +54,11 @@ const configSchema = Joi.object({
     reconnectJitterMs: Joi.number().integer().min(0).max(5000).default(1000),
 
     // Performance settings
-    maxMessageSize: Joi.number().integer().min(1024).max(10 * 1024 * 1024).default(1024 * 1024),
+    maxMessageSize: Joi.number()
+      .integer()
+      .min(1024)
+      .max(10 * 1024 * 1024)
+      .default(1024 * 1024),
     compressionEnabled: Joi.boolean().default(true),
 
     // Security settings
@@ -72,7 +79,9 @@ const configSchema = Joi.object({
 
     // Performance monitoring
     latencyMeasurementEnabled: Joi.boolean().default(true),
-    latencyHistogramBuckets: Joi.array().items(Joi.number().positive()).default([0.1, 0.5, 1, 2, 5, 10, 20, 50, 100]),
+    latencyHistogramBuckets: Joi.array()
+      .items(Joi.number().positive())
+      .default([0.1, 0.5, 1, 2, 5, 10, 20, 50, 100]),
     metricsCollectionIntervalMs: Joi.number().integer().min(100).max(60000).default(1000),
 
     // Message validation
@@ -176,7 +185,9 @@ const configSchema = Joi.object({
     burstMultiplier: Joi.number().min(1.0).max(100.0).default(5.0),
 
     // Test symbols
-    symbols: Joi.array().items(Joi.string()).default(['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'META', 'NVDA', 'NFLX']),
+    symbols: Joi.array()
+      .items(Joi.string())
+      .default(['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'META', 'NVDA', 'NFLX']),
     symbolRotationEnabled: Joi.boolean().default(true),
 
     // Data generation
@@ -196,15 +207,15 @@ const configSchema = Joi.object({
 /**
  * Load configuration from environment variables with nested support
  */
-function loadConfigFromEnv() {
+function loadConfigFromEnv () {
   const config = {
     app: {
-      name: process.env.APP_NAME,
-      version: process.env.APP_VERSION,
-      environment: process.env.NODE_ENV || process.env.ENVIRONMENT,
-      debug: process.env.DEBUG === 'true',
-      verbose: process.env.VERBOSE === 'true',
-      dryRun: process.env.DRY_RUN === 'true'
+      name: envUtils.getString('APP_NAME'),
+      version: envUtils.getString('APP_VERSION'),
+      environment: envUtils.getString('NODE_ENV') || envUtils.getString('ENVIRONMENT'),
+      debug: envUtils.getBoolean('DEBUG'),
+      verbose: envUtils.getBoolean('VERBOSE'),
+      dryRun: envUtils.getBoolean('DRY_RUN')
     },
     websocket: {
       url: process.env.WEBSOCKET_URL,
@@ -348,7 +359,7 @@ function loadConfigFromEnv() {
   }
 
   // Remove undefined values and filter out NaN numbers to let Joi apply defaults
-  function cleanValue(key, value) {
+  function cleanValue (key, value) {
     if (value === undefined || value === null || value === '') {
       return undefined
     }
@@ -364,7 +375,7 @@ function loadConfigFromEnv() {
 /**
  * Validate and create configuration
  */
-function createConfig() {
+function createConfig () {
   const envConfig = loadConfigFromEnv()
   const { error, value } = configSchema.validate(envConfig, {
     allowUnknown: false,
@@ -373,7 +384,9 @@ function createConfig() {
   })
 
   if (error) {
-    throw new Error(`Configuration validation failed: ${error.details.map(d => d.message).join(', ')}`)
+    throw new Error(
+      `Configuration validation failed: ${error.details.map((d) => d.message).join(', ')}`
+    )
   }
 
   return value
@@ -387,7 +400,7 @@ let config = null
 /**
  * Get the global configuration instance
  */
-export function getConfig() {
+export function getConfig () {
   if (!config) {
     config = createConfig()
   }
@@ -397,7 +410,7 @@ export function getConfig() {
 /**
  * Reload configuration (primarily for testing)
  */
-export function reloadConfig() {
+export function reloadConfig () {
   config = null
   return getConfig()
 }
@@ -405,14 +418,14 @@ export function reloadConfig() {
 /**
  * Set configuration (primarily for testing)
  */
-export function setConfig(newConfig) {
+export function setConfig (newConfig) {
   config = newConfig
 }
 
 /**
  * Get database connection URL
  */
-export function getDatabaseUrl(cfg = getConfig()) {
+export function getDatabaseUrl (cfg = getConfig()) {
   const { postgresql } = cfg
   return `postgresql://${postgresql.username}:${postgresql.password}@${postgresql.host}:${postgresql.port}/${postgresql.database}`
 }
@@ -420,7 +433,7 @@ export function getDatabaseUrl(cfg = getConfig()) {
 /**
  * Get Redis connection URL
  */
-export function getRedisUrl(cfg = getConfig()) {
+export function getRedisUrl (cfg = getConfig()) {
   const { redis } = cfg
   const auth = redis.password ? `:${redis.password}@` : ''
   return `redis://${auth}${redis.host}:${redis.port}/${redis.db}`
@@ -429,14 +442,14 @@ export function getRedisUrl(cfg = getConfig()) {
 /**
  * Check if running in production environment
  */
-export function isProduction(cfg = getConfig()) {
+export function isProduction (cfg = getConfig()) {
   return cfg.app.environment === 'production'
 }
 
 /**
  * Check if running in development environment
  */
-export function isDevelopment(cfg = getConfig()) {
+export function isDevelopment (cfg = getConfig()) {
   return cfg.app.environment === 'development'
 }
 

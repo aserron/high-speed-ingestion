@@ -5,13 +5,20 @@
  * to Redis, PostgreSQL, and specialized market data storage adapters.
  */
 
-// Connection Managers
-import { StorageFactory } from './interfaces.js'
-import { getLogger } from '../logging/index.js'
+// Internal modules
 import { getConfig } from '../config/index.js'
+import { getLogger } from '../logging/index.js'
+import { createInitializableSingleton, asyncUtils } from '../utils/common-utilities.js'
+
+// Relative modules
+import { StorageFactory } from './interfaces.js'
 
 export { RedisConnectionManager, getRedisManager, initializeRedis } from './redis.js'
-export { PostgreSQLConnectionManager, getPostgreSQLManager, initializePostgreSQL } from './postgresql.js'
+export {
+  PostgreSQLConnectionManager,
+  getPostgreSQLManager,
+  initializePostgreSQL
+} from './postgresql.js'
 
 // Storage Interfaces
 export {
@@ -188,7 +195,7 @@ export class StorageManager {
 
     for (const [type, storage] of this.storageInstances) {
       closePromises.push(
-        storage.close().catch(error => {
+        storage.close().catch((error) => {
           this.logger.error(`Error closing ${type} storage`, {
             error: error.message
           })
@@ -206,26 +213,20 @@ export class StorageManager {
 }
 
 // Global storage manager instance
-let storageManager = null
+const storageManagerSingleton = createInitializableSingleton((config) => new StorageManager(config))
 
 /**
  * Get the global storage manager instance
  */
 export function getStorageManager () {
-  if (!storageManager) {
-    storageManager = new StorageManager()
-  }
-  return storageManager
+  return storageManagerSingleton.getInstance()
 }
 
 /**
  * Initialize global storage manager
  */
 export async function initializeStorage (config = null) {
-  const manager = new StorageManager(config)
-  await manager.initialize()
-  storageManager = manager
-  return manager
+  return await storageManagerSingleton.initialize(config)
 }
 
 /**
@@ -234,7 +235,7 @@ export async function initializeStorage (config = null) {
 export async function getRedisStorage () {
   const manager = getStorageManager()
   if (!manager.isInitialized) {
-    await manager.initialize()
+    await asyncUtils.safeAsync(() => manager.initialize(), { timeout: 30000, maxRetries: 3 })
   }
   return manager.getRedisStorage()
 }
@@ -242,7 +243,7 @@ export async function getRedisStorage () {
 export async function getPostgreSQLStorage () {
   const manager = getStorageManager()
   if (!manager.isInitialized) {
-    await manager.initialize()
+    await asyncUtils.safeAsync(() => manager.initialize(), { timeout: 30000, maxRetries: 3 })
   }
   return manager.getPostgreSQLStorage()
 }
@@ -250,7 +251,7 @@ export async function getPostgreSQLStorage () {
 export async function getMarketDataStorage () {
   const manager = getStorageManager()
   if (!manager.isInitialized) {
-    await manager.initialize()
+    await asyncUtils.safeAsync(() => manager.initialize(), { timeout: 30000, maxRetries: 3 })
   }
   return manager.getMarketDataStorage()
 }

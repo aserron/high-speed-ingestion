@@ -6,10 +6,20 @@
  * financial data ingestion system.
  */
 
+// External dependencies
 import Redis from 'ioredis'
+
+// Internal modules
 import { getConfig } from '../config/index.js'
+import { StorageError } from '../errors/index.js'
 import { getLogger } from '../logging/index.js'
-import { ConnectionError, StorageError } from '../errors/index.js'
+import { createInitializableSingleton, connectionUtils } from '../utils/common-utilities.js'
+import {
+  handleConnectionInitError,
+  handleHealthCheckError,
+  handleQueryError,
+  handlePeriodicTaskError
+} from '../utils/error-handlers.js'
 
 /**
  * Redis connection manager with pooling and monitoring
@@ -96,15 +106,11 @@ export class RedisConnectionManager {
 
       this.logger.info('Redis connection manager initialized successfully')
     } catch (error) {
-      this.connectionStats.failedConnections++
-      this.connectionStats.lastErrorTime = Date.now()
-
-      throw new ConnectionError(
-        'Failed to initialize Redis connection manager',
+      handleConnectionInitError(
+        error,
         'redis',
         `${this.config.redis.host}:${this.config.redis.port}`,
-        null,
-        { cause: error }
+        this.connectionStats
       )
     }
   }
@@ -135,7 +141,10 @@ export class RedisConnectionManager {
     this.pool.on('close', () => {
       this.logger.warn('Redis connection closed')
       this.isConnected = false
-      this.connectionStats.activeConnections = Math.max(0, this.connectionStats.activeConnections - 1)
+      this.connectionStats.activeConnections = Math.max(
+        0,
+        this.connectionStats.activeConnections - 1
+      )
     })
 
     this.pool.on('reconnecting', (ms) => {
@@ -161,9 +170,7 @@ export class RedisConnectionManager {
       try {
         await this.healthCheck()
       } catch (error) {
-        this.logger.error('Redis health check failed', {
-          error: error.message
-        })
+        handlePeriodicTaskError(error, 'Redis health check', this.logger)
       }
     }, 30000) // Every 30 seconds
   }
@@ -172,9 +179,7 @@ export class RedisConnectionManager {
    * Perform health check
    */
   async healthCheck () {
-    if (!this.pool) {
-      throw new StorageError('Redis pool not initialized')
-    }
+    connectionUtils.validateConnection(this.pool, true, 'Redis', 'health check')
 
     const start = process.hrtime.bigint()
 
@@ -197,21 +202,7 @@ export class RedisConnectionManager {
         timestamp: Date.now()
       }
     } catch (error) {
-      const latencyNs = process.hrtime.bigint() - start
-
-      throw new StorageError(
-        'Redis health check failed',
-        'redis',
-        'ping',
-        null,
-        {
-          context: {
-            latencyNs: latencyNs.toString(),
-            latencyMs: Number(latencyNs) / 1_000_000
-          },
-          cause: error
-        }
-      )
+      handleHealthCheckError(error, 'Redis', start)
     }
   }
 
@@ -219,9 +210,7 @@ export class RedisConnectionManager {
    * Execute Redis command with error handling and metrics
    */
   async execute (command, ...args) {
-    if (!this.pool || !this.isConnected) {
-      throw new StorageError('Redis not connected', 'redis', command)
-    }
+    connectionUtils.validateDatabaseConnection(this.pool, this.isConnected, 'Redis', command)
 
     const start = process.hrtime.bigint()
 
@@ -239,23 +228,7 @@ export class RedisConnectionManager {
 
       return result
     } catch (error) {
-      const latencyNs = process.hrtime.bigint() - start
-      this.connectionStats.failedCommands++
-
-      throw new StorageError(
-        `Redis command failed: ${command}`,
-        'redis',
-        command,
-        null,
-        {
-          context: {
-            args: args.slice(0, 3), // Limit args for logging
-            latencyNs: latencyNs.toString(),
-            latencyMs: Number(latencyNs) / 1_000_000
-          },
-          cause: error
-        }
-      )
+      handleQueryError(error, 'redis', command, start, this.connectionStats)
     }
   }
 
@@ -409,9 +382,7 @@ export class RedisConnectionManager {
    * Pipeline operations for batch processing
    */
   pipeline () {
-    if (!this.pool || !this.isConnected) {
-      throw new StorageError('Redis not connected', 'redis', 'pipeline')
-    }
+    connectionUtils.validateDatabaseConnection(this.pool, this.isConnected, 'Redis', 'pipeline')
     return this.pool.pipeline()
   }
 
@@ -435,20 +406,14 @@ export class RedisConnectionManager {
     } catch (error) {
       const latencyNs = process.hrtime.bigint() - start
 
-      throw new StorageError(
-        'Redis pipeline execution failed',
-        'redis',
-        'pipeline',
-        null,
-        {
-          context: {
-            commands: pipeline.length,
-            latencyNs: latencyNs.toString(),
-            latencyMs: Number(latencyNs) / 1_000_000
-          },
-          cause: error
-        }
-      )
+      throw new StorageError('Redis pipeline execution failed', 'redis', 'pipeline', null, {
+        context: {
+          commands: pipeline.length,
+          latencyNs: latencyNs.toString(),
+          latencyMs: Number(latencyNs) / 1_000_000
+        },
+        cause: error
+      })
     }
   }
 
@@ -490,26 +455,22 @@ export class RedisConnectionManager {
 }
 
 // Global Redis manager instance
-let redisManager = null
+const redisManagerSingleton = createInitializableSingleton(
+  (config) => new RedisConnectionManager(config)
+)
 
 /**
  * Get the global Redis manager instance
  */
 export function getRedisManager () {
-  if (!redisManager) {
-    redisManager = new RedisConnectionManager()
-  }
-  return redisManager
+  return redisManagerSingleton.getInstance()
 }
 
 /**
  * Initialize Redis manager
  */
 export async function initializeRedis (config = null) {
-  const manager = new RedisConnectionManager(config)
-  await manager.initialize()
-  redisManager = manager
-  return manager
+  return await redisManagerSingleton.initialize(config)
 }
 
 export default {

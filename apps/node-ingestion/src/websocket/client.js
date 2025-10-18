@@ -6,11 +6,17 @@
  * message handling, and performance monitoring.
  */
 
+// External dependencies
 import { EventEmitter } from 'events'
-import { WebSocketConnectionManager, ConnectionState } from './connection-manager.js'
+
+// Internal modules
 import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
-import { ValidationError, ConnectionError } from '../errors/index.js'
+import { ConnectionError } from '../errors/index.js'
+import { validators, errorUtils, jsonUtils } from '../utils/common-utilities.js'
+
+// Relative modules
+import { WebSocketConnectionManager, ConnectionState } from './connection-manager.js'
 
 /**
  * WebSocket client for financial market data
@@ -123,14 +129,29 @@ export class WebSocketClient extends EventEmitter {
   }
 
   /**
-   * Connect to WebSocket server
+   * Connect to WebSocket server with enhanced error handling
+   * 
+   * @async Ensures proper initialization before connection attempt
+   * @throws {ConnectionError} When connection fails with detailed error context
+   * @returns {Promise<void>} Resolves when connection is established
+   * 
+   * @errorHandling Comprehensive try-catch with structured error logging
+   * @performance Lazy initialization pattern reduces unnecessary overhead
    */
   async connect () {
-    if (!this.isInitialized) {
-      await this.initialize()
-    }
+    try {
+      if (!this.isInitialized) {
+        await this.initialize()
+      }
 
-    return await this.connectionManager.connect()
+      return await this.connectionManager.connect()
+    } catch (error) {
+      this.logger.error('Failed to connect to WebSocket server', {
+        error: error.message,
+        stack: error.stack
+      })
+      throw error
+    }
   }
 
   /**
@@ -156,14 +177,7 @@ export class WebSocketClient extends EventEmitter {
       let parsedMessage = data
       if (!isBinary && this.options.messageFormat === 'json') {
         if (typeof data === 'string') {
-          try {
-            parsedMessage = JSON.parse(data)
-          } catch (error) {
-            this.logger.warn('Failed to parse JSON message', {
-              error: error.message,
-              data: data.substring(0, 100)
-            })
-          }
+          parsedMessage = jsonUtils.safeParse(data, data)
         }
       }
 
@@ -194,14 +208,13 @@ export class WebSocketClient extends EventEmitter {
       // Call registered message handlers
       this.callMessageHandlers(messageType, parsedMessage, event)
     } catch (error) {
-      this.logger.error('Error handling WebSocket message', {
-        error: error.message,
-        correlationId: event.correlationId
-      })
-
-      this.emit('messageError', {
-        error,
-        originalEvent: event
+      errorUtils.handleError(this.logger, 'Error handling WebSocket message', error, {
+        eventEmitter: this,
+        eventName: 'messageError',
+        context: {
+          correlationId: event.correlationId,
+          originalEvent: event
+        }
       })
     }
   }
@@ -238,9 +251,8 @@ export class WebSocketClient extends EventEmitter {
       try {
         handler(message, originalEvent)
       } catch (error) {
-        this.logger.error('Message handler error', {
-          messageType,
-          error: error.message
+        errorUtils.logError(this.logger, 'Message handler error', error, {
+          messageType
         })
       }
     }
@@ -251,9 +263,7 @@ export class WebSocketClient extends EventEmitter {
       try {
         handler(message, originalEvent)
       } catch (error) {
-        this.logger.error('Global message handler error', {
-          error: error.message
-        })
+        errorUtils.logError(this.logger, 'Global message handler error', error)
       }
     }
   }
@@ -266,14 +276,22 @@ export class WebSocketClient extends EventEmitter {
 
     // Format message based on configuration
     if (this.options.messageFormat === 'json' && typeof message === 'object') {
-      payload = JSON.stringify(message)
+      payload = jsonUtils.safeStringify(message, message)
     }
 
     return await this.connectionManager.send(payload, options)
   }
 
   /**
-   * Subscribe to market data symbols
+   * Subscribe to market data symbols with enhanced error handling
+   * 
+   * @param {string|string[]} symbols - Symbol or array of symbols to subscribe to
+   * @param {string} messageType - Type of market data messages (default: 'tick')
+   * @returns {Promise<void>} Resolves when subscription is successful
+   * 
+   * @async Handles subscription message sending and state tracking
+   * @errorHandling Comprehensive error logging with context for debugging
+   * @throws {Error} When subscription fails with detailed error information
    */
   async subscribe (symbols, messageType = 'tick') {
     if (!Array.isArray(symbols)) {
@@ -287,11 +305,20 @@ export class WebSocketClient extends EventEmitter {
       timestamp: Date.now()
     }
 
-    await this.send(subscriptionMessage)
+    try {
+      await this.send(subscriptionMessage)
 
-    // Track subscriptions for reconnection
-    for (const symbol of symbols) {
-      this.subscriptions.add(`${messageType}:${symbol}`)
+      // Track subscriptions for reconnection
+      for (const symbol of symbols) {
+        this.subscriptions.add(`${messageType}:${symbol}`)
+      }
+    } catch (error) {
+      this.logger.error('Failed to subscribe to symbols', {
+        symbols,
+        messageType,
+        error: error.message
+      })
+      throw error
     }
 
     this.logger.info('Subscribed to symbols', {
@@ -316,11 +343,20 @@ export class WebSocketClient extends EventEmitter {
       timestamp: Date.now()
     }
 
-    await this.send(unsubscriptionMessage)
+    try {
+      await this.send(unsubscriptionMessage)
 
-    // Remove from tracked subscriptions
-    for (const symbol of symbols) {
-      this.subscriptions.delete(`${messageType}:${symbol}`)
+      // Remove from tracked subscriptions
+      for (const symbol of symbols) {
+        this.subscriptions.delete(`${messageType}:${symbol}`)
+      }
+    } catch (error) {
+      this.logger.error('Failed to unsubscribe from symbols', {
+        symbols,
+        messageType,
+        error: error.message
+      })
+      throw error
     }
 
     this.logger.info('Unsubscribed from symbols', {
@@ -355,17 +391,44 @@ export class WebSocketClient extends EventEmitter {
       subscriptionGroups.get(messageType).push(symbol)
     }
 
-    // Re-subscribe for each message type
-    for (const [messageType, symbols] of subscriptionGroups) {
-      try {
-        await this.subscribe(symbols, messageType)
-      } catch (error) {
-        this.logger.error('Failed to re-establish subscription', {
-          messageType,
-          symbols,
-          error: error.message
-        })
+    /**
+     * Parallel subscription re-establishment with resilient error handling
+     * Uses Promise.allSettled() to handle partial failures gracefully
+     * 
+     * @performance Concurrent re-subscription reduces reconnection latency
+     * @resilience Continues processing even if some subscriptions fail
+     * @async All subscription groups processed simultaneously
+     */
+    const resubscribePromises = Array.from(subscriptionGroups.entries()).map(
+      async ([messageType, symbols]) => {
+        try {
+          await this.subscribe(symbols, messageType)
+        } catch (error) {
+          this.logger.error('Failed to re-establish subscription', {
+            messageType,
+            symbols,
+            error: error.message
+          })
+          throw error
+        }
       }
+    )
+
+    /**
+     * Resilient batch processing using Promise.allSettled()
+     * Allows partial success scenarios instead of all-or-nothing failure
+     * 
+     * @errorHandling Graceful degradation with detailed failure reporting
+     * @monitoring Tracks success/failure ratios for operational visibility
+     */
+    const results = await Promise.allSettled(resubscribePromises)
+    
+    const failures = results.filter(result => result.status === 'rejected')
+    if (failures.length > 0) {
+      this.logger.warn('Some subscription re-establishments failed', {
+        failureCount: failures.length,
+        totalCount: results.length
+      })
     }
   }
 
@@ -373,9 +436,7 @@ export class WebSocketClient extends EventEmitter {
    * Register message handler
    */
   onMessage (messageType, handler) {
-    if (typeof handler !== 'function') {
-      throw new ValidationError('Message handler must be a function', 'handler', handler)
-    }
+    validators.function(handler, 'handler')
 
     if (!this.messageHandlers.has(messageType)) {
       this.messageHandlers.set(messageType, [])

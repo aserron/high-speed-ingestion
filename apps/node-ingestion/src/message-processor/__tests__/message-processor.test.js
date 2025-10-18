@@ -1,6 +1,6 @@
 /**
  * Unit tests for the Node.js message processor.
- * 
+ *
  * Tests cover:
  * - Message processing logic and validation
  * - Latency measurement accuracy
@@ -20,36 +20,14 @@ import {
   MessageType,
   Side
 } from '../index.js'
-import {
-  ValidationError,
-  BackpressureError,
-  MessageProcessingError
-} from '../../errors/index.js'
+import { BackpressureError } from '../../errors/index.js'
 
-// Mock the config to avoid validation errors during tests
-jest.mock('../../config/index.js', () => ({
-  getConfig: jest.fn(() => ({
-    app: {
-      name: 'test-app',
-      version: '1.0.0',
-      environment: 'testing'
-    },
-    monitoring: {
-      logLevel: 'info',
-      logFormat: 'text'
-    }
-  }))
-}))
+// Set environment to development for tests
+process.env.NODE_ENV = 'development'
 
-// Mock the logger to avoid console output during tests
-jest.mock('../../logging/index.js', () => ({
-  getLogger: jest.fn(() => ({
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
-  }))
-}))
+// Import and reload config to pick up the new NODE_ENV
+import { reloadConfig } from '../../config/index.js'
+reloadConfig()
 
 describe('MessageProcessor', () => {
   let processor
@@ -177,7 +155,7 @@ describe('MessageProcessor', () => {
   describe('Latency Measurement', () => {
     test('should measure latency accurately and consistently', async () => {
       const results = []
-      
+
       // Process multiple messages and verify latency measurements
       for (let i = 0; i < 10; i++) {
         const result = await processor.processMessage(validMessageBytes)
@@ -185,12 +163,12 @@ describe('MessageProcessor', () => {
       }
 
       // All results should be successful
-      expect(results.every(r => r.success)).toBe(true)
+      expect(results.every((r) => r.success)).toBe(true)
 
       // All latency measurements should be positive and reasonable (< 10ms for simple processing)
-      const latencies = results.map(r => r.processingLatencyNs)
-      expect(latencies.every(lat => lat > 0)).toBe(true)
-      expect(latencies.every(lat => lat < 10_000_000)).toBe(true) // Less than 10ms
+      const latencies = results.map((r) => r.processingLatencyNs)
+      expect(latencies.every((lat) => lat > 0)).toBe(true)
+      expect(latencies.every((lat) => lat < 10_000_000)).toBe(true) // Less than 10ms
 
       // Verify statistics are updated
       const stats = processor.getLatencyStats()
@@ -202,7 +180,8 @@ describe('MessageProcessor', () => {
 
     test('should calculate latency percentiles correctly', async () => {
       // Process enough messages to trigger percentile calculation
-      for (let i = 0; i < 150; i++) { // More than the minimum 100 samples
+      for (let i = 0; i < 150; i++) {
+        // More than the minimum 100 samples
         await processor.processMessage(validMessageBytes)
       }
 
@@ -219,21 +198,28 @@ describe('MessageProcessor', () => {
     })
 
     test('should measure latency with artificial delay', async () => {
-      // Mock the msgpack decode to add artificial delay
+      // Mock the msgpack decode to add artificial delay for benchmarking
       const originalDecode = processor.msgpack.decode
+      const ARTIFICIAL_DELAY_NS = 5_000_000 // 5ms - clearly defined for fintech benchmarking
+      
       processor.msgpack.decode = jest.fn((data) => {
-        // Add 1ms delay
-        const start = Date.now()
-        while (Date.now() - start < 1) {
-          // Busy wait for 1ms
+        // Add precise 5ms delay using high-resolution timer for fintech timing accuracy
+        const start = process.hrtime.bigint()
+        while (Number(process.hrtime.bigint() - start) < ARTIFICIAL_DELAY_NS) {
+          // Busy wait for exact delay duration
         }
         return originalDecode.call(processor.msgpack, data)
       })
 
       const result = await processor.processMessage(validMessageBytes)
 
-      // Latency should reflect the added delay (should be > 1ms)
-      expect(result.processingLatencyNs).toBeGreaterThan(1_000_000) // > 1ms
+      // For fintech data pipeline: latency must be >= artificial delay (5ms)
+      // Allow 10% tolerance for system timing variations in production environments
+      const MIN_EXPECTED_LATENCY_NS = ARTIFICIAL_DELAY_NS * 0.9 // 4.5ms minimum
+      const MAX_EXPECTED_LATENCY_NS = ARTIFICIAL_DELAY_NS * 2.0 // 10ms maximum (reasonable upper bound)
+      
+      expect(result.processingLatencyNs).toBeGreaterThanOrEqual(MIN_EXPECTED_LATENCY_NS)
+      expect(result.processingLatencyNs).toBeLessThan(MAX_EXPECTED_LATENCY_NS)
       expect(result.success).toBe(true)
 
       // Restore original method
@@ -252,7 +238,9 @@ describe('MessageProcessor', () => {
 
       // Should throw BackpressureError
       await expect(smallQueueProcessor.handleBackpressure()).rejects.toThrow(BackpressureError)
-      await expect(smallQueueProcessor.handleBackpressure()).rejects.toThrow('Processing queue full')
+      await expect(smallQueueProcessor.handleBackpressure()).rejects.toThrow(
+        'Processing queue full'
+      )
     })
 
     test('should increase batch size under high load', async () => {
@@ -294,8 +282,8 @@ describe('MessageProcessor', () => {
       const results = await processor.processBatch(messages)
 
       expect(results).toHaveLength(5)
-      expect(results.every(r => r.success)).toBe(true)
-      expect(results.every(r => r.processingLatencyNs > 0)).toBe(true)
+      expect(results.every((r) => r.success)).toBe(true)
+      expect(results.every((r) => r.processingLatencyNs > 0)).toBe(true)
     })
 
     test('should handle empty batch', async () => {
@@ -341,7 +329,7 @@ describe('MessageProcessor', () => {
 
       // All messages should be processed successfully
       expect(results).toHaveLength(50)
-      expect(results.every(r => r.success)).toBe(true)
+      expect(results.every((r) => r.success)).toBe(true)
 
       // Batch processing should complete within reasonable time
       const batchTime = endTime - startTime
@@ -366,7 +354,7 @@ describe('MessageProcessor', () => {
       // Process messages with small delay to allow throughput calculation
       for (let i = 0; i < 5; i++) {
         await processor.processMessage(validMessageBytes)
-        await new Promise(resolve => setTimeout(resolve, 1)) // Small delay
+        await new Promise((resolve) => setTimeout(resolve, 1)) // Small delay
       }
 
       const stats = processor.getThroughputStats()
@@ -419,7 +407,7 @@ describe('MessageProcessor', () => {
   describe('Message Validation', () => {
     test('should fail validation for missing required fields', async () => {
       const incompleteData = {
-        messageId: 'test-001'
+        messageId: 'test-001',
         // Missing timestamp, symbol, messageType, data, sequenceNumber
       }
 
@@ -486,7 +474,7 @@ describe('MessageProcessor', () => {
     test('should create MarketData object correctly', () => {
       const marketData = new MarketData({
         messageId: 'test-001',
-        timestamp: 1234567890123456789,
+        timestamp: 1234567890123,
         symbol: 'AAPL',
         messageType: MessageType.TRADE,
         price: 150.25,
@@ -497,7 +485,7 @@ describe('MessageProcessor', () => {
       })
 
       expect(marketData.messageId).toBe('test-001')
-      expect(marketData.timestamp).toBe(1234567890123456789)
+      expect(marketData.timestamp).toBe(1234567890123)
       expect(marketData.symbol).toBe('AAPL')
       expect(marketData.messageType).toBe(MessageType.TRADE)
       expect(marketData.price).toBe(150.25)
@@ -510,7 +498,7 @@ describe('MessageProcessor', () => {
     test('should convert MarketData to dictionary correctly', () => {
       const marketData = new MarketData({
         messageId: 'test-001',
-        timestamp: 1234567890123456789,
+        timestamp: 1234567890123,
         symbol: 'AAPL',
         messageType: MessageType.QUOTE,
         price: 150.25,
@@ -524,7 +512,7 @@ describe('MessageProcessor', () => {
 
       const expected = {
         messageId: 'test-001',
-        timestamp: 1234567890123456789,
+        timestamp: 1234567890123,
         symbol: 'AAPL',
         messageType: 'QUOTE',
         data: {
@@ -544,7 +532,7 @@ describe('MessageProcessor', () => {
     test('should create successful ProcessingResult correctly', () => {
       const marketData = new MarketData({
         messageId: 'test-001',
-        timestamp: 1234567890123456789,
+        timestamp: 1234567890123,
         symbol: 'AAPL',
         messageType: MessageType.TRADE,
         price: 150.25,
@@ -587,32 +575,32 @@ describe('MessageProcessor', () => {
   describe('Statistics Classes', () => {
     test('should update LatencyStats correctly', () => {
       const stats = new LatencyStats()
-      
+
       stats.update(1500000) // 1.5ms in nanoseconds
-      
+
       expect(stats.totalMessages).toBe(1)
       expect(stats.minLatency).toBe(1.5)
       expect(stats.maxLatency).toBe(1.5)
-      
+
       stats.update(2500000) // 2.5ms in nanoseconds
-      
+
       expect(stats.totalMessages).toBe(2)
       expect(stats.minLatency).toBe(1.5)
       expect(stats.maxLatency).toBe(2.5)
     })
 
-    test('should update ThroughputStats correctly', () => {
+    test('should update ThroughputStats correctly', async () => {
       const stats = new ThroughputStats()
-      
+
       // Wait a bit to ensure elapsed time > 0
-      setTimeout(() => {
-        stats.update(100) // 100 bytes
-        
-        expect(stats.totalMessages).toBe(1)
-        expect(stats.totalBytes).toBe(100)
-        expect(stats.messagesPerSecond).toBeGreaterThan(0)
-        expect(stats.bytesPerSecond).toBeGreaterThan(0)
-      }, 10)
+      await new Promise(resolve => setTimeout(resolve, 10))
+      
+      stats.update(100) // 100 bytes
+
+      expect(stats.totalMessages).toBe(1)
+      expect(stats.totalBytes).toBe(100)
+      expect(stats.messagesPerSecond).toBeGreaterThan(0)
+      expect(stats.bytesPerSecond).toBeGreaterThan(0)
     })
   })
 })

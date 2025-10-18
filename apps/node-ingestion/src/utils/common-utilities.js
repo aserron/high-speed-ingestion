@@ -1,0 +1,701 @@
+/**
+ * Common Utility Functions
+ *
+ * Provides reusable utility functions to reduce code duplication
+ * across the application, including validation, configuration, and
+ * common patterns.
+ */
+
+// Internal modules
+import { getConfig } from '../config/index.js'
+import { ValidationError, StorageError } from '../errors/index.js'
+import { getLogger } from '../logging/index.js'
+
+/**
+ * Singleton pattern utility
+ */
+export function createSingleton (createInstance) {
+  let instance = null
+
+  return function getInstance (...args) {
+    if (!instance) {
+      instance = createInstance(...args)
+    }
+    return instance
+  }
+}
+
+/**
+ * Initialize and get singleton pattern
+ */
+export function createInitializableSingleton (createInstance) {
+  let instance = null
+
+  return {
+    getInstance: function (...args) {
+      if (!instance) {
+        instance = createInstance(...args)
+      }
+      return instance
+    },
+
+    initialize: async function (config = null) {
+      const inst = createInstance(config)
+      await inst.initialize()
+      instance = inst
+      return inst
+    }
+  }
+}
+
+/**
+ * Common validation utilities
+ */
+export const validators = {
+  /**
+   * Validate required parameter
+   */
+  required (value, paramName, context = null) {
+    if (value === null || value === undefined || value === '') {
+      throw new ValidationError(`${paramName} is required`, paramName, value, { context })
+    }
+    return value
+  },
+
+  /**
+   * Validate key parameter (non-empty string)
+   */
+  key (key, paramName = 'key') {
+    if (!key || typeof key !== 'string' || key.trim() === '') {
+      throw new ValidationError(`${paramName} must be a non-empty string`, paramName, key)
+    }
+    return key.trim()
+  },
+
+  /**
+   * Validate array parameter
+   */
+  array (arr, paramName = 'array', minLength = 0) {
+    if (!Array.isArray(arr)) {
+      throw new ValidationError(`${paramName} must be an array`, paramName, arr)
+    }
+    if (arr.length < minLength) {
+      throw new ValidationError(
+        `${paramName} must have at least ${minLength} item(s)`,
+        paramName,
+        arr
+      )
+    }
+    return arr
+  },
+
+  /**
+   * Validate object parameter
+   */
+  object (obj, paramName = 'object') {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+      throw new ValidationError(`${paramName} must be an object`, paramName, obj)
+    }
+    return obj
+  },
+
+  /**
+   * Validate function parameter
+   */
+  function (fn, paramName = 'function') {
+    if (typeof fn !== 'function') {
+      throw new ValidationError(`${paramName} must be a function`, paramName, fn)
+    }
+    return fn
+  },
+
+  /**
+   * Validate positive number
+   */
+  positiveNumber (num, paramName = 'number') {
+    if (typeof num !== 'number' || num <= 0 || isNaN(num)) {
+      throw new ValidationError(`${paramName} must be a positive number`, paramName, num)
+    }
+    return num
+  },
+
+  /**
+   * Validate key-value pairs object
+   */
+  keyValuePairs (pairs, paramName = 'keyValuePairs') {
+    this.object(pairs, paramName)
+    if (Object.keys(pairs).length === 0) {
+      throw new ValidationError(`${paramName} must not be empty`, paramName, pairs)
+    }
+    return pairs
+  },
+
+  /**
+   * Validate key and field combination
+   */
+  keyField (key, field, keyName = 'key', fieldName = 'field') {
+    this.key(key, keyName)
+    this.key(field, fieldName)
+    return { key, field }
+  }
+}
+
+/**
+ * Configuration utilities
+ */
+export const configUtils = {
+  /**
+   * Standard configuration and logger initialization pattern
+   */
+  initializeService (config, loggerName) {
+    const serviceConfig = config || getConfig()
+    const logger = getLogger(loggerName)
+    return { config: serviceConfig, logger }
+  },
+  /**
+   * Get configuration with fallback
+   */
+  getConfigWithFallback (getConfigFn, fallbackConfig = {}) {
+    try {
+      return getConfigFn() || fallbackConfig
+    } catch (error) {
+      return fallbackConfig
+    }
+  },
+
+  /**
+   * Extract nested configuration
+   */
+  extractConfig (config, path, defaultValue = null) {
+    const keys = path.split('.')
+    let current = config
+
+    for (const key of keys) {
+      if (current && typeof current === 'object' && key in current) {
+        current = current[key]
+      } else {
+        return defaultValue
+      }
+    }
+
+    return current
+  },
+
+  /**
+   * Merge configuration objects
+   */
+  mergeConfigs (baseConfig, overrideConfig) {
+    if (!overrideConfig) return baseConfig
+    if (!baseConfig) return overrideConfig
+
+    const merged = { ...baseConfig }
+
+    for (const [key, value] of Object.entries(overrideConfig)) {
+      if (value !== null && value !== undefined) {
+        if (
+          typeof value === 'object' &&
+          !Array.isArray(value) &&
+          typeof merged[key] === 'object' &&
+          !Array.isArray(merged[key])
+        ) {
+          merged[key] = this.mergeConfigs(merged[key], value)
+        } else {
+          merged[key] = value
+        }
+      }
+    }
+
+    return merged
+  }
+}
+
+/**
+ * Common async utilities
+ */
+export const asyncUtils = {
+  /**
+   * Retry async operation with exponential backoff
+   */
+  async retry (operation, maxAttempts = 3, baseDelay = 1000, backoffMultiplier = 2) {
+    let lastError
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await operation()
+      } catch (error) {
+        lastError = error
+
+        if (attempt === maxAttempts) {
+          throw error
+        }
+
+        const delay = baseDelay * Math.pow(backoffMultiplier, attempt - 1)
+        await this.delay(delay)
+      }
+    }
+
+    throw lastError
+  },
+
+  /**
+   * Delay utility
+   */
+  delay (ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+  },
+
+  /**
+   * Timeout wrapper for promises
+   */
+  withTimeout (promise, timeoutMs, timeoutMessage = 'Operation timed out') {
+    return Promise.race([
+      promise,
+      new Promise((_resolve, reject) => {
+        setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs)
+      })
+    ])
+  },
+
+  /**
+   * Execute async operations in parallel with concurrency limit
+   */
+  async parallelLimit (items, asyncFn, concurrency = 5) {
+    const results = []
+    const executing = []
+
+    for (const item of items) {
+      const promise = asyncFn(item).then((result) => {
+        executing.splice(executing.indexOf(promise), 1)
+        return result
+      })
+
+      results.push(promise)
+      executing.push(promise)
+
+      if (executing.length >= concurrency) {
+        await Promise.race(executing)
+      }
+    }
+
+    return Promise.all(results)
+  },
+
+  /**
+   * Execute async operations in batches
+   */
+  async batchProcess (items, asyncFn, batchSize = 10) {
+    const results = []
+
+    for (let i = 0; i < items.length; i += batchSize) {
+      const batch = items.slice(i, i + batchSize)
+      const batchResults = await Promise.all(batch.map(asyncFn))
+      results.push(...batchResults)
+    }
+
+    return results
+  },
+
+  /**
+   * Safe async operation with automatic retry and timeout
+   */
+  async safeAsync (operation, options = {}) {
+    const { maxRetries = 3, timeout = 30000, retryDelay = 1000, retryBackoff = 2 } = options
+
+    return this.withTimeout(this.retry(operation, maxRetries, retryDelay, retryBackoff), timeout)
+  }
+}
+
+/**
+ * Performance utilities
+ */
+export const perfUtils = {
+  /**
+   * Measure execution time in nanoseconds
+   */
+  measureTime (fn) {
+    const start = process.hrtime.bigint()
+    const result = fn()
+    const end = process.hrtime.bigint()
+
+    return {
+      result,
+      durationNs: Number(end - start)
+    }
+  },
+
+  /**
+   * Measure async execution time in nanoseconds
+   */
+  async measureTimeAsync (fn) {
+    const start = process.hrtime.bigint()
+    const result = await fn()
+    const end = process.hrtime.bigint()
+
+    return {
+      result,
+      durationNs: Number(end - start)
+    }
+  },
+
+  /**
+   * Convert nanoseconds to milliseconds
+   */
+  nsToMs (nanoseconds) {
+    return Number(nanoseconds) / 1_000_000
+  },
+
+  /**
+   * Convert nanoseconds to seconds
+   */
+  nsToSeconds (nanoseconds) {
+    return Number(nanoseconds) / 1_000_000_000
+  }
+}
+
+/**
+ * Environment utilities
+ */
+export const envUtils = {
+  /**
+   * Get environment variable with fallback
+   */
+  get (key, fallback = null) {
+    return process.env[key] ?? fallback
+  },
+
+  /**
+   * Get environment as specific type
+   */
+  getString (key, fallback = '') {
+    return this.get(key, fallback)
+  },
+
+  getNumber (key, fallback = 0) {
+    const value = this.get(key)
+    return value ? Number(value) : fallback
+  },
+
+  getBoolean (key, fallback = false) {
+    const value = this.get(key)
+    if (value === undefined || value === null) return fallback
+    return value.toLowerCase() === 'true'
+  },
+
+  /**
+   * Get current environment (development, production, test)
+   */
+  getEnvironment () {
+    return this.get('NODE_ENV', 'development')
+  },
+
+  /**
+   * Check if running in specific environment
+   */
+  isDevelopment () {
+    return this.getEnvironment() === 'development'
+  },
+
+  isProduction () {
+    return this.getEnvironment() === 'production'
+  },
+
+  isTest () {
+    return this.getEnvironment() === 'test'
+  }
+}
+
+/**
+ * String utilities
+ */
+export const stringUtils = {
+  /**
+   * Truncate string with ellipsis
+   */
+  truncate (str, maxLength = 100, suffix = '...') {
+    if (!str || str.length <= maxLength) {
+      return str
+    }
+    return str.substring(0, maxLength - suffix.length) + suffix
+  },
+
+  /**
+   * Safe string conversion
+   */
+  toString (value, fallback = '') {
+    if (value === null || value === undefined) {
+      return fallback
+    }
+    return String(value)
+  },
+
+  /**
+   * Generate random string
+   */
+  randomString (
+    length = 8,
+    charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  ) {
+    let result = ''
+    for (let i = 0; i < length; i++) {
+      result += charset.charAt(Math.floor(Math.random() * charset.length))
+    }
+    return result
+  }
+}
+
+/**
+ * JSON utilities to reduce duplicate parsing/serialization code
+ */
+export const jsonUtils = {
+  /**
+   * Safe JSON parsing with fallback
+   */
+  safeParse (data, fallback = null) {
+    try {
+      return JSON.parse(data)
+    } catch (error) {
+      return fallback
+    }
+  },
+
+  /**
+   * Safe JSON stringification
+   */
+  safeStringify (value, fallback = null) {
+    try {
+      return typeof value === 'string' ? value : JSON.stringify(value)
+    } catch (error) {
+      return fallback
+    }
+  },
+
+  /**
+   * Parse JSON with validation error on failure
+   */
+  parseWithValidation (data, fieldName = 'data') {
+    try {
+      return JSON.parse(data)
+    } catch (error) {
+      throw new ValidationError(`Invalid JSON in ${fieldName}`, fieldName, data, { cause: error })
+    }
+  },
+
+  /**
+   * Stringify with validation error on failure
+   */
+  stringifyWithValidation (value, fieldName = 'value') {
+    try {
+      return typeof value === 'string' ? value : JSON.stringify(value)
+    } catch (error) {
+      throw new ValidationError(`${fieldName} must be serializable`, fieldName, value, {
+        cause: error
+      })
+    }
+  }
+}
+
+/**
+ * Error handling utilities to standardize error processing patterns
+ */
+/**
+ * Error handling utilities to standardize error processing patterns
+ */
+export const errorUtils = {
+  /**
+   * Standard error logging with consistent format
+   */
+  logError (logger, message, error, context = {}) {
+    const errorInfo = {
+      error: error.message,
+      stack: error.stack,
+      ...context
+    }
+
+    logger.error(message, errorInfo)
+    return errorInfo
+  },
+
+  /**
+   * Log error with latency tracking
+   */
+  logErrorWithLatency (logger, message, error, startTime, context = {}) {
+    const latencyNs = process.hrtime.bigint() - startTime
+    return this.logError(logger, message, error, {
+      latencyNs: latencyNs.toString(),
+      latencyMs: Number(latencyNs) / 1_000_000,
+      ...context
+    })
+  },
+
+  /**
+   * Log error with statistics tracking
+   */
+  logErrorWithStats (logger, message, error, stats, statKey, context = {}) {
+    if (stats && statKey) {
+      stats[statKey]++
+    }
+    return this.logError(logger, message, error, context)
+  },
+
+  /**
+   * Comprehensive error handler with stats, latency, and event emission
+   */
+  handleError (logger, message, error, options = {}) {
+    const { stats, statKey, startTime, eventEmitter, eventName, context = {} } = options
+
+    // Track statistics
+    if (stats && statKey) {
+      stats[statKey]++
+    }
+
+    // Add latency if provided
+    let errorContext = { ...context }
+    if (startTime) {
+      const latencyNs = process.hrtime.bigint() - startTime
+      errorContext = {
+        ...errorContext,
+        latencyNs: latencyNs.toString(),
+        latencyMs: Number(latencyNs) / 1_000_000
+      }
+    }
+
+    // Log the error
+    const errorInfo = this.logError(logger, message, error, errorContext)
+
+    // Emit event if requested
+    if (eventEmitter && eventName) {
+      eventEmitter.emit(eventName, {
+        error,
+        context: errorContext,
+        timestamp: Date.now()
+      })
+    }
+
+    return errorInfo
+  },
+
+  /**
+   * Create standardized error context
+   */
+  createErrorContext (baseContext = {}) {
+    return {
+      timestamp: Date.now(),
+      ...baseContext
+    }
+  },
+
+  /**
+   * Safe error message extraction
+   */
+  getErrorMessage (error) {
+    if (!error) return 'Unknown error'
+    return error.message || error.toString() || 'Unknown error'
+  },
+
+  /**
+   * Safe error stack extraction
+   */
+  getErrorStack (error) {
+    if (!error) return null
+    return error.stack || null
+  }
+}
+
+/**
+ * Connection utilities to reduce duplicate connection validation
+ */
+export const connectionUtils = {
+  /**
+   * Validate connection pool is initialized and connected
+   */
+  validateConnection (pool, isConnected, serviceName, operation = 'operation') {
+    if (!pool) {
+      throw new StorageError(`${serviceName} pool not initialized`)
+    }
+    if (!isConnected) {
+      throw new StorageError(`${serviceName} not connected`, serviceName.toLowerCase(), operation)
+    }
+  },
+
+  /**
+   * Validate database connection for operations
+   */
+  validateDatabaseConnection (pool, isConnected, serviceName, operation) {
+    this.validateConnection(pool, isConnected, serviceName, operation)
+  }
+}
+
+/**
+ * Enhanced validation utilities (extending existing validators)
+ */
+export const validationUtils = {
+  /**
+   * Validate connection configuration
+   */
+  validateConnectionConfig (config, serviceName) {
+    const errors = []
+
+    if (!config.host) {
+      errors.push(`${serviceName} host is required`)
+    }
+
+    if (!config.port || config.port < 1 || config.port > 65535) {
+      errors.push(`${serviceName} port must be between 1 and 65535`)
+    }
+
+    if (errors.length > 0) {
+      throw new ValidationError(`${serviceName} configuration invalid: ${errors.join(', ')}`)
+    }
+
+    return true
+  },
+
+  /**
+   * Validate array with custom message
+   */
+  validateNonEmptyArray (arr, fieldName, customMessage = null) {
+    if (!Array.isArray(arr) || arr.length === 0) {
+      const message = customMessage || `${fieldName} must be a non-empty array`
+      throw new ValidationError(message, fieldName, arr)
+    }
+    return arr
+  },
+
+  /**
+   * Validate object data for database operations
+   */
+  validateObjectData (data, operation = 'operation') {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new ValidationError(`${operation} data must be an object`, 'data', data)
+    }
+    return data
+  },
+
+  /**
+   * Safe existence check with custom handling
+   */
+  checkExists (value, fieldName, throwError = true) {
+    const exists = value !== null && value !== undefined && value !== ''
+
+    if (!exists && throwError) {
+      throw new ValidationError(`${fieldName} is required`, fieldName, value)
+    }
+
+    return exists
+  }
+}
+
+export default {
+  createSingleton,
+  createInitializableSingleton,
+  validators,
+  configUtils,
+  asyncUtils,
+  perfUtils,
+  envUtils,
+  stringUtils,
+  jsonUtils,
+  errorUtils,
+  connectionUtils,
+  validationUtils
+}

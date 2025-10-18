@@ -30,10 +30,7 @@ const config = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@config/(.*)$': '<rootDir>/src/config/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
-    '^@tests/(.*)$': '<rootDir>/src/**/__tests__/$1',
-    
-    // Handle .js and .mjs file extensions in imports
-    '^(\\.{1,2}/.*)\\.m?js$': '$1'
+    '^@tests/(.*)$': '<rootDir>/src/**/__tests__/$1'
   },
   
   // Module resolution directories

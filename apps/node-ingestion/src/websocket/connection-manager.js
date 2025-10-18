@@ -6,10 +6,14 @@
  * for the Node.js financial data ingestion system.
  */
 
+// External dependencies
 import WebSocket from 'ws'
 import { EventEmitter } from 'events'
+
+// Internal modules
 import { getConfig } from '../config/index.js'
 import { getLogger, setCorrelationId } from '../logging/index.js'
+import { jsonUtils, errorUtils } from '../utils/common-utilities.js'
 import { ConnectionError, TimeoutError } from '../errors/index.js'
 
 /**
@@ -176,11 +180,13 @@ export class WebSocketConnectionManager extends EventEmitter {
   waitForConnection () {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new TimeoutError(
-          'WebSocket connection timeout',
-          'connect',
-          this.config.websocket.connectTimeoutMs
-        ))
+        reject(
+          new TimeoutError(
+            'WebSocket connection timeout',
+            'connect',
+            this.config.websocket.connectTimeoutMs
+          )
+        )
       }, this.config.websocket.connectTimeoutMs)
 
       const onOpen = () => {
@@ -192,13 +198,15 @@ export class WebSocketConnectionManager extends EventEmitter {
       const onError = (error) => {
         clearTimeout(timeout)
         this.ws.removeListener('open', onOpen)
-        reject(new ConnectionError(
-          'WebSocket connection failed',
-          'websocket',
-          this.url,
-          this.reconnectAttempts,
-          { cause: error }
-        ))
+        reject(
+          new ConnectionError(
+            'WebSocket connection failed',
+            'websocket',
+            this.url,
+            this.reconnectAttempts,
+            { cause: error }
+          )
+        )
       }
 
       this.ws.once('open', onOpen)
@@ -256,10 +264,8 @@ export class WebSocketConnectionManager extends EventEmitter {
    */
   onConnectionFailed (error) {
     this.stats.failedConnections++
-    this.stats.connectionErrors++
 
-    this.logger.error('WebSocket connection failed', {
-      error: error.message,
+    errorUtils.logErrorWithStats(this.logger, 'WebSocket connection failed', error, this.stats, 'connectionErrors', {
       attempt: this.reconnectAttempts + 1,
       maxAttempts: this.maxReconnectAttempts,
       url: this.url
@@ -307,15 +313,12 @@ export class WebSocketConnectionManager extends EventEmitter {
       if (isBinary) {
         message = data
       } else {
-        try {
-          message = JSON.parse(data.toString())
-        } catch (parseError) {
-          message = data.toString()
-        }
+        message = jsonUtils.safeParse(data.toString(), data.toString())
       }
 
       // Set correlation ID for message processing
-      const correlationId = message.correlationId || `ws-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const correlationId =
+        message.correlationId || `ws-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       setCorrelationId(correlationId)
 
       // Emit message event
@@ -343,18 +346,15 @@ export class WebSocketConnectionManager extends EventEmitter {
         correlationId
       })
     } catch (error) {
-      this.stats.messageErrors++
-      this.logger.error('Error processing WebSocket message', {
-        error: error.message,
-        messageSize: data.length,
-        isBinary
-      })
-
-      this.emit('messageError', {
-        error,
-        data,
-        isBinary,
-        timestamp: Date.now()
+      errorUtils.handleError(this.logger, 'Error processing WebSocket message', error, {
+        stats: this.stats,
+        statKey: 'messageErrors',
+        eventEmitter: this,
+        eventName: 'messageError',
+        context: {
+          messageSize: data.length,
+          isBinary
+        }
       })
     }
   }
@@ -449,7 +449,8 @@ export class WebSocketConnectionManager extends EventEmitter {
     // Update min/max/avg
     this.stats.maxPingLatency = Math.max(this.stats.maxPingLatency, latency)
     this.stats.minPingLatency = Math.min(this.stats.minPingLatency, latency)
-    this.stats.avgPingLatency = this.stats.pingLatencies.reduce((a, b) => a + b, 0) / this.stats.pingLatencies.length
+    this.stats.avgPingLatency =
+      this.stats.pingLatencies.reduce((a, b) => a + b, 0) / this.stats.pingLatencies.length
   }
 
   /**
@@ -571,9 +572,7 @@ export class WebSocketConnectionManager extends EventEmitter {
         })
       }, this.config.websocket.pongTimeoutMs)
     } catch (error) {
-      this.logger.error('Failed to send ping', {
-        error: error.message
-      })
+      errorUtils.logError(this.logger, 'Failed to send ping', error)
     }
   }
 
@@ -600,9 +599,14 @@ export class WebSocketConnectionManager extends EventEmitter {
     this.performanceMetrics.lastThroughputCheck = now
 
     // Calculate bandwidth
-    const timeDiff = (now - (this.stats.bandwidthSamples[this.stats.bandwidthSamples.length - 1]?.timestamp || now)) / 1000
+    const timeDiff =
+      (now -
+        (this.stats.bandwidthSamples[this.stats.bandwidthSamples.length - 1]?.timestamp || now)) /
+      1000
     if (timeDiff > 0) {
-      const bytesDiff = this.stats.bytesReceived - (this.stats.bandwidthSamples[this.stats.bandwidthSamples.length - 1]?.bytes || 0)
+      const bytesDiff =
+        this.stats.bytesReceived -
+        (this.stats.bandwidthSamples[this.stats.bandwidthSamples.length - 1]?.bytes || 0)
       const bandwidth = bytesDiff / timeDiff // bytes per second
 
       this.stats.bandwidthSamples.push({
@@ -646,7 +650,7 @@ export class WebSocketConnectionManager extends EventEmitter {
       if (Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
         payload = data
       } else if (typeof data === 'object') {
-        payload = JSON.stringify(data)
+        payload = jsonUtils.safeStringify(data, String(data))
       } else {
         payload = String(data)
       }
@@ -759,17 +763,24 @@ export class WebSocketConnectionManager extends EventEmitter {
       queueSize: this.messageQueue.length,
 
       // Performance metrics
-      averageProcessingTime: this.performanceMetrics.messageProcessingTimes.length > 0
-        ? this.performanceMetrics.messageProcessingTimes.reduce((a, b) => a + b, 0) / this.performanceMetrics.messageProcessingTimes.length
-        : 0,
+      averageProcessingTime:
+        this.performanceMetrics.messageProcessingTimes.length > 0
+          ? this.performanceMetrics.messageProcessingTimes.reduce((a, b) => a + b, 0) /
+            this.performanceMetrics.messageProcessingTimes.length
+          : 0,
 
-      currentThroughput: this.performanceMetrics.throughputSamples.length > 0
-        ? this.performanceMetrics.throughputSamples[this.performanceMetrics.throughputSamples.length - 1].messagesPerSecond
-        : 0,
+      currentThroughput:
+        this.performanceMetrics.throughputSamples.length > 0
+          ? this.performanceMetrics.throughputSamples[
+            this.performanceMetrics.throughputSamples.length - 1
+          ].messagesPerSecond
+          : 0,
 
-      averageThroughput: this.performanceMetrics.throughputSamples.length > 0
-        ? this.performanceMetrics.throughputSamples.reduce((a, b) => a + b.messagesPerSecond, 0) / this.performanceMetrics.throughputSamples.length
-        : 0
+      averageThroughput:
+        this.performanceMetrics.throughputSamples.length > 0
+          ? this.performanceMetrics.throughputSamples.reduce((a, b) => a + b.messagesPerSecond, 0) /
+            this.performanceMetrics.throughputSamples.length
+          : 0
     }
   }
 

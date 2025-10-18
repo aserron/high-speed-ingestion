@@ -1,6 +1,6 @@
 /**
  * High-performance message processor for financial data ingestion.
- * 
+ *
  * This module implements the core message processing engine with:
  * - msgpack5 serialization for high performance
  * - End-to-end latency measurement using process.hrtime.bigint
@@ -10,13 +10,9 @@
 
 import msgpack from 'msgpack5'
 import { EventEmitter } from 'events'
-import { performance } from 'perf_hooks'
+
 import { getLogger } from '../logging/index.js'
-import { 
-  MessageProcessingError, 
-  ValidationError, 
-  BackpressureError 
-} from '../errors/index.js'
+import { MessageProcessingError, ValidationError, BackpressureError } from '../errors/index.js'
 
 // Message type enumeration
 export const MessageType = {
@@ -35,7 +31,7 @@ export const Side = {
  * Market data message structure
  */
 export class MarketData {
-  constructor({
+  constructor ({
     messageId,
     timestamp,
     symbol,
@@ -57,7 +53,7 @@ export class MarketData {
     this.sequenceNumber = sequenceNumber
   }
 
-  toDict() {
+  toDict () {
     return {
       messageId: this.messageId,
       timestamp: this.timestamp,
@@ -78,13 +74,7 @@ export class MarketData {
  * Result of message processing operation
  */
 export class ProcessingResult {
-  constructor({
-    success,
-    messageId,
-    processingLatencyNs,
-    error = null,
-    marketData = null
-  }) {
+  constructor ({ success, messageId, processingLatencyNs, error = null, marketData = null }) {
     this.success = success
     this.messageId = messageId
     this.processingLatencyNs = processingLatencyNs
@@ -97,7 +87,7 @@ export class ProcessingResult {
  * Latency statistics tracking
  */
 export class LatencyStats {
-  constructor() {
+  constructor () {
     this.p50 = 0.0
     this.p95 = 0.0
     this.p99 = 0.0
@@ -107,7 +97,7 @@ export class LatencyStats {
     this.totalMessages = 0
   }
 
-  update(latencyNs) {
+  update (latencyNs) {
     const latencyMs = latencyNs / 1_000_000 // Convert to milliseconds
     this.minLatency = Math.min(this.minLatency, latencyMs)
     this.maxLatency = Math.max(this.maxLatency, latencyMs)
@@ -119,7 +109,7 @@ export class LatencyStats {
  * Throughput statistics tracking
  */
 export class ThroughputStats {
-  constructor() {
+  constructor () {
     this.messagesPerSecond = 0.0
     this.bytesPerSecond = 0.0
     this.totalMessages = 0
@@ -127,7 +117,7 @@ export class ThroughputStats {
     this.startTime = Date.now()
   }
 
-  update(messageSizeBytes) {
+  update (messageSizeBytes) {
     this.totalMessages++
     this.totalBytes += messageSizeBytes
 
@@ -141,7 +131,7 @@ export class ThroughputStats {
 
 /**
  * High-performance message processor for financial market data.
- * 
+ *
  * Features:
  * - msgpack5 serialization for optimal performance
  * - Nanosecond precision latency measurement
@@ -149,14 +139,14 @@ export class ThroughputStats {
  * - Comprehensive validation and error handling
  */
 export class MessageProcessor extends EventEmitter {
-  constructor({
+  constructor ({
     maxBatchSize = 1000,
     batchTimeoutMs = 10,
     maxQueueSize = 10000,
     enableValidation = true
   } = {}) {
     super()
-    
+
     this.maxBatchSize = maxBatchSize
     this.batchTimeoutMs = batchTimeoutMs
     this.maxQueueSize = maxQueueSize
@@ -182,7 +172,7 @@ export class MessageProcessor extends EventEmitter {
     this.processingErrors = 0
 
     this.logger = getLogger('MessageProcessor')
-    this.logger.info(`MessageProcessor initialized`, {
+    this.logger.info('MessageProcessor initialized', {
       maxBatchSize,
       batchTimeoutMs,
       maxQueueSize,
@@ -192,11 +182,11 @@ export class MessageProcessor extends EventEmitter {
 
   /**
    * Process a single market data message.
-   * 
+   *
    * @param {Buffer} message - Raw message bytes (MessagePack encoded)
    * @returns {Promise<ProcessingResult>} Processing result with outcome and metrics
    */
-  async processMessage(message) {
+  async processMessage (message) {
     const startTime = process.hrtime.bigint()
 
     try {
@@ -230,7 +220,6 @@ export class MessageProcessor extends EventEmitter {
       })
 
       return result
-
     } catch (error) {
       const endTime = process.hrtime.bigint()
       const processingLatency = Number(endTime - startTime)
@@ -263,11 +252,11 @@ export class MessageProcessor extends EventEmitter {
 
   /**
    * Process a batch of messages for improved throughput.
-   * 
+   *
    * @param {Buffer[]} messages - Array of raw message bytes
    * @returns {Promise<ProcessingResult[]>} Array of processing results
    */
-  async processBatch(messages) {
+  async processBatch (messages) {
     if (!messages || messages.length === 0) {
       return []
     }
@@ -277,26 +266,28 @@ export class MessageProcessor extends EventEmitter {
 
     try {
       // Process messages concurrently within the batch
-      const promises = messages.map(msg => this.processMessage(msg))
+      const promises = messages.map((msg) => this.processMessage(msg))
       const batchResults = await Promise.allSettled(promises)
 
       // Handle results and exceptions from concurrent processing
       for (let i = 0; i < batchResults.length; i++) {
         const result = batchResults[i]
-        
+
         if (result.status === 'fulfilled') {
           results.push(result.value)
         } else {
           this.processingErrors++
           this.errorCount++
           const batchLatency = Number(process.hrtime.bigint() - batchStart)
-          
-          results.push(new ProcessingResult({
-            success: false,
-            messageId: `batch_${i}`,
-            processingLatencyNs: batchLatency,
-            error: `Batch processing error: ${result.reason.message}`
-          }))
+
+          results.push(
+            new ProcessingResult({
+              success: false,
+              messageId: `batch_${i}`,
+              processingLatencyNs: batchLatency,
+              error: `Batch processing error: ${result.reason.message}`
+            })
+          )
         }
       }
 
@@ -306,7 +297,6 @@ export class MessageProcessor extends EventEmitter {
       })
 
       return results
-
     } catch (error) {
       this.logger.error('Batch processing failed', { error: error.message })
       throw new MessageProcessingError(`Batch processing failed: ${error.message}`)
@@ -315,15 +305,16 @@ export class MessageProcessor extends EventEmitter {
 
   /**
    * Handle backpressure by implementing adaptive batching.
-   * 
+   *
    * This method monitors queue depth and adjusts batch sizes dynamically
    * to maintain optimal throughput under varying load conditions.
    */
-  async handleBackpressure() {
+  async handleBackpressure () {
     const queueSize = this.processingQueue.length
     const queueUtilization = queueSize / this.maxQueueSize
 
-    if (queueUtilization > 0.8) { // High load - increase batch size
+    if (queueUtilization > 0.8) {
+      // High load - increase batch size
       const newBatchSize = Math.min(this.maxBatchSize * 2, 2000)
       this.logger.warn(`High queue utilization (${queueUtilization.toFixed(2)})`, {
         newBatchSize,
@@ -331,8 +322,8 @@ export class MessageProcessor extends EventEmitter {
         maxQueueSize: this.maxQueueSize
       })
       this.maxBatchSize = newBatchSize
-
-    } else if (queueUtilization < 0.2) { // Low load - decrease batch size
+    } else if (queueUtilization < 0.2) {
+      // Low load - decrease batch size
       const newBatchSize = Math.max(Math.floor(this.maxBatchSize / 2), 100)
       this.logger.info(`Low queue utilization (${queueUtilization.toFixed(2)})`, {
         newBatchSize,
@@ -355,12 +346,19 @@ export class MessageProcessor extends EventEmitter {
 
   /**
    * Validate message structure and required fields.
-   * 
+   *
    * @param {Object} data - Parsed message data
    * @throws {ValidationError} If message validation fails
    */
-  _validateMessage(data) {
-    const requiredFields = ['messageId', 'timestamp', 'symbol', 'messageType', 'data', 'sequenceNumber']
+  _validateMessage (data) {
+    const requiredFields = [
+      'messageId',
+      'timestamp',
+      'symbol',
+      'messageType',
+      'data',
+      'sequenceNumber'
+    ]
 
     for (const field of requiredFields) {
       if (!(field in data)) {
@@ -400,11 +398,11 @@ export class MessageProcessor extends EventEmitter {
 
   /**
    * Parse validated message data into MarketData object.
-   * 
+   *
    * @param {Object} data - Validated message data
    * @returns {MarketData} MarketData object
    */
-  _parseMarketData(data) {
+  _parseMarketData (data) {
     const dataSection = data.data
 
     return new MarketData({
@@ -422,17 +420,17 @@ export class MessageProcessor extends EventEmitter {
 
   /**
    * Update processing statistics.
-   * 
+   *
    * @param {number} latencyNs - Processing latency in nanoseconds
    * @param {number} messageSize - Message size in bytes
    */
-  _updateStats(latencyNs, messageSize) {
+  _updateStats (latencyNs, messageSize) {
     // Update latency statistics
     this.latencyStats.update(latencyNs)
-    
+
     // Store latency sample (as milliseconds)
     this.latencySamples.push(latencyNs / 1_000_000)
-    
+
     // Keep only the most recent samples
     if (this.latencySamples.length > this.maxSamples) {
       this.latencySamples.shift()
@@ -442,11 +440,12 @@ export class MessageProcessor extends EventEmitter {
     this.throughputStats.update(messageSize)
 
     // Calculate percentiles from recent samples
-    if (this.latencySamples.length >= 100) { // Need minimum samples for meaningful percentiles
+    if (this.latencySamples.length >= 100) {
+      // Need minimum samples for meaningful percentiles
       const sortedSamples = [...this.latencySamples].sort((a, b) => a - b)
       const n = sortedSamples.length
 
-      this.latencyStats.p50 = sortedSamples[Math.floor(n * 0.50)]
+      this.latencyStats.p50 = sortedSamples[Math.floor(n * 0.5)]
       this.latencyStats.p95 = sortedSamples[Math.floor(n * 0.95)]
       this.latencyStats.p99 = sortedSamples[Math.floor(n * 0.99)]
       this.latencyStats.p999 = sortedSamples[Math.floor(n * 0.999)]
@@ -457,7 +456,7 @@ export class MessageProcessor extends EventEmitter {
    * Get current latency statistics.
    * @returns {LatencyStats} Current latency statistics
    */
-  getLatencyStats() {
+  getLatencyStats () {
     return this.latencyStats
   }
 
@@ -465,7 +464,7 @@ export class MessageProcessor extends EventEmitter {
    * Get current throughput statistics.
    * @returns {ThroughputStats} Current throughput statistics
    */
-  getThroughputStats() {
+  getThroughputStats () {
     return this.throughputStats
   }
 
@@ -473,7 +472,7 @@ export class MessageProcessor extends EventEmitter {
    * Get error statistics.
    * @returns {Object} Error statistics
    */
-  getErrorStats() {
+  getErrorStats () {
     return {
       totalErrors: this.errorCount,
       validationErrors: this.validationErrors,
@@ -484,7 +483,7 @@ export class MessageProcessor extends EventEmitter {
   /**
    * Reset all statistics counters.
    */
-  resetStats() {
+  resetStats () {
     this.latencyStats = new LatencyStats()
     this.throughputStats = new ThroughputStats()
     this.latencySamples = []

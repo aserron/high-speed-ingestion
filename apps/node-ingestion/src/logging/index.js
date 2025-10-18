@@ -5,9 +5,12 @@
  * and integration with the monitoring system for comprehensive observability.
  */
 
-import winston from 'winston'
+// External dependencies
 import { AsyncLocalStorage } from 'async_hooks'
 import { v4 as uuidv4 } from 'uuid'
+import winston from 'winston'
+
+// Internal modules
 import { getConfig } from '../config/index.js'
 
 // AsyncLocalStorage for correlation ID tracking
@@ -198,7 +201,13 @@ export class PerformanceLogger {
   /**
    * Log throughput measurement
    */
-  logThroughput (operation, messagesPerSecond, bytesPerSecond = null, windowSizeMs = null, context = {}) {
+  logThroughput (
+    operation,
+    messagesPerSecond,
+    bytesPerSecond = null,
+    windowSizeMs = null,
+    context = {}
+  ) {
     const logData = {
       operation,
       messagesPerSecond,

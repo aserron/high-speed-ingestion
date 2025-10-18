@@ -5,10 +5,13 @@
  * and structured logging with correlation IDs for performance analysis.
  */
 
+// External dependencies
 import { EventEmitter } from 'events'
-import { performance } from 'perf_hooks'
 import { randomUUID } from 'crypto'
+
+// Internal modules
 import { getLogger } from '../logging/index.js'
+import { createSingleton } from '../utils/common-utilities.js'
 
 // Prometheus client with graceful fallback
 let promClient = null
@@ -21,27 +24,34 @@ try {
   // Create mock prometheus client for when prom-client is not available
   promClient = {
     Counter: class MockCounter {
-      constructor() {}
-      inc() {}
-      labels() { return this }
+      inc () {}
+      labels () {
+        return this
+      }
     },
     Histogram: class MockHistogram {
-      constructor() {}
-      observe() {}
-      labels() { return this }
-      startTimer() { return () => {} }
+      observe () {}
+      labels () {
+        return this
+      }
+
+      startTimer () {
+        return () => {}
+      }
     },
     Gauge: class MockGauge {
-      constructor() {}
-      set() {}
-      inc() {}
-      dec() {}
-      labels() { return this }
+      set () {}
+      inc () {}
+      dec () {}
+      labels () {
+        return this
+      }
     },
     Summary: class MockSummary {
-      constructor() {}
-      observe() {}
-      labels() { return this }
+      observe () {}
+      labels () {
+        return this
+      }
     },
     register: {
       clear: () => {},
@@ -56,14 +66,14 @@ try {
  * Latency statistics container
  */
 class LatencyStats {
-  constructor() {
+  constructor () {
     this.count = 0
     this.totalNs = 0n
     this.minNs = Infinity
     this.maxNs = 0
     this.samples = []
     this.maxSamples = 10000
-    
+
     // Percentile cache
     this.percentileCache = {
       p50: 0,
@@ -74,44 +84,44 @@ class LatencyStats {
     }
   }
 
-  addSample(latencyNs) {
+  addSample (latencyNs) {
     this.count++
     this.totalNs += BigInt(latencyNs)
     this.minNs = Math.min(this.minNs, latencyNs)
     this.maxNs = Math.max(this.maxNs, latencyNs)
-    
+
     // Add to samples array
     this.samples.push(latencyNs)
-    
+
     // Keep only recent samples
     if (this.samples.length > this.maxSamples) {
       this.samples.shift()
     }
-    
+
     // Update percentiles every 100 samples for performance
     if (this.count % 100 === 0) {
       this.updatePercentiles()
     }
   }
 
-  updatePercentiles() {
+  updatePercentiles () {
     if (this.samples.length === 0) return
-    
+
     const sorted = [...this.samples].sort((a, b) => a - b)
     const n = sorted.length
-    
-    this.percentileCache.p50 = sorted[Math.floor(n * 0.50)]
+
+    this.percentileCache.p50 = sorted[Math.floor(n * 0.5)]
     this.percentileCache.p95 = sorted[Math.floor(n * 0.95)]
     this.percentileCache.p99 = sorted[Math.floor(n * 0.99)]
     this.percentileCache.p999 = sorted[Math.floor(n * 0.999)]
     this.percentileCache.lastUpdate = Date.now()
   }
 
-  get avgNs() {
+  get avgNs () {
     return this.count > 0 ? Number(this.totalNs) / this.count : 0
   }
 
-  toJSON() {
+  toJSON () {
     return {
       count: this.count,
       avgNs: this.avgNs,
@@ -129,28 +139,28 @@ class LatencyStats {
  * Central metrics collection and monitoring system
  */
 export class MetricsCollector extends EventEmitter {
-  constructor(config = {}) {
+  constructor (config = {}) {
     super()
     this.config = config
     this.logger = getLogger('metrics-collector')
-    
+
     // Metrics storage
     this.latencyStats = new Map()
     this.throughputCounters = new Map()
     this.resourceGauges = new Map()
     this.correlationIds = new Map()
-    
+
     // Prometheus registry
     this.registry = prometheusAvailable ? new promClient.Registry() : null
-    
+
     // Initialize Prometheus metrics
     this.initPrometheusMetrics()
-    
+
     // Start background tasks
     this.startBackgroundTasks()
   }
 
-  initPrometheusMetrics() {
+  initPrometheusMetrics () {
     if (!prometheusAvailable) {
       this.logger.warn('Prometheus client not available, metrics will be limited')
       return
@@ -246,7 +256,7 @@ export class MetricsCollector extends EventEmitter {
     this.appInfo.labels('1.0.0', process.version, prometheusAvailable.toString()).set(1)
   }
 
-  startBackgroundTasks() {
+  startBackgroundTasks () {
     // Start resource monitoring
     if (this.config.enableResourceMonitoring !== false) {
       this.startResourceMonitoring()
@@ -259,8 +269,8 @@ export class MetricsCollector extends EventEmitter {
     this.startThroughputCalculation()
   }
 
-  startResourceMonitoring() {
-    const monitorResources = () => {
+  startResourceMonitoring () {
+    const monitorResources = async () => {
       try {
         const memUsage = process.memoryUsage()
         const cpuUsage = process.cpuUsage()
@@ -276,12 +286,12 @@ export class MetricsCollector extends EventEmitter {
         this.setGauge('cpu_usage_microseconds', totalCpuTime)
 
         // Event loop lag
+        const { performance } = await import('perf_hooks')
         const start = performance.now()
         setImmediate(() => {
           const lag = performance.now() - start
           this.setGauge('event_loop_lag_ms', lag)
         })
-
       } catch (error) {
         this.logger.error('Error monitoring resources', { error: error.message })
       }
@@ -292,7 +302,7 @@ export class MetricsCollector extends EventEmitter {
     monitorResources() // Initial measurement
   }
 
-  startMetricsCleanup() {
+  startMetricsCleanup () {
     const cleanup = () => {
       try {
         const now = Date.now()
@@ -316,7 +326,6 @@ export class MetricsCollector extends EventEmitter {
           activeCorrelationIds: this.correlationIds.size,
           latencyStatsCount: this.latencyStats.size
         })
-
       } catch (error) {
         this.logger.error('Error during metrics cleanup', { error: error.message })
       }
@@ -326,7 +335,7 @@ export class MetricsCollector extends EventEmitter {
     setInterval(cleanup, 300000)
   }
 
-  startThroughputCalculation() {
+  startThroughputCalculation () {
     const calculateThroughput = () => {
       try {
         const now = Date.now()
@@ -336,7 +345,7 @@ export class MetricsCollector extends EventEmitter {
           if (key.startsWith('message_processing')) {
             // Calculate messages per second over the last minute
             const recentSamples = stats.samples.filter(
-              sample => now - sample.timestamp < windowMs
+              (sample) => now - sample.timestamp < windowMs
             )
             const messagesPerSecond = (recentSamples.length / windowMs) * 1000
 
@@ -347,7 +356,6 @@ export class MetricsCollector extends EventEmitter {
             this.setGauge('throughput_messages_per_second', messagesPerSecond, { symbol })
           }
         }
-
       } catch (error) {
         this.logger.error('Error calculating throughput', { error: error.message })
       }
@@ -357,13 +365,14 @@ export class MetricsCollector extends EventEmitter {
     setInterval(calculateThroughput, 10000)
   }
 
-  generateCorrelationId() {
+  generateCorrelationId () {
     const correlationId = randomUUID()
     this.correlationIds.set(correlationId, Date.now())
     return correlationId
   }
 
-  trackLatency(operation, labels = {}) {
+  async trackLatency (operation, labels = {}) {
+    const { performance } = await import('perf_hooks')
     const startTime = performance.now()
     const correlationId = this.generateCorrelationId()
 
@@ -380,7 +389,7 @@ export class MetricsCollector extends EventEmitter {
     }
   }
 
-  recordLatency(operation, latencyNs, labels = {}) {
+  recordLatency (operation, latencyNs, labels = {}) {
     // Create key from operation and labels
     const labelStr = Object.entries(labels)
       .map(([k, v]) => `${k}=${v}`)
@@ -410,7 +419,7 @@ export class MetricsCollector extends EventEmitter {
     this.emit('latency', { operation, latencyNs, labels })
   }
 
-  incrementCounter(metric, value = 1, labels = {}) {
+  incrementCounter (metric, value = 1, labels = {}) {
     // Create key from metric and labels
     const labelStr = Object.entries(labels)
       .map(([k, v]) => `${k}=${v}`)
@@ -436,7 +445,7 @@ export class MetricsCollector extends EventEmitter {
     this.emit('counter', { metric, value, labels })
   }
 
-  setGauge(metric, value, labels = {}) {
+  setGauge (metric, value, labels = {}) {
     // Create key from metric and labels
     const labelStr = Object.entries(labels)
       .map(([k, v]) => `${k}=${v}`)
@@ -463,7 +472,7 @@ export class MetricsCollector extends EventEmitter {
     this.emit('gauge', { metric, value, labels })
   }
 
-  getLatencyStats(operation = null) {
+  getLatencyStats (operation = null) {
     const result = {}
 
     for (const [key, stats] of this.latencyStats.entries()) {
@@ -475,15 +484,15 @@ export class MetricsCollector extends EventEmitter {
     return result
   }
 
-  getThroughputStats() {
+  getThroughputStats () {
     return Object.fromEntries(this.throughputCounters)
   }
 
-  getResourceStats() {
+  getResourceStats () {
     return Object.fromEntries(this.resourceGauges)
   }
 
-  getAllStats() {
+  getAllStats () {
     return {
       latency: this.getLatencyStats(),
       throughput: this.getThroughputStats(),
@@ -493,7 +502,7 @@ export class MetricsCollector extends EventEmitter {
     }
   }
 
-  async exportPrometheusMetrics() {
+  async exportPrometheusMetrics () {
     if (!prometheusAvailable) {
       return '# Prometheus client not available\n'
     }
@@ -506,7 +515,7 @@ export class MetricsCollector extends EventEmitter {
     }
   }
 
-  getPrometheusContentType() {
+  getPrometheusContentType () {
     return prometheusAvailable ? this.registry.contentType : 'text/plain'
   }
 }
@@ -515,12 +524,12 @@ export class MetricsCollector extends EventEmitter {
  * Structured logger with correlation ID support
  */
 export class StructuredLogger {
-  constructor(name, metricsCollector = null) {
+  constructor (name, metricsCollector = null) {
     this.logger = getLogger(name)
     this.metricsCollector = metricsCollector
   }
 
-  logWithContext(level, message, correlationId = null, extra = {}) {
+  logWithContext (level, message, correlationId = null, extra = {}) {
     const logData = {
       message,
       timestamp: new Date().toISOString(),
@@ -529,7 +538,7 @@ export class StructuredLogger {
     }
 
     // Remove null/undefined values
-    Object.keys(logData).forEach(key => {
+    Object.keys(logData).forEach((key) => {
       if (logData[key] == null) {
         delete logData[key]
       }
@@ -538,58 +547,55 @@ export class StructuredLogger {
     this.logger[level](JSON.stringify(logData))
   }
 
-  info(message, correlationId = null, extra = {}) {
+  info (message, correlationId = null, extra = {}) {
     this.logWithContext('info', message, correlationId, extra)
   }
 
-  error(message, correlationId = null, extra = {}) {
+  error (message, correlationId = null, extra = {}) {
     this.logWithContext('error', message, correlationId, extra)
   }
 
-  warn(message, correlationId = null, extra = {}) {
+  warn (message, correlationId = null, extra = {}) {
     this.logWithContext('warn', message, correlationId, extra)
   }
 
-  debug(message, correlationId = null, extra = {}) {
+  debug (message, correlationId = null, extra = {}) {
     this.logWithContext('debug', message, correlationId, extra)
   }
 }
 
 // Global metrics collector instance
-let globalMetricsCollector = null
+const getMetricsCollectorSingleton = createSingleton((config = {}) => new MetricsCollector(config))
 
 /**
  * Get or create global metrics collector
  */
-export function getMetricsCollector(config = {}) {
-  if (!globalMetricsCollector) {
-    globalMetricsCollector = new MetricsCollector(config)
-  }
-  return globalMetricsCollector
+export function getMetricsCollector (config = {}) {
+  return getMetricsCollectorSingleton(config)
 }
 
 /**
  * Get structured logger with metrics integration
  */
-export function getStructuredLogger(name) {
+export function getStructuredLogger (name) {
   const metricsCollector = getMetricsCollector()
   return new StructuredLogger(name, metricsCollector)
 }
 
 // Convenience functions
-export function trackLatency(operation, labels = {}) {
+export function trackLatency (operation, labels = {}) {
   return getMetricsCollector().trackLatency(operation, labels)
 }
 
-export function recordLatency(operation, latencyNs, labels = {}) {
+export function recordLatency (operation, latencyNs, labels = {}) {
   getMetricsCollector().recordLatency(operation, latencyNs, labels)
 }
 
-export function incrementCounter(metric, value = 1, labels = {}) {
+export function incrementCounter (metric, value = 1, labels = {}) {
   getMetricsCollector().incrementCounter(metric, value, labels)
 }
 
-export function setGauge(metric, value, labels = {}) {
+export function setGauge (metric, value, labels = {}) {
   getMetricsCollector().setGauge(metric, value, labels)
 }
 

@@ -5,9 +5,11 @@
  * High-performance real-time market data processing with clustering support
  */
 
+// Internal modules
 import { getConfig } from './config/index.js'
-import { setupLogging, getLogger, setCorrelationId } from './logging/index.js'
 import { setupErrorHandlers } from './errors/index.js'
+import { setupLogging, getLogger, setCorrelationId } from './logging/index.js'
+import { asyncUtils, errorUtils, jsonUtils } from './utils/common-utilities.js'
 
 /**
  * Main application class
@@ -20,7 +22,7 @@ class FinanceIngestionApp {
     this.isShuttingDown = false
     this.startTime = null
     this.services = new Map()
-    
+
     // Error recovery state
     this.errorRecovery = {
       maxConsecutiveErrors: 10,
@@ -47,7 +49,7 @@ class FinanceIngestionApp {
       this.logger = getLogger('app')
 
       // Setup error handlers
-      setupErrorHandlers()
+      await setupErrorHandlers()
 
       // Set correlation ID for startup
       setCorrelationId('startup')
@@ -62,7 +64,7 @@ class FinanceIngestionApp {
 
       // Validate configuration
       await this.validateConfiguration()
-      
+
       // Setup error recovery mechanisms
       this.setupErrorRecovery()
 
@@ -104,10 +106,7 @@ class FinanceIngestionApp {
       // Keep the process alive
       this.keepAlive()
     } catch (error) {
-      this.logger.error('Failed to start application', {
-        error: error.message,
-        stack: error.stack
-      })
+      errorUtils.logError(this.logger, 'Failed to start application', error)
       throw error
     }
   }
@@ -154,7 +153,10 @@ class FinanceIngestionApp {
     const errors = []
 
     // Validate WebSocket configuration
-    if (!this.config.websocket.url.startsWith('ws://') && !this.config.websocket.url.startsWith('wss://')) {
+    if (
+      !this.config.websocket.url.startsWith('ws://') &&
+      !this.config.websocket.url.startsWith('wss://')
+    ) {
       errors.push('WebSocket URL must start with ws:// or wss://')
     }
 
@@ -197,14 +199,14 @@ class FinanceIngestionApp {
     for (const service of services) {
       try {
         this.logger.info(`Starting ${service.name} service`)
-        const serviceInstance = await service.start()
+        const serviceInstance = await asyncUtils.safeAsync(service.start, {
+          timeout: 30000,
+          maxRetries: 2
+        })
         this.services.set(service.name, serviceInstance)
         this.logger.info(`${service.name} service started successfully`)
       } catch (error) {
-        this.logger.error(`Failed to start ${service.name} service`, {
-          error: error.message,
-          stack: error.stack
-        })
+        errorUtils.logError(this.logger, `Failed to start ${service.name} service`, error)
         throw error
       }
     }
@@ -248,7 +250,7 @@ class FinanceIngestionApp {
     // Perform initial health check
     const health = await storageManager.healthCheck()
     if (!health.healthy) {
-      throw new Error(`Storage health check failed: ${JSON.stringify(health)}`)
+      throw new Error(`Storage health check failed: ${jsonUtils.safeStringify(health, 'health check failed')}`)
     }
 
     this.logger.info('Storage service started successfully', {
@@ -279,20 +281,20 @@ class FinanceIngestionApp {
     const { WebSocketConnectionManager } = await import('./websocket/index.js')
 
     this.logger.info('Initializing WebSocket service')
-    
+
     // Get processor service for message handling
     const processorService = this.services.get('processor')
     if (!processorService) {
       throw new Error('Processor service must be started before WebSocket service')
     }
-    
+
     // Initialize WebSocket connection manager
     const webSocketManager = new WebSocketConnectionManager({
       url: this.config.websocket.url,
       config: this.config.websocket,
       logger: this.logger
     })
-    
+
     // Set up message processing callback
     webSocketManager.onMessage = async (messageData) => {
       try {
@@ -305,26 +307,26 @@ class FinanceIngestionApp {
         })
       }
     }
-    
+
     // Set up connection event handlers
     webSocketManager.onConnected = () => {
       this.logger.info('WebSocket connected successfully')
     }
-    
+
     webSocketManager.onDisconnected = (reason) => {
       this.logger.warn('WebSocket disconnected', { reason })
     }
-    
+
     webSocketManager.onError = (error) => {
       this.logger.error('WebSocket error', {
         error: error.message,
         stack: error.stack
       })
     }
-    
+
     // Start WebSocket connection
     await webSocketManager.connect()
-    
+
     this.logger.info('WebSocket service started successfully', {
       url: this.config.websocket.url,
       connected: webSocketManager.isConnected()
@@ -342,29 +344,29 @@ class FinanceIngestionApp {
 
   async startProcessorService () {
     const { MessageProcessor } = await import('./message-processor/index.js')
-    
+
     this.logger.info('Initializing message processor service')
-    
+
     // Get storage manager from services
     const storageService = this.services.get('storage')
     if (!storageService) {
       throw new Error('Storage service must be started before processor service')
     }
-    
+
     // Get metrics service (when implemented)
     const metricsService = this.services.get('metrics')
-    
+
     // Initialize message processor
     const messageProcessor = new MessageProcessor({
       storageManager: storageService.manager,
       metricsCollector: metricsService?.collector,
       config: this.config.messageProcessor || {}
     })
-    
+
     await messageProcessor.initialize()
-    
+
     this.logger.info('Message processor service started successfully')
-    
+
     return {
       name: 'processor',
       processor: messageProcessor,
@@ -381,7 +383,7 @@ class FinanceIngestionApp {
   setupGracefulShutdown () {
     const signals = ['SIGTERM', 'SIGINT', 'SIGUSR2']
 
-    signals.forEach(signal => {
+    signals.forEach((signal) => {
       process.on(signal, async () => {
         this.logger.info(`Received ${signal}, initiating graceful shutdown`)
 
@@ -421,21 +423,21 @@ class FinanceIngestionApp {
    */
   async handleComponentError (component, error, recoveryAction = null) {
     const currentTime = Date.now()
-    
+
     // Reset consecutive errors if enough time has passed
     if (currentTime - this.errorRecovery.lastErrorTime > this.errorRecovery.errorResetInterval) {
       this.errorRecovery.consecutiveErrors = 0
     }
-    
+
     this.errorRecovery.consecutiveErrors++
     this.errorRecovery.lastErrorTime = currentTime
-    
+
     this.logger.error(`Component error in ${component}`, {
       error: error.message,
       stack: error.stack,
       consecutiveErrors: this.errorRecovery.consecutiveErrors
     })
-    
+
     // Circuit breaker logic
     if (this.errorRecovery.consecutiveErrors >= this.errorRecovery.circuitBreakerThreshold) {
       if (!this.errorRecovery.circuitBreakerOpen) {
@@ -444,15 +446,18 @@ class FinanceIngestionApp {
         this.errorRecovery.circuitBreakerOpenTime = currentTime
       }
     }
-    
+
     // Check if circuit breaker should be closed
-    if (this.errorRecovery.circuitBreakerOpen && 
-        currentTime - this.errorRecovery.circuitBreakerOpenTime > this.errorRecovery.circuitBreakerTimeout) {
+    if (
+      this.errorRecovery.circuitBreakerOpen &&
+      currentTime - this.errorRecovery.circuitBreakerOpenTime >
+        this.errorRecovery.circuitBreakerTimeout
+    ) {
       this.logger.info(`Closing circuit breaker for ${component}`)
       this.errorRecovery.circuitBreakerOpen = false
       this.errorRecovery.consecutiveErrors = 0
     }
-    
+
     // Execute recovery action if provided and circuit breaker is closed
     if (recoveryAction && !this.errorRecovery.circuitBreakerOpen) {
       try {
@@ -466,10 +471,12 @@ class FinanceIngestionApp {
         })
       }
     }
-    
+
     // Shutdown if too many consecutive errors
     if (this.errorRecovery.consecutiveErrors >= this.errorRecovery.maxConsecutiveErrors) {
-      this.logger.critical(`Maximum consecutive errors reached for ${component}, initiating shutdown`)
+      this.logger.critical(
+        `Maximum consecutive errors reached for ${component}, initiating shutdown`
+      )
       await this.stop()
       process.exit(1)
     }
@@ -480,18 +487,18 @@ class FinanceIngestionApp {
    */
   setupErrorRecovery () {
     this.logger.info('Setting up error recovery mechanisms')
-    
+
     // Handle uncaught exceptions
     process.on('uncaughtException', async (error) => {
       await this.handleComponentError('uncaughtException', error)
     })
-    
+
     // Handle unhandled promise rejections
     process.on('unhandledRejection', async (reason, promise) => {
       const error = reason instanceof Error ? reason : new Error(String(reason))
       await this.handleComponentError('unhandledRejection', error)
     })
-    
+
     this.logger.info('Error recovery mechanisms configured')
   }
 
@@ -527,10 +534,14 @@ const app = new FinanceIngestionApp()
 
 // Start application if this file is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  app.start().catch(error => {
-    console.error('Application startup failed:', error.message)
-    process.exit(1)
-  })
+  ;(async () => {
+    try {
+      await app.start()
+    } catch (error) {
+      console.error('Application startup failed:', error.message)
+      process.exit(1)
+    }
+  })()
 }
 
 export default app

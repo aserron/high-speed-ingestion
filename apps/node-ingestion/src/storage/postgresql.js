@@ -6,10 +6,19 @@
  * financial data ingestion system.
  */
 
+// External dependencies
 import pg from 'pg'
+
+// Internal modules
 import { getConfig } from '../config/index.js'
+import { StorageError } from '../errors/index.js'
 import { getLogger } from '../logging/index.js'
-import { ConnectionError, StorageError, ValidationError } from '../errors/index.js'
+import { createInitializableSingleton, errorUtils, connectionUtils, validationUtils } from '../utils/common-utilities.js'
+import {
+  handleConnectionInitError,
+  handleTransactionError,
+  handlePeriodicTaskError
+} from '../utils/error-handlers.js'
 
 const { Pool } = pg
 
@@ -17,7 +26,7 @@ const { Pool } = pg
  * PostgreSQL connection manager with pooling and monitoring
  */
 export class PostgreSQLConnectionManager {
-  constructor (config = null) {
+  constructor(config = null) {
     this.config = config || getConfig()
     this.logger = getLogger('postgresql-manager')
     this.pool = null
@@ -40,7 +49,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Initialize PostgreSQL connection pool
    */
-  async initialize () {
+  async initialize() {
     try {
       this.logger.info('Initializing PostgreSQL connection manager', {
         host: this.config.postgresql.host,
@@ -70,8 +79,8 @@ export class PostgreSQLConnectionManager {
         // SSL configuration
         ssl: this.config.postgresql.sslEnabled
           ? {
-              rejectUnauthorized: false // For development, should be true in production
-            }
+            rejectUnauthorized: false // For development, should be true in production
+          }
           : false,
 
         // Connection validation
@@ -94,15 +103,11 @@ export class PostgreSQLConnectionManager {
 
       this.logger.info('PostgreSQL connection manager initialized successfully')
     } catch (error) {
-      this.connectionStats.failedConnections++
-      this.connectionStats.lastErrorTime = Date.now()
-
-      throw new ConnectionError(
-        'Failed to initialize PostgreSQL connection manager',
+      handleConnectionInitError(
+        error,
         'postgresql',
         `${this.config.postgresql.host}:${this.config.postgresql.port}/${this.config.postgresql.database}`,
-        null,
-        { cause: error }
+        this.connectionStats
       )
     }
   }
@@ -110,7 +115,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Setup PostgreSQL event handlers
    */
-  setupEventHandlers () {
+  setupEventHandlers() {
     this.pool.on('connect', (client) => {
       this.logger.debug('PostgreSQL client connected')
       this.connectionStats.totalConnections++
@@ -127,7 +132,10 @@ export class PostgreSQLConnectionManager {
 
     this.pool.on('remove', (client) => {
       this.logger.debug('PostgreSQL client removed from pool')
-      this.connectionStats.activeConnections = Math.max(0, this.connectionStats.activeConnections - 1)
+      this.connectionStats.activeConnections = Math.max(
+        0,
+        this.connectionStats.activeConnections - 1
+      )
     })
 
     this.pool.on('error', (error, client) => {
@@ -143,7 +151,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Test database connection
    */
-  async testConnection () {
+  async testConnection() {
     const client = await this.pool.connect()
 
     try {
@@ -161,7 +169,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Start health monitoring
    */
-  startHealthMonitoring () {
+  startHealthMonitoring() {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval)
     }
@@ -170,9 +178,7 @@ export class PostgreSQLConnectionManager {
       try {
         await this.healthCheck()
       } catch (error) {
-        this.logger.error('PostgreSQL health check failed', {
-          error: error.message
-        })
+        handlePeriodicTaskError(error, 'PostgreSQL health check', this.logger)
       }
     }, 30000) // Every 30 seconds
   }
@@ -180,10 +186,8 @@ export class PostgreSQLConnectionManager {
   /**
    * Perform health check
    */
-  async healthCheck () {
-    if (!this.pool) {
-      throw new StorageError('PostgreSQL pool not initialized')
-    }
+  async healthCheck() {
+    connectionUtils.validateConnection(this.pool, true, 'PostgreSQL', 'health check')
 
     const start = process.hrtime.bigint()
 
@@ -218,29 +222,21 @@ export class PostgreSQLConnectionManager {
     } catch (error) {
       const latencyNs = process.hrtime.bigint() - start
 
-      throw new StorageError(
-        'PostgreSQL health check failed',
-        'postgresql',
-        'health_check',
-        null,
-        {
-          context: {
-            latencyNs: latencyNs.toString(),
-            latencyMs: Number(latencyNs) / 1_000_000
-          },
-          cause: error
-        }
-      )
+      throw new StorageError('PostgreSQL health check failed', 'postgresql', 'health_check', null, {
+        context: {
+          latencyNs: latencyNs.toString(),
+          latencyMs: Number(latencyNs) / 1_000_000
+        },
+        cause: error
+      })
     }
   }
 
   /**
    * Execute query with error handling and metrics
    */
-  async query (text, params = null, client = null) {
-    if (!this.pool || !this.isConnected) {
-      throw new StorageError('PostgreSQL not connected', 'postgresql', 'query')
-    }
+  async query(text, params = null, client = null) {
+    connectionUtils.validateDatabaseConnection(this.pool, this.isConnected, 'PostgreSQL', 'query')
 
     const start = process.hrtime.bigint()
     const usePoolClient = !client
@@ -293,10 +289,8 @@ export class PostgreSQLConnectionManager {
   /**
    * Execute transaction with automatic rollback on error
    */
-  async transaction (callback) {
-    if (!this.pool || !this.isConnected) {
-      throw new StorageError('PostgreSQL not connected', 'postgresql', 'transaction')
-    }
+  async transaction(callback) {
+    connectionUtils.validateDatabaseConnection(this.pool, this.isConnected, 'PostgreSQL', 'transaction')
 
     const client = await this.pool.connect()
     const start = process.hrtime.bigint()
@@ -319,31 +313,13 @@ export class PostgreSQLConnectionManager {
 
       return result
     } catch (error) {
-      const latencyNs = process.hrtime.bigint() - start
-      this.connectionStats.failedTransactions++
+      errorUtils.handleError(this.logger, 'PostgreSQL transaction failed', error, {
+        stats: this.connectionStats,
+        statKey: 'failedTransactions',
+        startTime: start
+      })
 
-      try {
-        await client.query('ROLLBACK')
-        this.logger.debug('PostgreSQL transaction rolled back')
-      } catch (rollbackError) {
-        this.logger.error('PostgreSQL rollback failed', {
-          error: rollbackError.message
-        })
-      }
-
-      throw new StorageError(
-        `PostgreSQL transaction failed: ${error.message}`,
-        'postgresql',
-        'transaction',
-        null,
-        {
-          context: {
-            latencyNs: latencyNs.toString(),
-            latencyMs: Number(latencyNs) / 1_000_000
-          },
-          cause: error
-        }
-      )
+      await handleTransactionError(error, client, 'PostgreSQL', this.connectionStats, this.logger)
     } finally {
       client.release()
     }
@@ -352,10 +328,8 @@ export class PostgreSQLConnectionManager {
   /**
    * Insert single record
    */
-  async insert (table, data, returning = null) {
-    if (!data || typeof data !== 'object') {
-      throw new ValidationError('Insert data must be an object', 'data', data)
-    }
+  async insert(table, data, returning = null) {
+    validationUtils.validateObjectData(data, 'Insert')
 
     const columns = Object.keys(data)
     const values = Object.values(data)
@@ -373,20 +347,18 @@ export class PostgreSQLConnectionManager {
   /**
    * Insert multiple records in batch
    */
-  async insertBatch (table, records, returning = null) {
-    if (!Array.isArray(records) || records.length === 0) {
-      throw new ValidationError('Insert records must be a non-empty array', 'records', records)
-    }
+  async insertBatch(table, records, returning = null) {
+    validationUtils.validateNonEmptyArray(records, 'records', 'Insert records must be a non-empty array')
 
     const columns = Object.keys(records[0])
     const valueRows = []
     const allValues = []
 
     records.forEach((record, recordIndex) => {
-      const recordValues = columns.map(col => record[col])
-      const placeholders = recordValues.map((_, valueIndex) =>
-        `$${allValues.length + valueIndex + 1}`
-      ).join(', ')
+      const recordValues = columns.map((col) => record[col])
+      const placeholders = recordValues
+        .map((_, valueIndex) => `$${allValues.length + valueIndex + 1}`)
+        .join(', ')
 
       valueRows.push(`(${placeholders})`)
       allValues.push(...recordValues)
@@ -404,10 +376,8 @@ export class PostgreSQLConnectionManager {
   /**
    * Update records
    */
-  async update (table, data, whereClause, whereParams = []) {
-    if (!data || typeof data !== 'object') {
-      throw new ValidationError('Update data must be an object', 'data', data)
-    }
+  async update(table, data, whereClause, whereParams = []) {
+    validationUtils.validateObjectData(data, 'Update')
 
     const columns = Object.keys(data)
     const values = Object.values(data)
@@ -424,7 +394,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Delete records
    */
-  async delete (table, whereClause, whereParams = []) {
+  async delete(table, whereClause, whereParams = []) {
     const query = `DELETE FROM ${table} WHERE ${whereClause}`
     return await this.query(query, whereParams)
   }
@@ -432,7 +402,14 @@ export class PostgreSQLConnectionManager {
   /**
    * Select records
    */
-  async select (table, columns = '*', whereClause = null, whereParams = [], orderBy = null, limit = null) {
+  async select(
+    table,
+    columns = '*',
+    whereClause = null,
+    whereParams = [],
+    orderBy = null,
+    limit = null
+  ) {
     let query = `SELECT ${columns} FROM ${table}`
 
     if (whereClause) {
@@ -453,11 +430,11 @@ export class PostgreSQLConnectionManager {
   /**
    * Execute raw SQL file
    */
-  async executeFile (sqlContent) {
+  async executeFile(sqlContent) {
     const statements = sqlContent
       .split(';')
-      .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0)
+      .map((stmt) => stmt.trim())
+      .filter((stmt) => stmt.length > 0)
 
     const results = []
 
@@ -466,9 +443,8 @@ export class PostgreSQLConnectionManager {
         const result = await this.query(statement)
         results.push(result)
       } catch (error) {
-        this.logger.error('SQL statement execution failed', {
-          statement: statement.substring(0, 200),
-          error: error.message
+        errorUtils.logError(this.logger, 'SQL statement execution failed', error, {
+          statement: statement.substring(0, 200)
         })
         throw error
       }
@@ -480,13 +456,13 @@ export class PostgreSQLConnectionManager {
   /**
    * Get connection statistics
    */
-  getStats () {
+  getStats() {
     const poolStats = this.pool
       ? {
-          totalCount: this.pool.totalCount,
-          idleCount: this.pool.idleCount,
-          waitingCount: this.pool.waitingCount
-        }
+        totalCount: this.pool.totalCount,
+        idleCount: this.pool.idleCount,
+        waitingCount: this.pool.waitingCount
+      }
       : null
 
     return {
@@ -502,7 +478,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Close PostgreSQL connection pool
    */
-  async close () {
+  async close() {
     this.logger.info('Closing PostgreSQL connection manager')
 
     if (this.healthCheckInterval) {
@@ -524,26 +500,22 @@ export class PostgreSQLConnectionManager {
 }
 
 // Global PostgreSQL manager instance
-let postgresManager = null
+const postgresManagerSingleton = createInitializableSingleton(
+  (config) => new PostgreSQLConnectionManager(config)
+)
 
 /**
  * Get the global PostgreSQL manager instance
  */
-export function getPostgreSQLManager () {
-  if (!postgresManager) {
-    postgresManager = new PostgreSQLConnectionManager()
-  }
-  return postgresManager
+export function getPostgreSQLManager() {
+  return postgresManagerSingleton.getInstance()
 }
 
 /**
  * Initialize PostgreSQL manager
  */
-export async function initializePostgreSQL (config = null) {
-  const manager = new PostgreSQLConnectionManager(config)
-  await manager.initialize()
-  postgresManager = manager
-  return manager
+export async function initializePostgreSQL(config = null) {
+  return await postgresManagerSingleton.initialize(config)
 }
 
 export default {

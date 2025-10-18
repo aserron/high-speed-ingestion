@@ -1,23 +1,25 @@
 /**
- * Native Clustering for Multi-Core Utilization
+ * Cluster Application Manager
  *
- * Implements Node.js cluster management for maximum CPU utilization
- * with proper worker lifecycle management, graceful shutdown, and
- * load balancing for the financial data ingestion system.
+ * Manages multi-core utilization with worker processes, health monitoring,
+ * and graceful shutdown capabilities.
  */
 
+// External dependencies
 import cluster from 'cluster'
 import os from 'os'
-import { getConfig } from './config/index.js'
-import { setupLogging, getLogger } from './logging/index.js'
-import { setupErrorHandlers, ClusterError } from './errors/index.js'
+
+// Internal modules
+import { getConfig } from '../config/index.js'
+import { setupErrorHandlers, ClusterError } from '../errors/index.js'
+import { setupLogging, getLogger } from '../logging/index.js'
 
 /**
- * Cluster manager class
+ * Cluster manager for multi-core utilization
  */
-class ClusterManager {
+export class ClusterApp {
   constructor () {
-    this.config = getConfig()
+    this.config = null
     this.logger = null
     this.workers = new Map()
     this.isShuttingDown = false
@@ -25,50 +27,39 @@ class ClusterManager {
     this.startTime = Date.now()
   }
 
-  /**
-   * Initialize the cluster manager
-   */
-  async initialize () {
-    // Setup logging first
-    setupLogging(this.config)
-    this.logger = getLogger('cluster-manager')
+  async start () {
+    try {
+      this.config = getConfig()
+      setupLogging(this.config)
+      this.logger = getLogger('cluster-manager')
+      await setupErrorHandlers()
 
-    // Setup error handlers
-    setupErrorHandlers()
+      this.logger.info('Initializing cluster manager', {
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        cpuCount: os.cpus().length,
+        totalMemory: os.totalmem(),
+        freeMemory: os.freemem()
+      })
 
-    this.logger.info('Initializing cluster manager', {
-      nodeVersion: process.version,
-      platform: process.platform,
-      arch: process.arch,
-      cpuCount: os.cpus().length,
-      totalMemory: os.totalmem(),
-      freeMemory: os.freemem()
-    })
-
-    if (cluster.isPrimary) {
-      await this.startPrimary()
-    } else {
-      await this.startWorker()
+      if (cluster.isPrimary) {
+        await this.startPrimary()
+      } else {
+        await this.startWorker()
+      }
+    } catch (error) {
+      console.error('Failed to start cluster:', error.message)
+      process.exit(1)
     }
   }
 
-  /**
-   * Start the primary process
-   */
   async startPrimary () {
     this.logger.info('Starting cluster primary process', {
-      pid: process.pid,
-      clusterEnabled: this.config.cluster.enabled
+      pid: process.pid
     })
 
-    if (!this.config.cluster.enabled) {
-      this.logger.info('Clustering disabled, starting single worker')
-      await this.startSingleWorker()
-      return
-    }
-
-    // Determine number of workers
-    const numWorkers = this.config.cluster.workers || os.cpus().length
+    const numWorkers = this.config?.cluster?.workers || os.cpus().length
     this.logger.info(`Starting ${numWorkers} worker processes`)
 
     // Setup cluster event handlers
@@ -76,11 +67,12 @@ class ClusterManager {
 
     /**
      * Start workers in parallel for better performance
-     * Uses Promise.all() to avoid sequential await in loop anti-pattern
-     * Reduces startup time from O(n) to O(1) where n is number of workers
+     * Optimized async pattern using Promise.all() instead of sequential await
+     * Eliminates await-in-loop anti-pattern for faster cluster initialization
      * 
-     * @performance Parallel worker creation significantly improves cluster startup time
-     * @throws {ClusterError} If any worker fails to start
+     * @performance Concurrent worker startup reduces total initialization time
+     * @async All workers start simultaneously rather than sequentially
+     * @throws {ClusterError} If any worker fails during startup process
      */
     const workerPromises = []
     for (let i = 0; i < numWorkers; i++) {
@@ -91,34 +83,12 @@ class ClusterManager {
     // Setup graceful shutdown
     this.setupGracefulShutdown()
 
-    // Setup health monitoring
-    this.setupHealthMonitoring()
-
     this.logger.info('Cluster primary process started successfully', {
       workers: this.workers.size,
       uptime: Date.now() - this.startTime
     })
   }
 
-  /**
-   * Start a single worker (no clustering)
-   */
-  async startSingleWorker () {
-    try {
-      const { default: app } = await import('./index.js')
-      await app.start()
-    } catch (error) {
-      this.logger.error('Failed to start single worker', {
-        error: error.message,
-        stack: error.stack
-      })
-      process.exit(1)
-    }
-  }
-
-  /**
-   * Start a worker process
-   */
   async startWorker () {
     const workerId = process.env.WORKER_ID || cluster.worker.id
     const logger = getLogger(`worker-${workerId}`)
@@ -130,8 +100,8 @@ class ClusterManager {
     })
 
     try {
-      // Import and start the main application
-      const { default: app } = await import('./index.js')
+      const { FullApp } = await import('./full-app.js')
+      const app = new FullApp()
       await app.start()
 
       logger.info('Worker process started successfully', {
@@ -148,9 +118,6 @@ class ClusterManager {
     }
   }
 
-  /**
-   * Fork a new worker
-   */
   async forkWorker () {
     return new Promise((resolve, reject) => {
       const worker = cluster.fork({ WORKER_ID: cluster.worker?.id || 'primary' })
@@ -163,18 +130,9 @@ class ClusterManager {
         restarts: this.restartCounts.get(workerId) || 0
       })
 
-      // Setup worker event handlers
       worker.on('online', () => {
         this.logger.info('Worker came online', { workerId, pid: worker.process.pid })
         resolve(worker)
-      })
-
-      worker.on('listening', (address) => {
-        this.logger.info('Worker listening', { workerId, address })
-      })
-
-      worker.on('disconnect', () => {
-        this.logger.warn('Worker disconnected', { workerId })
       })
 
       worker.on('error', (error) => {
@@ -183,7 +141,7 @@ class ClusterManager {
           error: error.message,
           stack: error.stack
         })
-        reject(new ClusterError(`Worker ${workerId} error: ${error.message}`, workerId, 'start'))
+        reject(error)
       })
 
       // Set timeout for worker startup
@@ -199,9 +157,6 @@ class ClusterManager {
     })
   }
 
-  /**
-   * Setup cluster event handlers
-   */
   setupClusterEventHandlers () {
     cluster.on('exit', (worker, code, signal) => {
       const workerId = worker.id
@@ -223,23 +178,17 @@ class ClusterManager {
         this.restartWorker(workerId)
       }
     })
-
-    cluster.on('disconnect', (worker) => {
-      this.logger.info('Worker disconnected', { workerId: worker.id })
-    })
   }
 
-  /**
-   * Restart a worker
-   */
   async restartWorker (workerId) {
     const restartCount = this.restartCounts.get(workerId) || 0
+    const maxRestarts = this.config?.cluster?.maxRestarts || 10
 
-    if (restartCount >= this.config.cluster.maxRestarts) {
+    if (restartCount >= maxRestarts) {
       this.logger.error('Worker restart limit exceeded', {
         workerId,
         restartCount,
-        maxRestarts: this.config.cluster.maxRestarts
+        maxRestarts
       })
       return
     }
@@ -250,7 +199,8 @@ class ClusterManager {
     this.restartCounts.set(workerId, restartCount + 1)
 
     // Wait before restarting
-    await new Promise((resolve) => setTimeout(resolve, this.config.cluster.restartDelay))
+    const restartDelay = this.config?.cluster?.restartDelay || 1000
+    await new Promise((resolve) => setTimeout(resolve, restartDelay))
 
     try {
       await this.forkWorker()
@@ -263,9 +213,6 @@ class ClusterManager {
     }
   }
 
-  /**
-   * Setup graceful shutdown
-   */
   setupGracefulShutdown () {
     const signals = ['SIGTERM', 'SIGINT', 'SIGUSR2']
 
@@ -277,9 +224,6 @@ class ClusterManager {
     })
   }
 
-  /**
-   * Perform graceful shutdown
-   */
   async gracefulShutdown () {
     if (this.isShuttingDown) {
       this.logger.warn('Shutdown already in progress')
@@ -290,6 +234,7 @@ class ClusterManager {
     this.logger.info('Starting graceful shutdown', { workers: this.workers.size })
 
     const shutdownPromises = []
+    const gracefulShutdownTimeout = this.config?.cluster?.gracefulShutdownTimeout || 10000
 
     // Disconnect all workers
     for (const [workerId, workerInfo] of this.workers) {
@@ -301,7 +246,7 @@ class ClusterManager {
             this.logger.warn('Worker shutdown timeout, killing', { workerId })
             worker.kill('SIGKILL')
             resolve()
-          }, this.config.cluster.gracefulShutdownTimeout)
+          }, gracefulShutdownTimeout)
 
           worker.on('disconnect', () => {
             clearTimeout(timeout)
@@ -326,35 +271,6 @@ class ClusterManager {
     process.exit(0)
   }
 
-  /**
-   * Setup health monitoring
-   */
-  setupHealthMonitoring () {
-    setInterval(() => {
-      const healthInfo = {
-        uptime: Date.now() - this.startTime,
-        workers: this.workers.size,
-        memory: process.memoryUsage(),
-        cpu: process.cpuUsage()
-      }
-
-      this.logger.debug('Cluster health check', healthInfo)
-
-      // Check for unhealthy workers
-      for (const [workerId, workerInfo] of this.workers) {
-        const { worker } = workerInfo
-
-        if (worker.isDead()) {
-          this.logger.warn('Dead worker detected', { workerId })
-          this.workers.delete(workerId)
-        }
-      }
-    }, 30000) // Every 30 seconds
-  }
-
-  /**
-   * Get cluster statistics
-   */
   getStats () {
     const workers = Array.from(this.workers.entries()).map(([id, info]) => ({
       id,
@@ -374,24 +290,4 @@ class ClusterManager {
   }
 }
 
-/**
- * Start the cluster
- */
-async function startCluster () {
-  const clusterManager = new ClusterManager()
-
-  try {
-    await clusterManager.initialize()
-  } catch (error) {
-    console.error('Failed to start cluster:', error.message)
-    process.exit(1)
-  }
-}
-
-// Start cluster if this file is run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  startCluster()
-}
-
-export default ClusterManager
-export { startCluster }
+export default ClusterApp

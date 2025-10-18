@@ -7,11 +7,15 @@
  * Optimized for financial market data ingestion and retrieval.
  */
 
+// Internal modules
+import { ValidationError } from '../../errors/index.js'
+import { getLogger } from '../../logging/index.js'
+import { validators, jsonUtils } from '../../utils/common-utilities.js'
+
+// Relative modules
 import { MarketDataStorageInterface } from '../interfaces.js'
 import { RedisStorageAdapter } from './redis-adapter.js'
 import { PostgreSQLStorageAdapter } from './postgresql-adapter.js'
-import { ValidationError } from '../../errors/index.js'
-import { getLogger } from '../../logging/index.js'
 
 /**
  * Market data storage adapter implementing MarketDataStorageInterface
@@ -44,10 +48,7 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
     this.logger.info('Initializing market data storage adapter')
 
     // Initialize both storage backends
-    await Promise.all([
-      this.redisAdapter.initialize(),
-      this.postgresAdapter.initialize()
-    ])
+    await Promise.all([this.redisAdapter.initialize(), this.postgresAdapter.initialize()])
 
     // Create database schema if needed
     await this.createSchema()
@@ -64,16 +65,20 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
   async createSchema () {
     try {
       // Create market_ticks table
-      await this.postgresAdapter.createTable('market_ticks', {
-        id: { type: 'BIGSERIAL', primaryKey: true },
-        symbol: { type: 'VARCHAR(20)', notNull: true },
-        timestamp: { type: 'BIGINT', notNull: true },
-        price: { type: 'DECIMAL(20,8)', notNull: true },
-        quantity: { type: 'DECIMAL(20,8)', notNull: true },
-        side: { type: 'VARCHAR(10)' },
-        exchange: { type: 'VARCHAR(20)' },
-        created_at: { type: 'TIMESTAMP', default: 'CURRENT_TIMESTAMP' }
-      }, { ifNotExists: true })
+      await this.postgresAdapter.createTable(
+        'market_ticks',
+        {
+          id: { type: 'BIGSERIAL', primaryKey: true },
+          symbol: { type: 'VARCHAR(20)', notNull: true },
+          timestamp: { type: 'BIGINT', notNull: true },
+          price: { type: 'DECIMAL(20,8)', notNull: true },
+          quantity: { type: 'DECIMAL(20,8)', notNull: true },
+          side: { type: 'VARCHAR(10)' },
+          exchange: { type: 'VARCHAR(20)' },
+          created_at: { type: 'TIMESTAMP', default: 'CURRENT_TIMESTAMP' }
+        },
+        { ifNotExists: true }
+      )
 
       // Create indexes for performance
       await this.postgresAdapter.createIndex(
@@ -91,20 +96,24 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
       )
 
       // Create OHLCV aggregation table
-      await this.postgresAdapter.createTable('market_ohlcv', {
-        id: { type: 'BIGSERIAL', primaryKey: true },
-        symbol: { type: 'VARCHAR(20)', notNull: true },
-        interval_type: { type: 'VARCHAR(10)', notNull: true }, // '1m', '5m', '1h', '1d'
-        start_time: { type: 'BIGINT', notNull: true },
-        end_time: { type: 'BIGINT', notNull: true },
-        open_price: { type: 'DECIMAL(20,8)', notNull: true },
-        high_price: { type: 'DECIMAL(20,8)', notNull: true },
-        low_price: { type: 'DECIMAL(20,8)', notNull: true },
-        close_price: { type: 'DECIMAL(20,8)', notNull: true },
-        volume: { type: 'DECIMAL(20,8)', notNull: true },
-        tick_count: { type: 'INTEGER', notNull: true },
-        created_at: { type: 'TIMESTAMP', default: 'CURRENT_TIMESTAMP' }
-      }, { ifNotExists: true })
+      await this.postgresAdapter.createTable(
+        'market_ohlcv',
+        {
+          id: { type: 'BIGSERIAL', primaryKey: true },
+          symbol: { type: 'VARCHAR(20)', notNull: true },
+          interval_type: { type: 'VARCHAR(10)', notNull: true }, // '1m', '5m', '1h', '1d'
+          start_time: { type: 'BIGINT', notNull: true },
+          end_time: { type: 'BIGINT', notNull: true },
+          open_price: { type: 'DECIMAL(20,8)', notNull: true },
+          high_price: { type: 'DECIMAL(20,8)', notNull: true },
+          low_price: { type: 'DECIMAL(20,8)', notNull: true },
+          close_price: { type: 'DECIMAL(20,8)', notNull: true },
+          volume: { type: 'DECIMAL(20,8)', notNull: true },
+          tick_count: { type: 'INTEGER', notNull: true },
+          created_at: { type: 'TIMESTAMP', default: 'CURRENT_TIMESTAMP' }
+        },
+        { ifNotExists: true }
+      )
 
       await this.postgresAdapter.createIndex(
         'idx_market_ohlcv_symbol_interval_time',
@@ -142,8 +151,10 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
    */
   async healthCheck () {
     const [redisHealth, postgresHealth] = await Promise.all([
-      this.redisAdapter.healthCheck().catch(error => ({ healthy: false, error: error.message })),
-      this.postgresAdapter.healthCheck().catch(error => ({ healthy: false, error: error.message }))
+      this.redisAdapter.healthCheck().catch((error) => ({ healthy: false, error: error.message })),
+      this.postgresAdapter
+        .healthCheck()
+        .catch((error) => ({ healthy: false, error: error.message }))
     ])
 
     return {
@@ -174,11 +185,15 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
     const key = `timeseries:${series}:${timestamp}`
 
     // Store in Redis for real-time access
-    await this.redisAdapter.set(key, {
-      timestamp,
-      value,
-      tags
-    }, { ttl: this.cacheConfig.realtimeDataTtl })
+    await this.redisAdapter.set(
+      key,
+      {
+        timestamp,
+        value,
+        tags
+      },
+      { ttl: this.cacheConfig.realtimeDataTtl }
+    )
 
     // Add to sorted set for time-based queries
     await this.redisAdapter.zadd(`series:${series}`, timestamp, key)
@@ -190,20 +205,22 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
    * Insert multiple time-series data points
    */
   async insertDataPoints (series, dataPoints) {
-    if (!Array.isArray(dataPoints) || dataPoints.length === 0) {
-      throw new ValidationError('Data points must be a non-empty array', 'dataPoints', dataPoints)
-    }
+    validators.array(dataPoints, 'dataPoints', 1)
 
     const pipeline = this.redisAdapter.connectionManager.pipeline()
 
     for (const point of dataPoints) {
       const key = `timeseries:${series}:${point.timestamp}`
 
-      pipeline.setex(key, this.cacheConfig.realtimeDataTtl, JSON.stringify({
-        timestamp: point.timestamp,
-        value: point.value,
-        tags: point.tags || {}
-      }))
+      pipeline.setex(
+        key,
+        this.cacheConfig.realtimeDataTtl,
+        jsonUtils.safeStringify({
+          timestamp: point.timestamp,
+          value: point.value,
+          tags: point.tags || {}
+        })
+      )
 
       pipeline.zadd(`series:${series}`, point.timestamp, key)
     }
@@ -224,7 +241,9 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
       `series:${series}`,
       startTime,
       endTime,
-      'LIMIT', 0, limit
+      'LIMIT',
+      0,
+      limit
     )
 
     if (keys.length === 0) {
@@ -235,9 +254,7 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
     // Get data points from Redis
     const dataPoints = await this.redisAdapter.mget(...keys)
 
-    return dataPoints
-      .filter(point => point !== null)
-      .sort((a, b) => a.timestamp - b.timestamp)
+    return dataPoints.filter((point) => point !== null).sort((a, b) => a.timestamp - b.timestamp)
   }
 
   /**
@@ -255,7 +272,7 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
       limit
     })
 
-    return result.rows.map(row => ({
+    return result.rows.map((row) => ({
       timestamp: parseInt(row.timestamp),
       value: {
         price: parseFloat(row.price),
@@ -350,9 +367,7 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
    * Store multiple ticks in batch
    */
   async storeTicks (ticks) {
-    if (!Array.isArray(ticks) || ticks.length === 0) {
-      throw new ValidationError('Ticks must be a non-empty array', 'ticks', ticks)
-    }
+    validators.array(ticks, 'ticks', 1)
 
     const results = []
     const symbolGroups = new Map()
@@ -393,7 +408,7 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
       }
 
       // Store in time-series format
-      const dataPoints = symbolTicks.map(tick => ({
+      const dataPoints = symbolTicks.map((tick) => ({
         timestamp: parseInt(tick.timestamp),
         value: {
           price: parseFloat(tick.price),
@@ -547,10 +562,7 @@ export class MarketDataStorageAdapter extends MarketDataStorageInterface {
     await this.flushPendingTicks()
 
     // Close both storage backends
-    await Promise.all([
-      this.redisAdapter.close(),
-      this.postgresAdapter.close()
-    ])
+    await Promise.all([this.redisAdapter.close(), this.postgresAdapter.close()])
 
     this.logger.info('Market data storage adapter closed')
   }
