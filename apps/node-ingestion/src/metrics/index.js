@@ -552,17 +552,16 @@ export class StructuredLogger {
   }
 }
 
+import { createSingleton } from '../utils/common-utilities.js'
+
 // Global metrics collector instance
-let globalMetricsCollector = null
+const getMetricsCollectorSingleton = createSingleton((config = {}) => new MetricsCollector(config))
 
 /**
  * Get or create global metrics collector
  */
 export function getMetricsCollector(config = {}) {
-  if (!globalMetricsCollector) {
-    globalMetricsCollector = new MetricsCollector(config)
-  }
-  return globalMetricsCollector
+  return getMetricsCollectorSingleton(config)
 }
 
 /**

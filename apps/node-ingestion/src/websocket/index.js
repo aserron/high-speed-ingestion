@@ -10,6 +10,7 @@
 import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
 import { WebSocketClient } from './client.js'
+import { createInitializableSingleton } from '../utils/common-utilities.js'
 
 export { WebSocketConnectionManager, ConnectionState } from './connection-manager.js'
 export { WebSocketClient } from './client.js'
@@ -154,26 +155,20 @@ export class WebSocketService {
 }
 
 // Global WebSocket service instance
-let webSocketService = null
+const webSocketServiceSingleton = createInitializableSingleton((config) => new WebSocketService(config))
 
 /**
  * Get the global WebSocket service instance
  */
 export function getWebSocketService () {
-  if (!webSocketService) {
-    webSocketService = new WebSocketService()
-  }
-  return webSocketService
+  return webSocketServiceSingleton.getInstance()
 }
 
 /**
  * Initialize global WebSocket service
  */
 export async function initializeWebSocket (config = null) {
-  const service = new WebSocketService(config)
-  await service.initialize()
-  webSocketService = service
-  return service
+  return await webSocketServiceSingleton.initialize(config)
 }
 
 /**

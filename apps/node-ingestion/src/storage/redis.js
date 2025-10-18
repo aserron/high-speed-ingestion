@@ -11,6 +11,7 @@ import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
 import { ConnectionError, StorageError } from '../errors/index.js'
 import { handleConnectionInitError, handleHealthCheckError, handleQueryError, handlePeriodicTaskError } from '../utils/error-handlers.js'
+import { createInitializableSingleton } from '../utils/common-utilities.js'
 
 /**
  * Redis connection manager with pooling and monitoring
@@ -455,26 +456,20 @@ export class RedisConnectionManager {
 }
 
 // Global Redis manager instance
-let redisManager = null
+const redisManagerSingleton = createInitializableSingleton((config) => new RedisConnectionManager(config))
 
 /**
  * Get the global Redis manager instance
  */
 export function getRedisManager () {
-  if (!redisManager) {
-    redisManager = new RedisConnectionManager()
-  }
-  return redisManager
+  return redisManagerSingleton.getInstance()
 }
 
 /**
  * Initialize Redis manager
  */
 export async function initializeRedis (config = null) {
-  const manager = new RedisConnectionManager(config)
-  await manager.initialize()
-  redisManager = manager
-  return manager
+  return await redisManagerSingleton.initialize(config)
 }
 
 export default {

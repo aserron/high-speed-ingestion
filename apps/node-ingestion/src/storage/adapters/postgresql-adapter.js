@@ -8,6 +8,7 @@
 import { RelationalStorageInterface } from '../interfaces.js'
 import { PostgreSQLConnectionManager } from '../postgresql.js'
 import { ValidationError, StorageError } from '../../errors/index.js'
+import { validators } from '../../utils/common-utilities.js'
 import { getLogger } from '../../logging/index.js'
 
 /**
@@ -49,9 +50,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
    * Execute a query
    */
   async query(sql, params = []) {
-    if (!sql || typeof sql !== 'string') {
-      throw new ValidationError('SQL query must be a non-empty string', 'sql', sql)
-    }
+    validators.key(sql, 'sql')
 
     return await this.connectionManager.query(sql, params)
   }
@@ -60,9 +59,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
    * Execute a transaction
    */
   async transaction(callback) {
-    if (typeof callback !== 'function') {
-      throw new ValidationError('Transaction callback must be a function', 'callback', callback)
-    }
+    validators.function(callback, 'callback')
 
     return await this.connectionManager.transaction(callback)
   }

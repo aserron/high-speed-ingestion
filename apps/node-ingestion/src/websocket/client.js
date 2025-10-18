@@ -12,6 +12,7 @@ import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
 import { ValidationError, ConnectionError } from '../errors/index.js'
 import { handleJsonParseError } from '../utils/error-handlers.js'
+import { validators } from '../utils/common-utilities.js'
 
 /**
  * WebSocket client for financial market data
@@ -367,9 +368,7 @@ export class WebSocketClient extends EventEmitter {
    * Register message handler
    */
   onMessage (messageType, handler) {
-    if (typeof handler !== 'function') {
-      throw new ValidationError('Message handler must be a function', 'handler', handler)
-    }
+    validators.function(handler, 'handler')
 
     if (!this.messageHandlers.has(messageType)) {
       this.messageHandlers.set(messageType, [])

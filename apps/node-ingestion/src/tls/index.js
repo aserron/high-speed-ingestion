@@ -274,17 +274,16 @@ export class TLSManager {
   }
 }
 
+import { createSingleton } from '../utils/common-utilities.js'
+
 // Global TLS manager instance
-let tlsManager = null
+const getTlsManagerSingleton = createSingleton(() => new TLSManager())
 
 /**
  * Get global TLS manager instance
  */
 export function getTlsManager() {
-  if (!tlsManager) {
-    tlsManager = new TLSManager()
-  }
-  return tlsManager
+  return getTlsManagerSingleton()
 }
 
 /**

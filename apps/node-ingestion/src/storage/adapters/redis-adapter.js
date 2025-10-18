@@ -11,6 +11,7 @@ import { ValidationError, StorageError } from '../../errors/index.js'
 import { getLogger } from '../../logging/index.js'
 import { handleJsonParseError, handleSerializationError } from '../../utils/error-handlers.js'
 import { validators } from '../../utils/common-utilities.js'
+import { validators } from '../../utils/common-utilities.js'
 
 /**
  * Redis storage adapter implementing KeyValueStorageInterface
@@ -51,9 +52,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
    * Set a key-value pair
    */
   async set (key, value, options = {}) {
-    if (!key) {
-      throw new ValidationError('Key is required', 'key', key)
-    }
+    validators.key(key)
 
     const serializedValue = handleSerializationError(value)
     const expirationMs = options.ttl ? options.ttl * 1000 : options.expirationMs
@@ -64,9 +63,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
    * Get value by key
    */
   async get (key) {
-    if (!key) {
-      throw new ValidationError('Key is required', 'key', key)
-    }
+    validators.key(key)
 
     const value = await this.connectionManager.get(key)
 
@@ -150,9 +147,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
    * Set multiple key-value pairs at once
    */
   async mset (keyValuePairs) {
-    if (!keyValuePairs || typeof keyValuePairs !== 'object') {
-      throw new ValidationError('Key-value pairs must be an object', 'keyValuePairs', keyValuePairs)
-    }
+    validators.keyValuePairs(keyValuePairs)
 
     const pipeline = this.connectionManager.pipeline()
 
@@ -200,9 +195,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
    * Hash operations
    */
   async hset (key, field, value) {
-    if (!key || !field) {
-      throw new ValidationError('Key and field are required', 'key/field', { key, field })
-    }
+    validators.keyField(key, field)
 
     let serializedValue
     try {

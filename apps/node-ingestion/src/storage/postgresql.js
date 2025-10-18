@@ -11,6 +11,7 @@ import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
 import { ConnectionError, StorageError, ValidationError } from '../errors/index.js'
 import { handleConnectionInitError, handleHealthCheckError, handleQueryError, handleTransactionError, handlePeriodicTaskError } from '../utils/error-handlers.js'
+import { createInitializableSingleton } from '../utils/common-utilities.js'
 
 const { Pool } = pg
 
@@ -498,26 +499,20 @@ export class PostgreSQLConnectionManager {
 }
 
 // Global PostgreSQL manager instance
-let postgresManager = null
+const postgresManagerSingleton = createInitializableSingleton((config) => new PostgreSQLConnectionManager(config))
 
 /**
  * Get the global PostgreSQL manager instance
  */
 export function getPostgreSQLManager () {
-  if (!postgresManager) {
-    postgresManager = new PostgreSQLConnectionManager()
-  }
-  return postgresManager
+  return postgresManagerSingleton.getInstance()
 }
 
 /**
  * Initialize PostgreSQL manager
  */
 export async function initializePostgreSQL (config = null) {
-  const manager = new PostgreSQLConnectionManager(config)
-  await manager.initialize()
-  postgresManager = manager
-  return manager
+  return await postgresManagerSingleton.initialize(config)
 }
 
 export default {

@@ -205,27 +205,23 @@ export class StorageManager {
   }
 }
 
+import { createInitializableSingleton } from '../utils/common-utilities.js'
+
 // Global storage manager instance
-let storageManager = null
+const storageManagerSingleton = createInitializableSingleton((config) => new StorageManager(config))
 
 /**
  * Get the global storage manager instance
  */
 export function getStorageManager () {
-  if (!storageManager) {
-    storageManager = new StorageManager()
-  }
-  return storageManager
+  return storageManagerSingleton.getInstance()
 }
 
 /**
  * Initialize global storage manager
  */
 export async function initializeStorage (config = null) {
-  const manager = new StorageManager(config)
-  await manager.initialize()
-  storageManager = manager
-  return manager
+  return await storageManagerSingleton.initialize(config)
 }
 
 /**
