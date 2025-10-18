@@ -22,30 +22,12 @@ import {
 } from '../index.js'
 import { BackpressureError } from '../../errors/index.js'
 
-// Mock the config to avoid validation errors during tests
-jest.mock('../../config/index.js', () => ({
-  getConfig: jest.fn(() => ({
-    app: {
-      name: 'test-app',
-      version: '1.0.0',
-      environment: 'testing'
-    },
-    monitoring: {
-      logLevel: 'info',
-      logFormat: 'text'
-    }
-  }))
-}))
+// Set environment to development for tests
+process.env.NODE_ENV = 'development'
 
-// Mock the logger to avoid console output during tests
-jest.mock('../../logging/index.js', () => ({
-  getLogger: jest.fn(() => ({
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
-  }))
-}))
+// Import and reload config to pick up the new NODE_ENV
+import { reloadConfig } from '../../config/index.js'
+reloadConfig()
 
 describe('MessageProcessor', () => {
   let processor
@@ -418,7 +400,7 @@ describe('MessageProcessor', () => {
   describe('Message Validation', () => {
     test('should fail validation for missing required fields', async () => {
       const incompleteData = {
-        messageId: 'test-001'
+        messageId: 'test-001',
         // Missing timestamp, symbol, messageType, data, sequenceNumber
       }
 
@@ -600,18 +582,18 @@ describe('MessageProcessor', () => {
       expect(stats.maxLatency).toBe(2.5)
     })
 
-    test('should update ThroughputStats correctly', () => {
+    test('should update ThroughputStats correctly', async () => {
       const stats = new ThroughputStats()
 
       // Wait a bit to ensure elapsed time > 0
-      setTimeout(() => {
-        stats.update(100) // 100 bytes
+      await new Promise(resolve => setTimeout(resolve, 10))
+      
+      stats.update(100) // 100 bytes
 
-        expect(stats.totalMessages).toBe(1)
-        expect(stats.totalBytes).toBe(100)
-        expect(stats.messagesPerSecond).toBeGreaterThan(0)
-        expect(stats.bytesPerSecond).toBeGreaterThan(0)
-      }, 10)
+      expect(stats.totalMessages).toBe(1)
+      expect(stats.totalBytes).toBe(100)
+      expect(stats.messagesPerSecond).toBeGreaterThan(0)
+      expect(stats.bytesPerSecond).toBeGreaterThan(0)
     })
   })
 })
