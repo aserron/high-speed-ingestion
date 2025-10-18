@@ -11,6 +11,7 @@ import { WebSocketConnectionManager, ConnectionState } from './connection-manage
 import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
 import { ValidationError, ConnectionError } from '../errors/index.js'
+import { handleJsonParseError } from '../utils/error-handlers.js'
 
 /**
  * WebSocket client for financial market data
@@ -156,14 +157,7 @@ export class WebSocketClient extends EventEmitter {
       let parsedMessage = data
       if (!isBinary && this.options.messageFormat === 'json') {
         if (typeof data === 'string') {
-          try {
-            parsedMessage = JSON.parse(data)
-          } catch (error) {
-            this.logger.warn('Failed to parse JSON message', {
-              error: error.message,
-              data: data.substring(0, 100)
-            })
-          }
+          parsedMessage = handleJsonParseError(data, data, this.logger)
         }
       }
 

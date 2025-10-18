@@ -27,7 +27,7 @@ export class APIServer {
     this.config = config || getConfig()
     this.logger = getLogger('api-server')
     this.metricsCollector = getMetricsCollector(this.config.metrics || {})
-    
+
     // Storage manager reference (will be injected)
     this.storageManager = null
     

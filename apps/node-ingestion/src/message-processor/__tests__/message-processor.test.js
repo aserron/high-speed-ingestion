@@ -22,8 +22,7 @@ import {
 } from '../index.js'
 import {
   ValidationError,
-  BackpressureError,
-  MessageProcessingError
+  BackpressureError
 } from '../../errors/index.js'
 
 // Mock the config to avoid validation errors during tests

@@ -9,6 +9,7 @@ import { KeyValueStorageInterface } from '../interfaces.js'
 import { RedisConnectionManager } from '../redis.js'
 import { ValidationError, StorageError } from '../../errors/index.js'
 import { getLogger } from '../../logging/index.js'
+import { handleJsonParseError, handleSerializationError } from '../../utils/error-handlers.js'
 
 /**
  * Redis storage adapter implementing KeyValueStorageInterface
@@ -53,13 +54,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
       throw new ValidationError('Key is required', 'key', key)
     }
 
-    let serializedValue
-    try {
-      serializedValue = typeof value === 'string' ? value : JSON.stringify(value)
-    } catch (error) {
-      throw new ValidationError('Value must be serializable', 'value', value, { cause: error })
-    }
-
+    const serializedValue = handleSerializationError(value)
     const expirationMs = options.ttl ? options.ttl * 1000 : options.expirationMs
     return await this.connectionManager.set(key, serializedValue, expirationMs)
   }
@@ -78,12 +73,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
       return null
     }
 
-    try {
-      return JSON.parse(value)
-    } catch (error) {
-      // Return as string if not valid JSON
-      return value
-    }
+    return handleJsonParseError(value, value)
   }
 
   /**

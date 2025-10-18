@@ -9,20 +9,21 @@
   - Update deprecated APIs (url.parse → URL constructor)
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
 
-- [-] 1.1 Fix parsing and syntax errors
+- [x] 1.1 Fix parsing and syntax errors
 
   - Fix await outside async function in auth/index.js and tls/index.js
   - Remove useless constructors in metrics classes
   - Fix case block declarations in app.js
   - _Requirements: 2.1, 2.2, 2.3_
 
-- [ ] 1.2 Remove unneeded code
+- [x] 1.2 Remove unneeded code
   - Remove unused imports (jest, performance, StorageError, etc.)
   - Remove unused variables and dead code
   - Clean up empty constructors and redundant code
   - _Requirements: 2.1, 2.2_
 
-- [ ] 1.3 Fix formatting violations
+- [x] 1.3 Fix formatting violations
+
   - Fix trailing spaces (305 auto-fixable errors)
   - Add missing spaces before function parentheses
   - Fix missing newlines at end of files
@@ -36,7 +37,9 @@
   - Remove code duplication in error handling
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 2.1 Consolidate error handling patterns
+- [x] 2.1 Consolidate error handling patterns
+
+
   - Merge similar try-catch blocks
   - Standardize error message formats
   - Remove duplicate error logging code

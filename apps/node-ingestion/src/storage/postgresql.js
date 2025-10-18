@@ -10,6 +10,7 @@ import pg from 'pg'
 import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
 import { ConnectionError, StorageError, ValidationError } from '../errors/index.js'
+import { handleConnectionInitError, handleHealthCheckError, handleQueryError, handleTransactionError, handlePeriodicTaskError } from '../utils/error-handlers.js'
 
 const { Pool } = pg
 
@@ -94,15 +95,11 @@ export class PostgreSQLConnectionManager {
 
       this.logger.info('PostgreSQL connection manager initialized successfully')
     } catch (error) {
-      this.connectionStats.failedConnections++
-      this.connectionStats.lastErrorTime = Date.now()
-
-      throw new ConnectionError(
-        'Failed to initialize PostgreSQL connection manager',
+      handleConnectionInitError(
+        error,
         'postgresql',
         `${this.config.postgresql.host}:${this.config.postgresql.port}/${this.config.postgresql.database}`,
-        null,
-        { cause: error }
+        this.connectionStats
       )
     }
   }
@@ -170,9 +167,7 @@ export class PostgreSQLConnectionManager {
       try {
         await this.healthCheck()
       } catch (error) {
-        this.logger.error('PostgreSQL health check failed', {
-          error: error.message
-        })
+        handlePeriodicTaskError(error, 'PostgreSQL health check', this.logger)
       }
     }, 30000) // Every 30 seconds
   }
@@ -322,28 +317,7 @@ export class PostgreSQLConnectionManager {
       const latencyNs = process.hrtime.bigint() - start
       this.connectionStats.failedTransactions++
 
-      try {
-        await client.query('ROLLBACK')
-        this.logger.debug('PostgreSQL transaction rolled back')
-      } catch (rollbackError) {
-        this.logger.error('PostgreSQL rollback failed', {
-          error: rollbackError.message
-        })
-      }
-
-      throw new StorageError(
-        `PostgreSQL transaction failed: ${error.message}`,
-        'postgresql',
-        'transaction',
-        null,
-        {
-          context: {
-            latencyNs: latencyNs.toString(),
-            latencyMs: Number(latencyNs) / 1_000_000
-          },
-          cause: error
-        }
-      )
+      await handleTransactionError(error, client, 'PostgreSQL', this.connectionStats, this.logger)
     } finally {
       client.release()
     }

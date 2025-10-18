@@ -7,7 +7,6 @@
 
 import fs from 'fs'
 import https from 'https'
-import tls from 'tls'
 import crypto from 'crypto'
 import { WebSocket } from 'ws'
 import { getLogger } from '../logging/index.js'

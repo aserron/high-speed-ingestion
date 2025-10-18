@@ -7,7 +7,6 @@
 
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
-import rateLimit from 'express-rate-limit'
 import { getLogger } from '../logging/index.js'
 
 /**

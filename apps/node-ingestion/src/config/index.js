@@ -6,8 +6,6 @@
  * financial data ingestion system.
  */
 
-console.warn('importing joi')
-
 // ES Modules
 import Joi from 'joi'
 import dotenv from 'dotenv'

@@ -10,6 +10,7 @@ import Redis from 'ioredis'
 import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
 import { ConnectionError, StorageError } from '../errors/index.js'
+import { handleConnectionInitError, handleHealthCheckError, handleQueryError, handlePeriodicTaskError } from '../utils/error-handlers.js'
 
 /**
  * Redis connection manager with pooling and monitoring
@@ -96,15 +97,11 @@ export class RedisConnectionManager {
 
       this.logger.info('Redis connection manager initialized successfully')
     } catch (error) {
-      this.connectionStats.failedConnections++
-      this.connectionStats.lastErrorTime = Date.now()
-
-      throw new ConnectionError(
-        'Failed to initialize Redis connection manager',
+      handleConnectionInitError(
+        error,
         'redis',
         `${this.config.redis.host}:${this.config.redis.port}`,
-        null,
-        { cause: error }
+        this.connectionStats
       )
     }
   }
@@ -161,9 +158,7 @@ export class RedisConnectionManager {
       try {
         await this.healthCheck()
       } catch (error) {
-        this.logger.error('Redis health check failed', {
-          error: error.message
-        })
+        handlePeriodicTaskError(error, 'Redis health check', this.logger)
       }
     }, 30000) // Every 30 seconds
   }
@@ -197,21 +192,7 @@ export class RedisConnectionManager {
         timestamp: Date.now()
       }
     } catch (error) {
-      const latencyNs = process.hrtime.bigint() - start
-
-      throw new StorageError(
-        'Redis health check failed',
-        'redis',
-        'ping',
-        null,
-        {
-          context: {
-            latencyNs: latencyNs.toString(),
-            latencyMs: Number(latencyNs) / 1_000_000
-          },
-          cause: error
-        }
-      )
+      handleHealthCheckError(error, 'Redis', start)
     }
   }
 
@@ -239,23 +220,7 @@ export class RedisConnectionManager {
 
       return result
     } catch (error) {
-      const latencyNs = process.hrtime.bigint() - start
-      this.connectionStats.failedCommands++
-
-      throw new StorageError(
-        `Redis command failed: ${command}`,
-        'redis',
-        command,
-        null,
-        {
-          context: {
-            args: args.slice(0, 3), // Limit args for logging
-            latencyNs: latencyNs.toString(),
-            latencyMs: Number(latencyNs) / 1_000_000
-          },
-          cause: error
-        }
-      )
+      handleQueryError(error, 'redis', command, start, this.connectionStats)
     }
   }
 

@@ -6,7 +6,6 @@
  */
 
 import { EventEmitter } from 'events'
-import { performance } from 'perf_hooks'
 import { randomUUID } from 'crypto'
 import { getLogger } from '../logging/index.js'
 
@@ -272,6 +271,7 @@ export class MetricsCollector extends EventEmitter {
         this.setGauge('cpu_usage_microseconds', totalCpuTime)
 
         // Event loop lag
+        const { performance } = await import('perf_hooks')
         const start = performance.now()
         setImmediate(() => {
           const lag = performance.now() - start
@@ -360,6 +360,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   trackLatency(operation, labels = {}) {
+    const { performance } = await import('perf_hooks')
     const startTime = performance.now()
     const correlationId = this.generateCorrelationId()
 
