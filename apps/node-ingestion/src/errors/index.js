@@ -6,13 +6,13 @@
  * and context preservation.
  */
 
-import { getLogger } from '../logging/index.js'
+
 
 /**
  * Base error class for all finance ingestion system errors
  */
 export class FinanceIngestionError extends Error {
-  constructor (message, errorCode = null, context = {}, cause = null) {
+  constructor(message, errorCode = null, context = {}, cause = null) {
     super(message)
 
     this.name = this.constructor.name
@@ -36,7 +36,7 @@ export class FinanceIngestionError extends Error {
   /**
    * Convert error to structured object for logging
    */
-  toJSON () {
+  toJSON() {
     return {
       errorType: this.name,
       errorCode: this.errorCode,
@@ -46,9 +46,9 @@ export class FinanceIngestionError extends Error {
       stack: this.stack,
       cause: this.cause
         ? {
-            type: this.cause.constructor.name,
-            message: this.cause.message
-          }
+          type: this.cause.constructor.name,
+          message: this.cause.message
+        }
         : null
     }
   }
@@ -56,7 +56,7 @@ export class FinanceIngestionError extends Error {
   /**
    * Get a detailed string representation
    */
-  toString () {
+  toString() {
     const parts = [`${this.errorCode}: ${this.message}`]
 
     if (Object.keys(this.context).length > 0) {
@@ -78,7 +78,7 @@ export class FinanceIngestionError extends Error {
  * Configuration-related errors
  */
 export class ConfigurationError extends FinanceIngestionError {
-  constructor (message, configKey = null, configValue = null, options = {}) {
+  constructor(message, configKey = null, configValue = null, options = {}) {
     const context = { ...options.context }
     if (configKey) context.configKey = configKey
     if (configValue !== null) context.configValue = String(configValue)
@@ -91,7 +91,7 @@ export class ConfigurationError extends FinanceIngestionError {
  * Connection-related errors
  */
 export class ConnectionError extends FinanceIngestionError {
-  constructor (message, connectionType = null, endpoint = null, retryCount = null, options = {}) {
+  constructor(message, connectionType = null, endpoint = null, retryCount = null, options = {}) {
     const context = { ...options.context }
     if (connectionType) context.connectionType = connectionType
     if (endpoint) context.endpoint = endpoint
@@ -105,7 +105,7 @@ export class ConnectionError extends FinanceIngestionError {
  * Message processing errors
  */
 export class ProcessingError extends FinanceIngestionError {
-  constructor (message, messageId = null, processingStage = null, messageData = null, options = {}) {
+  constructor(message, messageId = null, processingStage = null, messageData = null, options = {}) {
     const context = { ...options.context }
     if (messageId) context.messageId = messageId
     if (processingStage) context.processingStage = processingStage
@@ -124,7 +124,7 @@ export class ProcessingError extends FinanceIngestionError {
  * Alias for ProcessingError for backward compatibility
  */
 export class MessageProcessingError extends ProcessingError {
-  constructor (message, messageId = null, processingStage = null, messageData = null, options = {}) {
+  constructor(message, messageId = null, processingStage = null, messageData = null, options = {}) {
     super(message, messageId, processingStage, messageData, options)
   }
 }
@@ -133,7 +133,7 @@ export class MessageProcessingError extends ProcessingError {
  * Storage-related errors
  */
 export class StorageError extends FinanceIngestionError {
-  constructor (message, storageType = null, operation = null, affectedRecords = null, options = {}) {
+  constructor(message, storageType = null, operation = null, affectedRecords = null, options = {}) {
     const context = { ...options.context }
     if (storageType) context.storageType = storageType
     if (operation) context.operation = operation
@@ -147,7 +147,7 @@ export class StorageError extends FinanceIngestionError {
  * Data validation errors
  */
 export class ValidationError extends FinanceIngestionError {
-  constructor (message, fieldName = null, fieldValue = null, validationRule = null, options = {}) {
+  constructor(message, fieldName = null, fieldValue = null, validationRule = null, options = {}) {
     const context = { ...options.context }
     if (fieldName) context.fieldName = fieldName
     if (fieldValue !== null) context.fieldValue = String(fieldValue)
@@ -161,7 +161,7 @@ export class ValidationError extends FinanceIngestionError {
  * Backpressure-related errors
  */
 export class BackpressureError extends FinanceIngestionError {
-  constructor (message, queueSize = null, maxQueueSize = null, messageRate = null, options = {}) {
+  constructor(message, queueSize = null, maxQueueSize = null, messageRate = null, options = {}) {
     const context = { ...options.context }
     if (queueSize !== null) context.queueSize = queueSize
     if (maxQueueSize !== null) context.maxQueueSize = maxQueueSize
@@ -175,7 +175,7 @@ export class BackpressureError extends FinanceIngestionError {
  * Metrics collection errors
  */
 export class MetricsError extends FinanceIngestionError {
-  constructor (message, metricName = null, metricType = null, options = {}) {
+  constructor(message, metricName = null, metricType = null, options = {}) {
     const context = { ...options.context }
     if (metricName) context.metricName = metricName
     if (metricType) context.metricType = metricType
@@ -188,7 +188,7 @@ export class MetricsError extends FinanceIngestionError {
  * Timeout-related errors
  */
 export class TimeoutError extends FinanceIngestionError {
-  constructor (message, operation = null, timeoutMs = null, elapsedMs = null, options = {}) {
+  constructor(message, operation = null, timeoutMs = null, elapsedMs = null, options = {}) {
     const context = { ...options.context }
     if (operation) context.operation = operation
     if (timeoutMs !== null) context.timeoutMs = timeoutMs
@@ -202,7 +202,7 @@ export class TimeoutError extends FinanceIngestionError {
  * Resource constraint errors
  */
 export class ResourceError extends FinanceIngestionError {
-  constructor (message, resourceType = null, currentUsage = null, limit = null, options = {}) {
+  constructor(message, resourceType = null, currentUsage = null, limit = null, options = {}) {
     const context = { ...options.context }
     if (resourceType) context.resourceType = resourceType
     if (currentUsage !== null) context.currentUsage = currentUsage
@@ -216,7 +216,7 @@ export class ResourceError extends FinanceIngestionError {
  * Cluster management errors
  */
 export class ClusterError extends FinanceIngestionError {
-  constructor (message, workerId = null, operation = null, options = {}) {
+  constructor(message, workerId = null, operation = null, options = {}) {
     const context = { ...options.context }
     if (workerId !== null) context.workerId = workerId
     if (operation) context.operation = operation
@@ -228,7 +228,7 @@ export class ClusterError extends FinanceIngestionError {
 /**
  * Convert generic errors to appropriate FinanceIngestionError subclass
  */
-export function convertError (error, context = {}) {
+export function convertError(error, context = {}) {
   if (error instanceof FinanceIngestionError) {
     // Add additional context to existing error
     Object.assign(error.context, context)
@@ -265,13 +265,17 @@ export function convertError (error, context = {}) {
 /**
  * Error handler function for centralized error processing
  */
-export function handleError (error, logger = null, context = {}, shouldRethrow = true) {
+export function handleError(error, logger = null, context = {}, shouldRethrow = true) {
   // Convert to FinanceIngestionError if needed
   const financeError = convertError(error, context)
 
   // Log the error
-  const log = logger || getLogger('error-handler')
-  log.error('Error occurred', financeError.toJSON())
+  if (!logger) {
+    // Lazy import to avoid circular dependency
+    const { getLogger } = await import('../logging/index.js')
+    logger = getLogger('error-handler')
+  }
+  logger.error('Error occurred', financeError.toJSON())
 
   if (shouldRethrow) {
     throw financeError
@@ -284,14 +288,14 @@ export function handleError (error, logger = null, context = {}, shouldRethrow =
  * Error context manager for automatic error context addition
  */
 export class ErrorContext {
-  constructor (context = {}) {
+  constructor(context = {}) {
     this.context = context
   }
 
   /**
    * Run function with error context
    */
-  run (fn) {
+  run(fn) {
     try {
       return fn()
     } catch (error) {
@@ -302,7 +306,7 @@ export class ErrorContext {
   /**
    * Run async function with error context
    */
-  async runAsync (fn) {
+  async runAsync(fn) {
     try {
       return await fn()
     } catch (error) {
@@ -314,7 +318,7 @@ export class ErrorContext {
 /**
  * Async error handler wrapper
  */
-export function asyncErrorHandler (fn) {
+export function asyncErrorHandler(fn) {
   return async (...args) => {
     try {
       return await fn(...args)
@@ -327,7 +331,7 @@ export function asyncErrorHandler (fn) {
 /**
  * Express/Fastify error handler middleware
  */
-export function errorHandlerMiddleware (error, request, reply, next) {
+export async function errorHandlerMiddleware(error, request, reply, next) {
   const financeError = convertError(error, {
     requestId: request.id,
     method: request.method,
@@ -335,6 +339,8 @@ export function errorHandlerMiddleware (error, request, reply, next) {
     userAgent: request.headers['user-agent']
   })
 
+  // Lazy import to avoid circular dependency
+  const { getLogger } = await import('../logging/index.js')
   const logger = getLogger('http-error')
   logger.error('HTTP request error', financeError.toJSON())
 
@@ -360,7 +366,7 @@ export function errorHandlerMiddleware (error, request, reply, next) {
 /**
  * Map error types to HTTP status codes
  */
-function getHttpStatusCode (error) {
+function getHttpStatusCode(error) {
   if (error instanceof ValidationError) return 400
   if (error instanceof ConfigurationError) return 400
   if (error instanceof ConnectionError) return 503
@@ -373,7 +379,9 @@ function getHttpStatusCode (error) {
 /**
  * Setup global error handlers
  */
-export function setupErrorHandlers () {
+export async function setupErrorHandlers() {
+  // Lazy import to avoid circular dependency
+  const { getLogger } = await import('../logging/index.js')
   const logger = getLogger('global-error')
 
   // Handle uncaught exceptions

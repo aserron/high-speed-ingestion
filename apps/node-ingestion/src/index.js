@@ -7,8 +7,8 @@
 
 // Internal modules
 import { getConfig } from './config/index.js'
-import { setupLogging, getLogger, setCorrelationId } from './logging/index.js'
 import { setupErrorHandlers } from './errors/index.js'
+import { setupLogging, getLogger, setCorrelationId } from './logging/index.js'
 import { asyncUtils, errorUtils, jsonUtils } from './utils/common-utilities.js'
 
 /**
@@ -49,7 +49,7 @@ class FinanceIngestionApp {
       this.logger = getLogger('app')
 
       // Setup error handlers
-      setupErrorHandlers()
+      await setupErrorHandlers()
 
       // Set correlation ID for startup
       setCorrelationId('startup')

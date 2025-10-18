@@ -11,8 +11,8 @@ import os from 'os'
 
 // Internal modules
 import { getConfig } from '../config/index.js'
-import { setupLogging, getLogger } from '../logging/index.js'
 import { setupErrorHandlers, ClusterError } from '../errors/index.js'
+import { setupLogging, getLogger } from '../logging/index.js'
 
 /**
  * Cluster manager for multi-core utilization
@@ -32,7 +32,7 @@ export class ClusterApp {
       this.config = getConfig()
       setupLogging(this.config)
       this.logger = getLogger('cluster-manager')
-      setupErrorHandlers()
+      await setupErrorHandlers()
 
       this.logger.info('Initializing cluster manager', {
         nodeVersion: process.version,

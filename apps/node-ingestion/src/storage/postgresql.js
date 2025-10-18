@@ -11,14 +11,14 @@ import pg from 'pg'
 
 // Internal modules
 import { getConfig } from '../config/index.js'
-import { getLogger } from '../logging/index.js'
 import { StorageError } from '../errors/index.js'
+import { getLogger } from '../logging/index.js'
+import { createInitializableSingleton, errorUtils, connectionUtils, validationUtils } from '../utils/common-utilities.js'
 import {
   handleConnectionInitError,
   handleTransactionError,
   handlePeriodicTaskError
 } from '../utils/error-handlers.js'
-import { createInitializableSingleton, errorUtils, connectionUtils, validationUtils } from '../utils/common-utilities.js'
 
 const { Pool } = pg
 

@@ -7,8 +7,8 @@
  */
 
 // Internal modules
-import { ValidationError, StorageError } from '../errors/index.js'
 import { getConfig } from '../config/index.js'
+import { ValidationError, StorageError } from '../errors/index.js'
 import { getLogger } from '../logging/index.js'
 
 /**

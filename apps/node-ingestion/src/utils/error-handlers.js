@@ -6,8 +6,8 @@
  */
 
 // Internal modules
-import { getLogger } from '../logging/index.js'
 import { ConnectionError, StorageError, ProcessingError, ValidationError } from '../errors/index.js'
+import { getLogger } from '../logging/index.js'
 
 /**
  * Standard connection initialization error handler

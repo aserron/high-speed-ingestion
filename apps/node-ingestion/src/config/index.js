@@ -7,8 +7,8 @@
  */
 
 // External dependencies
-import Joi from 'joi'
 import dotenv from 'dotenv'
+import Joi from 'joi'
 
 // Internal modules
 import { envUtils } from '../utils/common-utilities.js'

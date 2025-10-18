@@ -6,9 +6,9 @@
  */
 
 // External dependencies
-import winston from 'winston'
 import { AsyncLocalStorage } from 'async_hooks'
 import { v4 as uuidv4 } from 'uuid'
+import winston from 'winston'
 
 // Internal modules
 import { getConfig } from '../config/index.js'

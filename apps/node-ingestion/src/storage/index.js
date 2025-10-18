@@ -6,8 +6,8 @@
  */
 
 // Internal modules
-import { getLogger } from '../logging/index.js'
 import { getConfig } from '../config/index.js'
+import { getLogger } from '../logging/index.js'
 import { createInitializableSingleton, asyncUtils } from '../utils/common-utilities.js'
 
 // Relative modules

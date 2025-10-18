@@ -7,10 +7,10 @@
 // Internal modules
 import { envUtils } from '../utils/common-utilities.js'
 
-// Application classes
-import { SimpleApp } from './simple-app.js'
-import { FullApp } from './full-app.js'
+// Relative modules
 import { ClusterApp } from './cluster-app.js'
+import { FullApp } from './full-app.js'
+import { SimpleApp } from './simple-app.js'
 
 /**
  * Application modes

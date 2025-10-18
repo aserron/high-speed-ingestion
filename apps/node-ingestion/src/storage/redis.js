@@ -11,15 +11,15 @@ import Redis from 'ioredis'
 
 // Internal modules
 import { getConfig } from '../config/index.js'
-import { getLogger } from '../logging/index.js'
 import { StorageError } from '../errors/index.js'
+import { getLogger } from '../logging/index.js'
+import { createInitializableSingleton, connectionUtils } from '../utils/common-utilities.js'
 import {
   handleConnectionInitError,
   handleHealthCheckError,
   handleQueryError,
   handlePeriodicTaskError
 } from '../utils/error-handlers.js'
-import { createInitializableSingleton, connectionUtils } from '../utils/common-utilities.js'
 
 /**
  * Redis connection manager with pooling and monitoring
