@@ -6,13 +6,18 @@
  * message handling, and performance monitoring.
  */
 
+// External dependencies
 import { EventEmitter } from 'events'
-import { WebSocketConnectionManager, ConnectionState } from './connection-manager.js'
+
+// Internal modules
 import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
-import { ValidationError, ConnectionError } from '../errors/index.js'
+import { ConnectionError } from '../errors/index.js'
 import { handleJsonParseError } from '../utils/error-handlers.js'
-import { validators } from '../utils/common-utilities.js'
+import { validators, errorUtils } from '../utils/common-utilities.js'
+
+// Relative modules
+import { WebSocketConnectionManager, ConnectionState } from './connection-manager.js'
 
 /**
  * WebSocket client for financial market data
@@ -189,14 +194,13 @@ export class WebSocketClient extends EventEmitter {
       // Call registered message handlers
       this.callMessageHandlers(messageType, parsedMessage, event)
     } catch (error) {
-      this.logger.error('Error handling WebSocket message', {
-        error: error.message,
-        correlationId: event.correlationId
-      })
-
-      this.emit('messageError', {
-        error,
-        originalEvent: event
+      errorUtils.handleError(this.logger, 'Error handling WebSocket message', error, {
+        eventEmitter: this,
+        eventName: 'messageError',
+        context: {
+          correlationId: event.correlationId,
+          originalEvent: event
+        }
       })
     }
   }
@@ -233,9 +237,8 @@ export class WebSocketClient extends EventEmitter {
       try {
         handler(message, originalEvent)
       } catch (error) {
-        this.logger.error('Message handler error', {
-          messageType,
-          error: error.message
+        errorUtils.logError(this.logger, 'Message handler error', error, {
+          messageType
         })
       }
     }
@@ -246,9 +249,7 @@ export class WebSocketClient extends EventEmitter {
       try {
         handler(message, originalEvent)
       } catch (error) {
-        this.logger.error('Global message handler error', {
-          error: error.message
-        })
+        errorUtils.logError(this.logger, 'Global message handler error', error)
       }
     }
   }

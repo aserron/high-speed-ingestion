@@ -5,12 +5,13 @@
  * client interface, and utilities for financial market data ingestion.
  */
 
-// Core WebSocket components
-// Utilities and helpers
+// Internal modules
 import { getConfig } from '../config/index.js'
 import { getLogger } from '../logging/index.js'
+import { createInitializableSingleton, asyncUtils } from '../utils/common-utilities.js'
+
+// Relative modules
 import { WebSocketClient } from './client.js'
-import { createInitializableSingleton } from '../utils/common-utilities.js'
 
 export { WebSocketConnectionManager, ConnectionState } from './connection-manager.js'
 export { WebSocketClient } from './client.js'
@@ -138,7 +139,7 @@ export class WebSocketService {
     const closePromises = []
     for (const [name, client] of this.clients) {
       closePromises.push(
-        client.disconnect().catch(error => {
+        client.disconnect().catch((error) => {
           this.logger.error(`Error closing client ${name}`, {
             error: error.message
           })
@@ -155,7 +156,9 @@ export class WebSocketService {
 }
 
 // Global WebSocket service instance
-const webSocketServiceSingleton = createInitializableSingleton((config) => new WebSocketService(config))
+const webSocketServiceSingleton = createInitializableSingleton(
+  (config) => new WebSocketService(config)
+)
 
 /**
  * Get the global WebSocket service instance
@@ -189,13 +192,18 @@ export async function createMarketDataClient (symbols = [], options = {}) {
     ...options
   })
 
-  // Initialize and connect
-  await client.initialize()
+  // Initialize and connect with timeout and retry
+  await asyncUtils.safeAsync(() => client.initialize(), { timeout: 15000, maxRetries: 3 })
 
   // Subscribe to symbols if provided
   if (symbols.length > 0) {
-    await client.waitForConnection()
-    await client.subscribe(symbols)
+    await asyncUtils.safeAsync(
+      async () => {
+        await client.waitForConnection()
+        await client.subscribe(symbols)
+      },
+      { timeout: 10000, maxRetries: 2 }
+    )
   }
 
   return client

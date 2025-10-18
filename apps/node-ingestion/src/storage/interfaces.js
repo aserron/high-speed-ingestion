@@ -7,6 +7,7 @@
  */
 
 import { ValidationError } from '../errors/index.js'
+import { validationUtils } from '../utils/common-utilities.js'
 
 /**
  * Base storage interface that all storage implementations must follow
@@ -222,9 +223,7 @@ export class MarketDataStorageInterface extends TimeSeriesStorageInterface {
    * Store multiple ticks in batch
    */
   async storeTicks (ticks) {
-    if (!Array.isArray(ticks)) {
-      throw new ValidationError('Ticks must be an array', 'ticks', ticks)
-    }
+    validationUtils.validateNonEmptyArray(ticks, 'ticks', 'Ticks must be an array')
 
     const groupedTicks = {}
 
@@ -363,8 +362,8 @@ export class StorageFactory {
    * Close all storage instances
    */
   static async closeAll () {
-    const closePromises = Array.from(this.storageInstances.values()).map(storage =>
-      storage.close().catch(error => {
+    const closePromises = Array.from(this.storageInstances.values()).map((storage) =>
+      storage.close().catch((error) => {
         // Log error silently
         return error
       })
@@ -407,12 +406,10 @@ export class StorageConfigValidator {
    * Validate Redis configuration
    */
   static validateRedisConfig (config) {
-    const errors = []
+    // Use centralized validation for common connection config
+    validationUtils.validateConnectionConfig(config, 'Redis')
 
-    if (!config.host) errors.push('Redis host is required')
-    if (!config.port || config.port < 1 || config.port > 65535) {
-      errors.push('Redis port must be between 1 and 65535')
-    }
+    const errors = []
     if (config.db !== undefined && (config.db < 0 || config.db > 15)) {
       errors.push('Redis database must be between 0 and 15')
     }
@@ -428,10 +425,8 @@ export class StorageConfigValidator {
   static validatePostgreSQLConfig (config) {
     const errors = []
 
-    if (!config.host) errors.push('PostgreSQL host is required')
-    if (!config.port || config.port < 1 || config.port > 65535) {
-      errors.push('PostgreSQL port must be between 1 and 65535')
-    }
+    // Use centralized validation for common connection config
+    validationUtils.validateConnectionConfig(config, 'PostgreSQL')
     if (!config.database) errors.push('PostgreSQL database is required')
     if (!config.username) errors.push('PostgreSQL username is required')
 

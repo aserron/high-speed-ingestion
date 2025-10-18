@@ -1,21 +1,24 @@
 /**
  * PostgreSQL Storage Adapter
- * 
+ *
  * Implements the RelationalStorageInterface using PostgreSQL as the backend
  * for structured data storage and complex queries.
  */
 
-import { RelationalStorageInterface } from '../interfaces.js'
-import { PostgreSQLConnectionManager } from '../postgresql.js'
-import { ValidationError, StorageError } from '../../errors/index.js'
+// Internal modules
+import { ValidationError } from '../../errors/index.js'
 import { validators } from '../../utils/common-utilities.js'
 import { getLogger } from '../../logging/index.js'
+
+// Relative modules
+import { RelationalStorageInterface } from '../interfaces.js'
+import { PostgreSQLConnectionManager } from '../postgresql.js'
 
 /**
  * PostgreSQL storage adapter implementing RelationalStorageInterface
  */
 export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
-  constructor(config = null) {
+  constructor (config = null) {
     super()
     this.connectionManager = new PostgreSQLConnectionManager(config)
     this.logger = getLogger('postgresql-adapter')
@@ -24,7 +27,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Initialize PostgreSQL storage
    */
-  async initialize() {
+  async initialize () {
     await this.connectionManager.initialize()
     this.logger.info('PostgreSQL storage adapter initialized')
   }
@@ -32,14 +35,14 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Perform health check
    */
-  async healthCheck() {
+  async healthCheck () {
     return await this.connectionManager.healthCheck()
   }
 
   /**
    * Get storage statistics
    */
-  getStats() {
+  getStats () {
     return {
       type: 'postgresql',
       ...this.connectionManager.getStats()
@@ -49,7 +52,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Execute a query
    */
-  async query(sql, params = []) {
+  async query (sql, params = []) {
     validators.key(sql, 'sql')
 
     return await this.connectionManager.query(sql, params)
@@ -58,7 +61,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Execute a transaction
    */
-  async transaction(callback) {
+  async transaction (callback) {
     validators.function(callback, 'callback')
 
     return await this.connectionManager.transaction(callback)
@@ -67,7 +70,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Insert a single record
    */
-  async insert(table, data, options = {}) {
+  async insert (table, data, options = {}) {
     if (!table || typeof table !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'table', table)
     }
@@ -82,7 +85,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Insert multiple records
    */
-  async insertBatch(table, records, options = {}) {
+  async insertBatch (table, records, options = {}) {
     if (!table || typeof table !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'table', table)
     }
@@ -97,7 +100,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Update records
    */
-  async update(table, data, whereClause, whereParams = []) {
+  async update (table, data, whereClause, whereParams = []) {
     if (!table || typeof table !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'table', table)
     }
@@ -105,7 +108,11 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
       throw new ValidationError('Data must be an object', 'data', data)
     }
     if (!whereClause || typeof whereClause !== 'string') {
-      throw new ValidationError('Where clause must be a non-empty string', 'whereClause', whereClause)
+      throw new ValidationError(
+        'Where clause must be a non-empty string',
+        'whereClause',
+        whereClause
+      )
     }
 
     return await this.connectionManager.update(table, data, whereClause, whereParams)
@@ -114,12 +121,16 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Delete records
    */
-  async delete(table, whereClause, whereParams = []) {
+  async delete (table, whereClause, whereParams = []) {
     if (!table || typeof table !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'table', table)
     }
     if (!whereClause || typeof whereClause !== 'string') {
-      throw new ValidationError('Where clause must be a non-empty string', 'whereClause', whereClause)
+      throw new ValidationError(
+        'Where clause must be a non-empty string',
+        'whereClause',
+        whereClause
+      )
     }
 
     return await this.connectionManager.delete(table, whereClause, whereParams)
@@ -128,7 +139,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Select records
    */
-  async select(table, options = {}) {
+  async select (table, options = {}) {
     if (!table || typeof table !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'table', table)
     }
@@ -170,7 +181,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Create table with schema
    */
-  async createTable(tableName, schema, options = {}) {
+  async createTable (tableName, schema, options = {}) {
     if (!tableName || typeof tableName !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'tableName', tableName)
     }
@@ -206,11 +217,11 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
 
     let createSql = `CREATE TABLE ${options.ifNotExists ? 'IF NOT EXISTS ' : ''}${tableName} (`
     createSql += columns.join(', ')
-    
+
     if (constraints.length > 0) {
-      createSql += ', ' + constraints.join(', ')
+      createSql += `, ${constraints.join(', ')}`
     }
-    
+
     createSql += ')'
 
     if (options.temporary) {
@@ -223,13 +234,13 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Drop table
    */
-  async dropTable(tableName, options = {}) {
+  async dropTable (tableName, options = {}) {
     if (!tableName || typeof tableName !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'tableName', tableName)
     }
 
     let dropSql = `DROP TABLE ${options.ifExists ? 'IF EXISTS ' : ''}${tableName}`
-    
+
     if (options.cascade) {
       dropSql += ' CASCADE'
     }
@@ -240,7 +251,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Create index
    */
-  async createIndex(indexName, tableName, columns, options = {}) {
+  async createIndex (indexName, tableName, columns, options = {}) {
     if (!indexName || typeof indexName !== 'string') {
       throw new ValidationError('Index name must be a non-empty string', 'indexName', indexName)
     }
@@ -264,13 +275,13 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Drop index
    */
-  async dropIndex(indexName, options = {}) {
+  async dropIndex (indexName, options = {}) {
     if (!indexName || typeof indexName !== 'string') {
       throw new ValidationError('Index name must be a non-empty string', 'indexName', indexName)
     }
 
     let dropSql = `DROP INDEX ${options.ifExists ? 'IF EXISTS ' : ''}${indexName}`
-    
+
     if (options.cascade) {
       dropSql += ' CASCADE'
     }
@@ -281,7 +292,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Execute raw SQL file
    */
-  async executeFile(sqlContent) {
+  async executeFile (sqlContent) {
     if (!sqlContent || typeof sqlContent !== 'string') {
       throw new ValidationError('SQL content must be a non-empty string', 'sqlContent', sqlContent)
     }
@@ -292,7 +303,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Get table information
    */
-  async getTableInfo(tableName) {
+  async getTableInfo (tableName) {
     if (!tableName || typeof tableName !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'tableName', tableName)
     }
@@ -317,7 +328,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Get table indexes
    */
-  async getTableIndexes(tableName) {
+  async getTableIndexes (tableName) {
     if (!tableName || typeof tableName !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'tableName', tableName)
     }
@@ -349,7 +360,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Analyze table statistics
    */
-  async analyzeTable(tableName) {
+  async analyzeTable (tableName) {
     if (!tableName || typeof tableName !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'tableName', tableName)
     }
@@ -360,13 +371,13 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Vacuum table
    */
-  async vacuumTable(tableName, options = {}) {
+  async vacuumTable (tableName, options = {}) {
     if (!tableName || typeof tableName !== 'string') {
       throw new ValidationError('Table name must be a non-empty string', 'tableName', tableName)
     }
 
     let vacuumSql = 'VACUUM'
-    
+
     if (options.full) {
       vacuumSql += ' FULL'
     }
@@ -385,7 +396,7 @@ export class PostgreSQLStorageAdapter extends RelationalStorageInterface {
   /**
    * Close PostgreSQL connection
    */
-  async close() {
+  async close () {
     await this.connectionManager.close()
     this.logger.info('PostgreSQL storage adapter closed')
   }

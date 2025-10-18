@@ -487,9 +487,6 @@ export const jsonUtils = {
 /**
  * Error handling utilities to standardize error processing patterns
  */
-/**
- * Error handling utilities to standardize error processing patterns
- */
 export const errorUtils = {
   /**
    * Standard error logging with consistent format
@@ -591,6 +588,154 @@ export const errorUtils = {
   }
 }
 
+  validationUtils
+}
+/**
+ * Constructor utilities to reduce duplicate initialization patterns
+ */
+export const constructorUtils = {
+  /**
+   * Initialize config with fallback to global config
+   * Note: This should be used with dynamic import or passed as parameter
+   */
+  initConfig (providedConfig, getConfigFn) {
+    return providedConfig || (getConfigFn ? getConfigFn() : null)
+  },
+
+  /**
+   * Initialize logger with module name
+   * Note: This should be used with dynamic import or passed as parameter
+   */
+  initLogger (moduleName, getLoggerFn) {
+    return getLoggerFn ? getLoggerFn(moduleName) : null
+  },
+
+  /**
+   * Standard service constructor initialization
+   */
+  initService (moduleName, providedConfig, getConfigFn, getLoggerFn) {
+    return {
+      config: this.initConfig(providedConfig, getConfigFn),
+      logger: this.initLogger(moduleName, getLoggerFn)
+    }
+  }
+}
+
+/**
+ * Connection utilities to reduce duplicate connection validation
+ */
+export const connectionUtils = {
+  /**
+   * Validate connection pool is initialized and connected
+   */
+  validateConnection (pool, isConnected, serviceName, operation = 'operation') {
+    if (!pool) {
+      throw new StorageError(`${serviceName} pool not initialized`)
+    }
+    if (!isConnected) {
+      throw new StorageError(`${serviceName} not connected`, serviceName.toLowerCase(), operation)
+    }
+  },
+
+  /**
+   * Validate database connection for operations
+   */
+  validateDatabaseConnection (pool, isConnected, serviceName, operation) {
+    this.validateConnection(pool, isConnected, serviceName, operation)
+  }
+}
+
+/**
+ * Enhanced validation utilities (extending existing validators)
+ */
+export const validationUtils = {
+  /**
+   * Validate connection configuration
+   */
+  validateConnectionConfig (config, serviceName) {
+    const errors = []
+    
+    if (!config.host) {
+      errors.push(`${serviceName} host is required`)
+    }
+    
+    if (!config.port || config.port < 1 || config.port > 65535) {
+      errors.push(`${serviceName} port must be between 1 and 65535`)
+    }
+    
+    if (errors.length > 0) {
+      throw new ValidationError(`${serviceName} configuration invalid: ${errors.join(', ')}`)
+    }
+    
+    return true
+  },
+
+  /**
+   * Validate array with custom message
+   */
+  validateNonEmptyArray (arr, fieldName, customMessage = null) {
+    if (!Array.isArray(arr) || arr.length === 0) {
+      const message = customMessage || `${fieldName} must be a non-empty array`
+      throw new ValidationError(message, fieldName, arr)
+    }
+    return arr
+  },
+
+  /**
+   * Validate object data for database operations
+   */
+  validateObjectData (data, operation = 'operation') {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      throw new ValidationError(`${operation} data must be an object`, 'data', data)
+    }
+    return data
+  },
+
+  /**
+   * Safe existence check with custom handling
+   */
+  checkExists (value, fieldName, throwError = true) {
+    const exists = value !== null && value !== undefined && value !== ''
+    
+    if (!exists && throwError) {
+      throw new ValidationError(`${fieldName} is required`, fieldName, value)
+    }
+    
+    return exists
+  }
+}
+
+/**
+ * Constructor utilities to reduce duplicate initialization patterns
+ */
+export const constructorUtils = {
+  /**
+   * Initialize config with fallback to global config
+   * Note: This should be used with dynamic import or passed as parameter
+   */
+  initConfig (providedConfig, getConfigFn) {
+    return providedConfig || (getConfigFn ? getConfigFn() : null)
+  },
+
+  /**
+   * Initialize logger with module name
+   * Note: This should be used with dynamic import or passed as parameter
+   */
+  initLogger (moduleName, getLoggerFn) {
+    return getLoggerFn ? getLoggerFn(moduleName) : null
+  },
+
+  /**
+   * Standard service constructor initialization
+   */
+  initService (moduleName, providedConfig, getConfigFn, getLoggerFn) {
+    return {
+      config: this.initConfig(providedConfig, getConfigFn),
+      logger: this.initLogger(moduleName, getLoggerFn)
+    }
+  }
+}
+
 /**
  * Connection utilities to reduce duplicate connection validation
  */
@@ -686,6 +831,7 @@ export default {
   stringUtils,
   jsonUtils,
   errorUtils,
+  constructorUtils,
   connectionUtils,
   validationUtils
 }

@@ -23,35 +23,35 @@ const HealthStatus = {
  * REST API server for financial data ingestion system
  */
 export class APIServer {
-  constructor(config = null) {
+  constructor (config = null) {
     this.config = config || getConfig()
     this.logger = getLogger('api-server')
     this.metricsCollector = getMetricsCollector(this.config.metrics || {})
 
     // Storage manager reference (will be injected)
     this.storageManager = null
-    
+
     // Express app and server
     this.app = null
     this.server = null
     this.startTime = Date.now()
-    
+
     // Initialize Express app
     this.initExpressApp()
   }
 
-  initExpressApp() {
+  initExpressApp () {
     this.app = express()
-    
+
     // Middleware
     this.app.use(cors())
     this.app.use(express.json())
     this.app.use(express.urlencoded({ extended: true }))
-    
+
     // Request logging middleware
     this.app.use((req, res, next) => {
       const start = performance.now()
-      
+
       res.on('finish', () => {
         const duration = performance.now() - start
         this.logger.info('API request completed', null, {
@@ -61,31 +61,31 @@ export class APIServer {
           duration: `${duration.toFixed(2)}ms`,
           userAgent: req.get('User-Agent')
         })
-        
+
         // Track API metrics
         this.metricsCollector.incrementCounter('api_requests_total', 1, {
           method: req.method,
           endpoint: req.route?.path || req.url,
           status: res.statusCode.toString()
         })
-        
+
         this.metricsCollector.recordLatency('api_request', duration * 1_000_000, {
           method: req.method,
           endpoint: req.route?.path || req.url
         })
       })
-      
+
       next()
     })
-    
+
     // Register routes
     this.registerRoutes()
-    
+
     // Error handling middleware
     this.app.use(this.errorHandler.bind(this))
   }
 
-  registerRoutes() {
+  registerRoutes () {
     // Health check endpoint
     this.app.get('/health', async (req, res) => {
       try {
@@ -107,10 +107,10 @@ export class APIServer {
       try {
         const metrics = await this.metricsCollector.exportPrometheusMetrics()
         const contentType = this.metricsCollector.getPrometheusContentType()
-        
+
         res.set('Content-Type', contentType)
         res.send(metrics)
-        
+
         // Track metrics export
         this.metricsCollector.incrementCounter('api_metrics_exports_total', 1, {
           format: 'prometheus'
@@ -126,7 +126,7 @@ export class APIServer {
       try {
         const stats = await this.getPerformanceStats()
         res.json(stats)
-        
+
         // Track stats request
         this.metricsCollector.incrementCounter('api_stats_requests_total', 1, {
           endpoint: 'performance'
@@ -141,12 +141,12 @@ export class APIServer {
     this.app.get('/stats/latency', async (req, res) => {
       try {
         const latencyStats = this.metricsCollector.getLatencyStats()
-        
+
         res.json({
           timestamp: Date.now(),
           latencyStats
         })
-        
+
         // Track latency stats request
         this.metricsCollector.incrementCounter('api_stats_requests_total', 1, {
           endpoint: 'latency'
@@ -162,13 +162,13 @@ export class APIServer {
       try {
         const throughputStats = this.metricsCollector.getThroughputStats()
         const resourceStats = this.metricsCollector.getResourceStats()
-        
+
         res.json({
           timestamp: Date.now(),
           throughput: throughputStats,
           resources: resourceStats
         })
-        
+
         // Track throughput stats request
         this.metricsCollector.incrementCounter('api_stats_requests_total', 1, {
           endpoint: 'throughput'
@@ -185,14 +185,14 @@ export class APIServer {
         if (!this.storageManager) {
           return res.status(503).json({ error: 'Storage manager not available' })
         }
-        
+
         const storageStats = this.storageManager.getStats()
-        
+
         res.json({
           timestamp: Date.now(),
           storage: storageStats
         })
-        
+
         // Track storage stats request
         this.metricsCollector.incrementCounter('api_stats_requests_total', 1, {
           endpoint: 'storage'
@@ -207,12 +207,12 @@ export class APIServer {
     this.app.get('/config', async (req, res) => {
       try {
         const sanitizedConfig = this.getSanitizedConfig()
-        
+
         res.json({
           timestamp: Date.now(),
           config: sanitizedConfig
         })
-        
+
         // Track config request
         this.metricsCollector.incrementCounter('api_config_requests_total', 1, {
           action: 'get'
@@ -228,13 +228,13 @@ export class APIServer {
       try {
         // This would typically reload configuration from file/environment
         // For now, just return success
-        
+
         res.json({
           timestamp: Date.now(),
           status: 'success',
           message: 'Configuration reload requested'
         })
-        
+
         // Track config reload
         this.metricsCollector.incrementCounter('api_config_requests_total', 1, {
           action: 'reload'
@@ -258,9 +258,9 @@ export class APIServer {
     })
   }
 
-  async getHealthCheck() {
+  async getHealthCheck () {
     const startTime = performance.now()
-    
+
     const healthData = {
       status: HealthStatus.HEALTHY,
       timestamp: new Date().toISOString(),
@@ -268,9 +268,9 @@ export class APIServer {
       uptimeSeconds: Math.floor((Date.now() - this.startTime) / 1000),
       components: {}
     }
-    
+
     let overallHealthy = true
-    
+
     // Check metrics collector
     try {
       const metricsStats = this.metricsCollector.getAllStats()
@@ -286,7 +286,7 @@ export class APIServer {
       }
       overallHealthy = false
     }
-    
+
     // Check storage manager
     if (this.storageManager) {
       try {
@@ -295,7 +295,7 @@ export class APIServer {
           status: storageHealth.healthy ? HealthStatus.HEALTHY : HealthStatus.UNHEALTHY,
           ...storageHealth
         }
-        
+
         if (!storageHealth.healthy) {
           overallHealthy = false
         }
@@ -313,56 +313,58 @@ export class APIServer {
       }
       overallHealthy = false
     }
-    
+
     // Set overall status
     if (!overallHealthy) {
       healthData.status = HealthStatus.UNHEALTHY
-    } else if (Object.values(healthData.components).some(comp => comp.status === HealthStatus.DEGRADED)) {
+    } else if (
+      Object.values(healthData.components).some((comp) => comp.status === HealthStatus.DEGRADED)
+    ) {
       healthData.status = HealthStatus.DEGRADED
     }
-    
+
     // Add response time
     healthData.responseTimeMs = performance.now() - startTime
-    
+
     // Track health check metrics
     this.metricsCollector.incrementCounter('api_health_checks_total', 1, {
       status: healthData.status
     })
-    
+
     return healthData
   }
 
-  async getPerformanceStats() {
+  async getPerformanceStats () {
     const stats = this.metricsCollector.getAllStats()
-    
+
     // Add storage stats if available
     if (this.storageManager) {
       stats.storage = this.storageManager.getStats()
     }
-    
+
     // Add API-specific stats
     stats.api = {
       serverTime: new Date().toISOString(),
       uptimeSeconds: Math.floor((Date.now() - this.startTime) / 1000)
     }
-    
+
     return stats
   }
 
-  getSanitizedConfig() {
+  getSanitizedConfig () {
     const config = { ...this.config }
-    
+
     // Remove sensitive information
     const sensitiveKeys = ['password', 'secret', 'key', 'token', 'auth']
-    
+
     const sanitizeObject = (obj) => {
       if (typeof obj !== 'object' || obj === null) {
         return obj
       }
-      
+
       const sanitized = {}
       for (const [key, value] of Object.entries(obj)) {
-        if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
+        if (sensitiveKeys.some((sensitive) => key.toLowerCase().includes(sensitive))) {
           sanitized[key] = '***REDACTED***'
         } else if (typeof value === 'object') {
           sanitized[key] = sanitizeObject(value)
@@ -372,11 +374,11 @@ export class APIServer {
       }
       return sanitized
     }
-    
+
     return sanitizeObject(config)
   }
 
-  generateOpenAPISpec() {
+  generateOpenAPISpec () {
     return {
       openapi: '3.0.0',
       info: {
@@ -516,7 +518,7 @@ export class APIServer {
     }
   }
 
-  generateSwaggerUI() {
+  generateSwaggerUI () {
     return `
     <!DOCTYPE html>
     <html>
@@ -542,32 +544,32 @@ export class APIServer {
     `
   }
 
-  errorHandler(error, req, res, next) {
+  errorHandler (error, req, res, next) {
     this.logger.error('API error', null, {
       error: error.message,
       stack: error.stack,
       url: req.url,
       method: req.method
     })
-    
+
     // Track API errors
     this.metricsCollector.incrementCounter('api_errors_total', 1, {
       method: req.method,
       endpoint: req.route?.path || req.url,
       errorType: error.constructor.name
     })
-    
+
     res.status(500).json({
       error: 'Internal server error',
       timestamp: new Date().toISOString()
     })
   }
 
-  setStorageManager(storageManager) {
+  setStorageManager (storageManager) {
     this.storageManager = storageManager
   }
 
-  async startServer(host = '0.0.0.0', port = 8080) {
+  async startServer (host = '0.0.0.0', port = 8080) {
     return new Promise((resolve, reject) => {
       this.server = this.app.listen(port, host, (error) => {
         if (error) {
@@ -581,7 +583,7 @@ export class APIServer {
     })
   }
 
-  async stopServer() {
+  async stopServer () {
     if (this.server) {
       return new Promise((resolve) => {
         this.logger.info('Stopping API server')
@@ -600,7 +602,7 @@ let globalAPIServer = null
 /**
  * Get or create global API server instance
  */
-export function getAPIServer(config = null) {
+export function getAPIServer (config = null) {
   if (!globalAPIServer) {
     globalAPIServer = new APIServer(config)
   }
@@ -610,7 +612,7 @@ export function getAPIServer(config = null) {
 /**
  * Start the global API server
  */
-export async function startAPIServer(host = '0.0.0.0', port = 8080, config = null) {
+export async function startAPIServer (host = '0.0.0.0', port = 8080, config = null) {
   const server = getAPIServer(config)
   await server.startServer(host, port)
   return server
@@ -619,7 +621,7 @@ export async function startAPIServer(host = '0.0.0.0', port = 8080, config = nul
 /**
  * Stop the global API server
  */
-export async function stopAPIServer() {
+export async function stopAPIServer () {
   if (globalAPIServer) {
     await globalAPIServer.stopServer()
     globalAPIServer = null

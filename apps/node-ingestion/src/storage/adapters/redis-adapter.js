@@ -5,13 +5,15 @@
  * for high-performance caching and temporary data storage.
  */
 
-import { KeyValueStorageInterface } from '../interfaces.js'
-import { RedisConnectionManager } from '../redis.js'
+// Internal modules
 import { ValidationError, StorageError } from '../../errors/index.js'
 import { getLogger } from '../../logging/index.js'
 import { handleJsonParseError, handleSerializationError } from '../../utils/error-handlers.js'
-import { validators } from '../../utils/common-utilities.js'
-import { validators } from '../../utils/common-utilities.js'
+import { validators, jsonUtils } from '../../utils/common-utilities.js'
+
+// Relative modules
+import { KeyValueStorageInterface } from '../interfaces.js'
+import { RedisConnectionManager } from '../redis.js'
 
 /**
  * Redis storage adapter implementing KeyValueStorageInterface
@@ -128,18 +130,16 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
 
     return results.map(([error, value]) => {
       if (error) {
-        throw new StorageError(`Failed to get key: ${error.message}`, 'redis', 'mget', null, { cause: error })
+        throw new StorageError(`Failed to get key: ${error.message}`, 'redis', 'mget', null, {
+          cause: error
+        })
       }
 
       if (value === null) {
         return null
       }
 
-      try {
-        return JSON.parse(value)
-      } catch (parseError) {
-        return value
-      }
+      return jsonUtils.safeParse(value, value)
     })
   }
 
@@ -152,12 +152,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
     const pipeline = this.connectionManager.pipeline()
 
     for (const [key, value] of Object.entries(keyValuePairs)) {
-      let serializedValue
-      try {
-        serializedValue = typeof value === 'string' ? value : JSON.stringify(value)
-      } catch (error) {
-        throw new ValidationError(`Value for key ${key} must be serializable`, 'value', value, { cause: error })
-      }
+      const serializedValue = jsonUtils.stringifyWithValidation(value, `value for key ${key}`)
 
       pipeline.set(key, serializedValue)
     }
@@ -169,7 +164,13 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
       const [error] = results[i]
       if (error) {
         const key = Object.keys(keyValuePairs)[i]
-        throw new StorageError(`Failed to set key ${key}: ${error.message}`, 'redis', 'mset', null, { cause: error })
+        throw new StorageError(
+          `Failed to set key ${key}: ${error.message}`,
+          'redis',
+          'mset',
+          null,
+          { cause: error }
+        )
       }
     }
 
@@ -197,12 +198,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
   async hset (key, field, value) {
     validators.keyField(key, field)
 
-    let serializedValue
-    try {
-      serializedValue = typeof value === 'string' ? value : JSON.stringify(value)
-    } catch (error) {
-      throw new ValidationError('Value must be serializable', 'value', value, { cause: error })
-    }
+    const serializedValue = jsonUtils.stringifyWithValidation(value, 'value')
 
     return await this.connectionManager.hset(key, field, serializedValue)
   }
@@ -238,11 +234,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
 
     const result = {}
     for (const [field, value] of Object.entries(hash)) {
-      try {
-        result[field] = JSON.parse(value)
-      } catch (error) {
-        result[field] = value
-      }
+      result[field] = jsonUtils.safeParse(value, value)
     }
 
     return result
@@ -250,7 +242,10 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
 
   async hdel (key, ...fields) {
     if (!key || fields.length === 0) {
-      throw new ValidationError('Key and at least one field are required', 'key/fields', { key, fields })
+      throw new ValidationError('Key and at least one field are required', 'key/fields', {
+        key,
+        fields
+      })
     }
 
     return await this.connectionManager.hdel(key, ...fields)
@@ -261,14 +256,19 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
    */
   async lpush (key, ...values) {
     if (!key || values.length === 0) {
-      throw new ValidationError('Key and at least one value are required', 'key/values', { key, values })
+      throw new ValidationError('Key and at least one value are required', 'key/values', {
+        key,
+        values
+      })
     }
 
-    const serializedValues = values.map(value => {
+    const serializedValues = values.map((value) => {
       try {
         return typeof value === 'string' ? value : JSON.stringify(value)
       } catch (error) {
-        throw new ValidationError('All values must be serializable', 'value', value, { cause: error })
+        throw new ValidationError('All values must be serializable', 'value', value, {
+          cause: error
+        })
       }
     })
 
@@ -277,14 +277,19 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
 
   async rpush (key, ...values) {
     if (!key || values.length === 0) {
-      throw new ValidationError('Key and at least one value are required', 'key/values', { key, values })
+      throw new ValidationError('Key and at least one value are required', 'key/values', {
+        key,
+        values
+      })
     }
 
-    const serializedValues = values.map(value => {
+    const serializedValues = values.map((value) => {
       try {
         return typeof value === 'string' ? value : JSON.stringify(value)
       } catch (error) {
-        throw new ValidationError('All values must be serializable', 'value', value, { cause: error })
+        throw new ValidationError('All values must be serializable', 'value', value, {
+          cause: error
+        })
       }
     })
 
@@ -342,7 +347,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
 
     const values = await this.connectionManager.lrange(key, start, stop)
 
-    return values.map(value => {
+    return values.map((value) => {
       try {
         return JSON.parse(value)
       } catch (error) {

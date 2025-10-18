@@ -17,7 +17,7 @@ const program = new Command()
 /**
  * Setup CLI program
  */
-function setupCLI() {
+function setupCLI () {
   program
     .name('finance-ingestion')
     .description('High-performance Node.js financial data ingestion system')
@@ -110,7 +110,7 @@ function setupCLI() {
 /**
  * Run command implementation
  */
-async function runCommand(options) {
+async function runCommand (options) {
   // Initialize configuration and logging
   const config = getConfig()
 
@@ -118,11 +118,11 @@ async function runCommand(options) {
   if (options.host || options.port) {
     config.websocket.url = `wss://${options.host || 'localhost'}:${options.port || 8080}/market-data`
   }
-  
+
   if (options.duration && parseInt(options.duration) > 0) {
     config.benchmark.durationMs = parseInt(options.duration) * 1000
   }
-  
+
   if (options.cluster) {
     config.cluster.enabled = true
   }
@@ -133,7 +133,7 @@ async function runCommand(options) {
 
   setupLogging(config)
   setupErrorHandlers()
-  
+
   const logger = getLogger('cli')
 
   logger.info('Starting ingestion system', {
@@ -155,9 +155,9 @@ async function runCommand(options) {
 /**
  * Cluster command implementation
  */
-async function clusterCommand(options) {
+async function clusterCommand (options) {
   const config = getConfig()
-  
+
   // Enable clustering
   config.cluster.enabled = true
 
@@ -167,7 +167,7 @@ async function clusterCommand(options) {
 
   setupLogging(config)
   setupErrorHandlers()
-  
+
   const logger = getLogger('cli')
 
   logger.info('Starting cluster mode', {
@@ -180,7 +180,7 @@ async function clusterCommand(options) {
 /**
  * Benchmark command implementation
  */
-async function benchmarkCommand(options) {
+async function benchmarkCommand (options) {
   const config = getConfig()
 
   if (options.duration) {
@@ -189,7 +189,7 @@ async function benchmarkCommand(options) {
 
   setupLogging(config)
   setupErrorHandlers()
-  
+
   const logger = getLogger('cli')
 
   logger.info('Starting benchmark suite', {
@@ -201,13 +201,13 @@ async function benchmarkCommand(options) {
   // Placeholder for benchmark implementation
   logger.info('Benchmark suite would start here')
   logger.info('This will be implemented in subsequent tasks')
-  
+
   if (options.output) {
     logger.info(`Would save results to ${options.output} in ${options.format} format`)
   }
-  
+
   // Simulate benchmark execution
-  await new Promise(resolve => setTimeout(resolve, 2000))
+  await new Promise((resolve) => setTimeout(resolve, 2000))
 
   logger.info('Benchmark suite completed')
 }
@@ -215,15 +215,15 @@ async function benchmarkCommand(options) {
 /**
  * Validate config command implementation
  */
-async function validateConfigCommand() {
+async function validateConfigCommand () {
   try {
     const config = getConfig()
     setupLogging(config)
-    
+
     const logger = getLogger('cli')
-    
+
     logger.info('Validating configuration...')
-    
+
     const errors = []
 
     // Check WebSocket configuration
@@ -248,7 +248,7 @@ async function validateConfigCommand() {
 
     if (errors.length > 0) {
       logger.error('Configuration validation failed', { errors })
-      errors.forEach(error => console.error(`ERROR: ${error}`))
+      errors.forEach((error) => console.error(`ERROR: ${error}`))
       process.exit(1)
     } else {
       logger.info('Configuration validation passed')
@@ -263,12 +263,12 @@ async function validateConfigCommand() {
 /**
  * Health check command implementation
  */
-async function healthCheckCommand() {
+async function healthCheckCommand () {
   const config = getConfig()
   setupLogging(config)
-  
+
   const logger = getLogger('cli')
-  
+
   logger.info('Performing health checks...')
 
   // Placeholder for health check implementation
@@ -282,7 +282,7 @@ async function healthCheckCommand() {
   for (const check of checks) {
     logger.info(`Would check: ${check}`)
     // Simulate check
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 500))
   }
 
   logger.info('All health checks would pass')

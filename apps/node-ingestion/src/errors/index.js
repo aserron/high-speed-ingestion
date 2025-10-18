@@ -29,7 +29,7 @@ export class FinanceIngestionError extends Error {
 
     // Preserve original error if there's a cause
     if (cause && cause.stack) {
-      this.stack += '\nCaused by: ' + cause.stack
+      this.stack += `\nCaused by: ${cause.stack}`
     }
   }
 
