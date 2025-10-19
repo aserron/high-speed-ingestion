@@ -69,7 +69,7 @@ export class ClusterApp {
      * Start workers in parallel for better performance
      * Optimized async pattern using Promise.all() instead of sequential await
      * Eliminates await-in-loop anti-pattern for faster cluster initialization
-     * 
+     *
      * @performance Concurrent worker startup reduces total initialization time
      * @async All workers start simultaneously rather than sequentially
      * @throws {ClusterError} If any worker fails during startup process

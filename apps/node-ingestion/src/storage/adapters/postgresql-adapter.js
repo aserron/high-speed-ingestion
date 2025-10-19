@@ -6,7 +6,6 @@
  */
 
 // Internal modules
-import { ValidationError } from '../../errors/index.js'
 import { validators } from '../../utils/common-utilities.js'
 import { getLogger } from '../../logging/index.js'
 

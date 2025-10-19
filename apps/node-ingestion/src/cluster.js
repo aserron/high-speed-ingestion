@@ -78,7 +78,7 @@ class ClusterManager {
      * Start workers in parallel for better performance
      * Uses Promise.all() to avoid sequential await in loop anti-pattern
      * Reduces startup time from O(n) to O(1) where n is number of workers
-     * 
+     *
      * @performance Parallel worker creation significantly improves cluster startup time
      * @throws {ClusterError} If any worker fails to start
      */
