@@ -22,11 +22,11 @@ import {
 } from '../index.js'
 import { BackpressureError } from '../../errors/index.js'
 
-// Set environment to development for tests
-process.env.NODE_ENV = 'development'
-
 // Import and reload config to pick up the new NODE_ENV
 import { reloadConfig } from '../../config/index.js'
+
+// Set environment to development for tests
+process.env.NODE_ENV = 'development'
 reloadConfig()
 
 describe('MessageProcessor', () => {
@@ -201,7 +201,7 @@ describe('MessageProcessor', () => {
       // Mock the msgpack decode to add artificial delay for benchmarking
       const originalDecode = processor.msgpack.decode
       const ARTIFICIAL_DELAY_NS = 5_000_000 // 5ms - clearly defined for fintech benchmarking
-      
+
       processor.msgpack.decode = jest.fn((data) => {
         // Add precise 5ms delay using high-resolution timer for fintech timing accuracy
         const start = process.hrtime.bigint()
@@ -217,7 +217,7 @@ describe('MessageProcessor', () => {
       // Allow 10% tolerance for system timing variations in production environments
       const MIN_EXPECTED_LATENCY_NS = ARTIFICIAL_DELAY_NS * 0.9 // 4.5ms minimum
       const MAX_EXPECTED_LATENCY_NS = ARTIFICIAL_DELAY_NS * 2.0 // 10ms maximum (reasonable upper bound)
-      
+
       expect(result.processingLatencyNs).toBeGreaterThanOrEqual(MIN_EXPECTED_LATENCY_NS)
       expect(result.processingLatencyNs).toBeLessThan(MAX_EXPECTED_LATENCY_NS)
       expect(result.success).toBe(true)
@@ -407,7 +407,7 @@ describe('MessageProcessor', () => {
   describe('Message Validation', () => {
     test('should fail validation for missing required fields', async () => {
       const incompleteData = {
-        messageId: 'test-001',
+        messageId: 'test-001'
         // Missing timestamp, symbol, messageType, data, sequenceNumber
       }
 
@@ -594,7 +594,7 @@ describe('MessageProcessor', () => {
 
       // Wait a bit to ensure elapsed time > 0
       await new Promise(resolve => setTimeout(resolve, 10))
-      
+
       stats.update(100) // 100 bytes
 
       expect(stats.totalMessages).toBe(1)

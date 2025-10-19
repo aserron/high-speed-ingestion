@@ -130,11 +130,11 @@ export class WebSocketClient extends EventEmitter {
 
   /**
    * Connect to WebSocket server with enhanced error handling
-   * 
+   *
    * @async Ensures proper initialization before connection attempt
    * @throws {ConnectionError} When connection fails with detailed error context
    * @returns {Promise<void>} Resolves when connection is established
-   * 
+   *
    * @errorHandling Comprehensive try-catch with structured error logging
    * @performance Lazy initialization pattern reduces unnecessary overhead
    */
@@ -284,11 +284,11 @@ export class WebSocketClient extends EventEmitter {
 
   /**
    * Subscribe to market data symbols with enhanced error handling
-   * 
+   *
    * @param {string|string[]} symbols - Symbol or array of symbols to subscribe to
    * @param {string} messageType - Type of market data messages (default: 'tick')
    * @returns {Promise<void>} Resolves when subscription is successful
-   * 
+   *
    * @async Handles subscription message sending and state tracking
    * @errorHandling Comprehensive error logging with context for debugging
    * @throws {Error} When subscription fails with detailed error information
@@ -394,7 +394,7 @@ export class WebSocketClient extends EventEmitter {
     /**
      * Parallel subscription re-establishment with resilient error handling
      * Uses Promise.allSettled() to handle partial failures gracefully
-     * 
+     *
      * @performance Concurrent re-subscription reduces reconnection latency
      * @resilience Continues processing even if some subscriptions fail
      * @async All subscription groups processed simultaneously
@@ -417,12 +417,12 @@ export class WebSocketClient extends EventEmitter {
     /**
      * Resilient batch processing using Promise.allSettled()
      * Allows partial success scenarios instead of all-or-nothing failure
-     * 
+     *
      * @errorHandling Graceful degradation with detailed failure reporting
      * @monitoring Tracks success/failure ratios for operational visibility
      */
     const results = await Promise.allSettled(resubscribePromises)
-    
+
     const failures = results.filter(result => result.status === 'rejected')
     if (failures.length > 0) {
       this.logger.warn('Some subscription re-establishments failed', {

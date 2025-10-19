@@ -26,7 +26,7 @@ const { Pool } = pg
  * PostgreSQL connection manager with pooling and monitoring
  */
 export class PostgreSQLConnectionManager {
-  constructor(config = null) {
+  constructor (config = null) {
     this.config = config || getConfig()
     this.logger = getLogger('postgresql-manager')
     this.pool = null
@@ -49,7 +49,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Initialize PostgreSQL connection pool
    */
-  async initialize() {
+  async initialize () {
     try {
       this.logger.info('Initializing PostgreSQL connection manager', {
         host: this.config.postgresql.host,
@@ -79,8 +79,8 @@ export class PostgreSQLConnectionManager {
         // SSL configuration
         ssl: this.config.postgresql.sslEnabled
           ? {
-            rejectUnauthorized: false // For development, should be true in production
-          }
+              rejectUnauthorized: false // For development, should be true in production
+            }
           : false,
 
         // Connection validation
@@ -115,7 +115,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Setup PostgreSQL event handlers
    */
-  setupEventHandlers() {
+  setupEventHandlers () {
     this.pool.on('connect', (client) => {
       this.logger.debug('PostgreSQL client connected')
       this.connectionStats.totalConnections++
@@ -151,7 +151,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Test database connection
    */
-  async testConnection() {
+  async testConnection () {
     const client = await this.pool.connect()
 
     try {
@@ -169,7 +169,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Start health monitoring
    */
-  startHealthMonitoring() {
+  startHealthMonitoring () {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval)
     }
@@ -186,7 +186,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Perform health check
    */
-  async healthCheck() {
+  async healthCheck () {
     connectionUtils.validateConnection(this.pool, true, 'PostgreSQL', 'health check')
 
     const start = process.hrtime.bigint()
@@ -235,7 +235,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Execute query with error handling and metrics
    */
-  async query(text, params = null, client = null) {
+  async query (text, params = null, client = null) {
     connectionUtils.validateDatabaseConnection(this.pool, this.isConnected, 'PostgreSQL', 'query')
 
     const start = process.hrtime.bigint()
@@ -289,7 +289,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Execute transaction with automatic rollback on error
    */
-  async transaction(callback) {
+  async transaction (callback) {
     connectionUtils.validateDatabaseConnection(this.pool, this.isConnected, 'PostgreSQL', 'transaction')
 
     const client = await this.pool.connect()
@@ -328,7 +328,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Insert single record
    */
-  async insert(table, data, returning = null) {
+  async insert (table, data, returning = null) {
     validationUtils.validateObjectData(data, 'Insert')
 
     const columns = Object.keys(data)
@@ -347,7 +347,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Insert multiple records in batch
    */
-  async insertBatch(table, records, returning = null) {
+  async insertBatch (table, records, returning = null) {
     validationUtils.validateNonEmptyArray(records, 'records', 'Insert records must be a non-empty array')
 
     const columns = Object.keys(records[0])
@@ -376,7 +376,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Update records
    */
-  async update(table, data, whereClause, whereParams = []) {
+  async update (table, data, whereClause, whereParams = []) {
     validationUtils.validateObjectData(data, 'Update')
 
     const columns = Object.keys(data)
@@ -394,7 +394,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Delete records
    */
-  async delete(table, whereClause, whereParams = []) {
+  async delete (table, whereClause, whereParams = []) {
     const query = `DELETE FROM ${table} WHERE ${whereClause}`
     return await this.query(query, whereParams)
   }
@@ -402,7 +402,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Select records
    */
-  async select(
+  async select (
     table,
     columns = '*',
     whereClause = null,
@@ -430,7 +430,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Execute raw SQL file
    */
-  async executeFile(sqlContent) {
+  async executeFile (sqlContent) {
     const statements = sqlContent
       .split(';')
       .map((stmt) => stmt.trim())
@@ -456,13 +456,13 @@ export class PostgreSQLConnectionManager {
   /**
    * Get connection statistics
    */
-  getStats() {
+  getStats () {
     const poolStats = this.pool
       ? {
-        totalCount: this.pool.totalCount,
-        idleCount: this.pool.idleCount,
-        waitingCount: this.pool.waitingCount
-      }
+          totalCount: this.pool.totalCount,
+          idleCount: this.pool.idleCount,
+          waitingCount: this.pool.waitingCount
+        }
       : null
 
     return {
@@ -478,7 +478,7 @@ export class PostgreSQLConnectionManager {
   /**
    * Close PostgreSQL connection pool
    */
-  async close() {
+  async close () {
     this.logger.info('Closing PostgreSQL connection manager')
 
     if (this.healthCheckInterval) {
@@ -507,14 +507,14 @@ const postgresManagerSingleton = createInitializableSingleton(
 /**
  * Get the global PostgreSQL manager instance
  */
-export function getPostgreSQLManager() {
+export function getPostgreSQLManager () {
   return postgresManagerSingleton.getInstance()
 }
 
 /**
  * Initialize PostgreSQL manager
  */
-export async function initializePostgreSQL(config = null) {
+export async function initializePostgreSQL (config = null) {
   return await postgresManagerSingleton.initialize(config)
 }
 
