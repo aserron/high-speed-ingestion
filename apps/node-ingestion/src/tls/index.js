@@ -396,7 +396,7 @@ export async function validateCertificateChain (certFile, keyFile, caFile = null
     /**
      * Optimized certificate and key file operations using parallel I/O
      * Uses Promise.all() to read both files concurrently instead of sequentially
-     * 
+     *
      * @performance Parallel file reads reduce I/O wait time by ~50%
      * @async Concurrent file operations improve certificate validation speed
      */
@@ -412,7 +412,7 @@ export async function validateCertificateChain (certFile, keyFile, caFile = null
     /**
      * Parallel file writes for optimal I/O performance
      * Writes certificate and key files concurrently to reduce validation latency
-     * 
+     *
      * @performance Concurrent writes eliminate sequential I/O bottleneck
      */
     await Promise.all([

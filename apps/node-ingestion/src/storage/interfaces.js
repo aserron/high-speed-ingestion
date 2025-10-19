@@ -254,18 +254,18 @@ export class MarketDataStorageInterface extends TimeSeriesStorageInterface {
     /**
      * Resilient batch processing using Promise.allSettled()
      * Improved error handling pattern that allows partial success scenarios
-     * 
+     *
      * @performance Concurrent data insertion reduces total processing time
      * @resilience Continues processing even when individual insertions fail
      * @monitoring Detailed failure tracking for operational visibility
      * @returns {Array} Successfully inserted results, excluding failures
      */
     const results = await Promise.allSettled(promises)
-    
+
     /**
      * Comprehensive failure analysis and logging
      * Provides detailed error context for debugging and monitoring
-     * 
+     *
      * @errorHandling Graceful degradation with structured error reporting
      * @observability Tracks failure rates and error patterns
      */
@@ -277,7 +277,7 @@ export class MarketDataStorageInterface extends TimeSeriesStorageInterface {
         errors: failures.map(f => f.reason?.message)
       })
     }
-    
+
     // Return successful results only, filtering out failures
     return results
       .filter(result => result.status === 'fulfilled')

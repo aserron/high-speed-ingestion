@@ -247,7 +247,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
     validators.key(key)
     validators.array(values, 'values', 1)
 
-    const serializedValues = values.map((value) => 
+    const serializedValues = values.map((value) =>
       jsonUtils.stringifyWithValidation(value, 'value')
     )
 
@@ -258,7 +258,7 @@ export class RedisStorageAdapter extends KeyValueStorageInterface {
     validators.key(key)
     validators.array(values, 'values', 1)
 
-    const serializedValues = values.map((value) => 
+    const serializedValues = values.map((value) =>
       jsonUtils.stringifyWithValidation(value, 'value')
     )
 

@@ -8,7 +8,6 @@
  */
 
 // Internal modules
-import { ValidationError } from '../../errors/index.js'
 import { getLogger } from '../../logging/index.js'
 import { validators, jsonUtils } from '../../utils/common-utilities.js'
 
