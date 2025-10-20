@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "search": {
+      "command": "uvx",
+      "args": [
+        "duckduckgo-mcp-server"
+      ],
+      "disabled": false
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "@mauricio.wolff/mcp-obsidian@latest",
+        "E:\\documents\\sron-knowledge_base"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "list_directory"
+      ]
+    }
+  }
+}
