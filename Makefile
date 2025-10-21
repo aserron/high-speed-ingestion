@@ -30,65 +30,65 @@ help:
 
 # Development environment
 dev:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up
 
 dev-build:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up --build
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up --build
 
 dev-logs:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml logs -f
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml logs -f
 
 dev-down:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml down
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml down
 
 # Production environment
 prod:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml up
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml up
 
 prod-build:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml up --build
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml up --build
 
 prod-logs:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml logs -f
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml logs -f
 
 prod-down:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml down
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.prod.yml down
 
 # Build all images
 build:
-	docker-compose build
+	docker compose -f infrastructure/docker/docker-compose.base.yml build
 
 # Show logs
 logs:
-	docker-compose logs -f
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml logs -f
 
 # Testing
 test:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec python-ingestion python -m pytest
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec node-ingestion npm test
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec python-ingestion python -m pytest
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec node-ingestion npm test
 
 # Benchmarking
 benchmark:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec python-ingestion python -m pytest benchmarks/
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec node-ingestion npm run benchmark
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec python-ingestion python -m pytest benchmarks/
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec node-ingestion npm run benchmark
 
 # Utility commands
 shell-python:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec python-ingestion /bin/bash
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec python-ingestion /bin/bash
 
 shell-node:
-	docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec node-ingestion /bin/sh
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec node-ingestion /bin/sh
 
 # Database operations
 db-reset:
-	docker-compose down -v
-	docker-compose up -d postgres redis
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml down -v
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up -d postgres redis
 	sleep 5
-	docker-compose up
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up
 
 # Clean up everything
 clean:
-	docker-compose down -v --remove-orphans
+	docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml down -v --remove-orphans
 	docker system prune -f
 	docker volume prune -f
 

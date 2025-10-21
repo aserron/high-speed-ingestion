@@ -7,6 +7,7 @@ services:
       target: runtime
     volumes:
       - ../../apps/python-ingestion:/app
+      - ../../apps/python-ingestion:/app
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - DEBUG=true
@@ -38,6 +39,7 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_DB=finance_benchmark_dev
+    command: postgres -c log_min_messages=ERROR -c log_connections=off -c log_disconnections=off -c log_statement=none
     volumes:
       - postgres-dev-data:/var/lib/postgresql/data
       - ../../scripts/01-init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql

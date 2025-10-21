@@ -1,14 +1,12 @@
-version: '3.8'
-
 # Linting services for development
 services:
   python-lint:
     build:
-      context: ./apps/python-ingestion
+      context: ../../apps/python-ingestion
       dockerfile: Dockerfile
       target: builder
     volumes:
-      - ./apps/python-ingestion:/app
+      - ../../apps/python-ingestion:/app
     working_dir: /app
     command: >
       sh -c "
@@ -24,11 +22,11 @@ services:
 
   node-lint:
     build:
-      context: ./apps/node-ingestion
+      context: ../../apps/node-ingestion
       dockerfile: Dockerfile
       target: builder
     volumes:
-      - ./apps/node-ingestion:/app
+      - ../../apps/node-ingestion:/app
     working_dir: /app
     command: >
       sh -c "
