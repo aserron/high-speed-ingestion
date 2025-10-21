@@ -5,9 +5,6 @@ Provides centralized configuration management using Pydantic for validation
 and environment variable support for different deployment environments.
 """
 
-import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
 from functools import lru_cache
 
 from pydantic import BaseModel, Field, validator
@@ -16,20 +13,20 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class WebSocketConfig(BaseModel):
     """WebSocket connection configuration"""
-    
+
     url: str = Field(
         default="wss://localhost:8080/market-data",
         description="WebSocket server URL"
     )
-    protocols: Optional[List[str]] = Field(
+    protocols: list[str] | None = Field(
         default=None,
         description="WebSocket sub-protocols"
     )
-    headers: Optional[Dict[str, str]] = Field(
+    headers: dict[str, str] | None = Field(
         default=None,
         description="Additional headers for WebSocket connection"
     )
-    
+
     # Connection settings
     connect_timeout_ms: int = Field(
         default=5000,
@@ -49,7 +46,7 @@ class WebSocketConfig(BaseModel):
         le=30000,
         description="Pong timeout in milliseconds"
     )
-    
+
     # Reconnection settings
     max_reconnect_attempts: int = Field(
         default=10,
@@ -81,7 +78,7 @@ class WebSocketConfig(BaseModel):
         le=5000,
         description="Random jitter for reconnection delays"
     )
-    
+
     # Performance settings
     max_message_size: int = Field(
         default=1024 * 1024,  # 1MB
@@ -93,7 +90,7 @@ class WebSocketConfig(BaseModel):
         default=True,
         description="Enable WebSocket compression"
     )
-    
+
     # Security settings
     tls_enabled: bool = Field(
         default=True,
@@ -107,7 +104,7 @@ class WebSocketConfig(BaseModel):
 
 class ProcessingConfig(BaseModel):
     """Message processing configuration"""
-    
+
     # Batch processing
     batch_size: int = Field(
         default=100,
@@ -121,7 +118,7 @@ class ProcessingConfig(BaseModel):
         le=1000,
         description="Batch timeout in milliseconds"
     )
-    
+
     # Backpressure handling
     max_queue_size: int = Field(
         default=10000,
@@ -139,13 +136,13 @@ class ProcessingConfig(BaseModel):
         default=True,
         description="Drop oldest messages when backpressure threshold is reached"
     )
-    
+
     # Performance monitoring
     latency_measurement_enabled: bool = Field(
         default=True,
         description="Enable latency measurement"
     )
-    latency_histogram_buckets: List[float] = Field(
+    latency_histogram_buckets: list[float] = Field(
         default=[0.1, 0.5, 1, 2, 5, 10, 20, 50, 100],
         description="Latency histogram buckets in milliseconds"
     )
@@ -155,7 +152,7 @@ class ProcessingConfig(BaseModel):
         le=60000,
         description="Metrics collection interval in milliseconds"
     )
-    
+
     # Message validation
     validate_incoming_messages: bool = Field(
         default=True,
@@ -169,12 +166,12 @@ class ProcessingConfig(BaseModel):
 
 class RedisConfig(BaseModel):
     """Redis configuration"""
-    
+
     host: str = Field(default="localhost", description="Redis host")
     port: int = Field(default=6379, ge=1, le=65535, description="Redis port")
-    password: Optional[str] = Field(default=None, description="Redis password")
+    password: str | None = Field(default=None, description="Redis password")
     db: int = Field(default=0, ge=0, le=15, description="Redis database number")
-    
+
     # Connection settings
     max_connections: int = Field(
         default=10,
@@ -194,17 +191,17 @@ class RedisConfig(BaseModel):
         le=30000,
         description="Connection acquire timeout in milliseconds"
     )
-    
+
     # Performance settings
     socket_keepalive: bool = Field(
         default=True,
         description="Enable socket keepalive"
     )
-    socket_keepalive_options: Optional[Dict[str, int]] = Field(
+    socket_keepalive_options: dict[str, int] | None = Field(
         default=None,
         description="Socket keepalive options"
     )
-    key_prefix: Optional[str] = Field(
+    key_prefix: str | None = Field(
         default=None,
         description="Key prefix for all Redis keys"
     )
@@ -212,13 +209,13 @@ class RedisConfig(BaseModel):
 
 class PostgreSQLConfig(BaseModel):
     """PostgreSQL configuration"""
-    
+
     host: str = Field(default="localhost", description="PostgreSQL host")
     port: int = Field(default=5432, ge=1, le=65535, description="PostgreSQL port")
     database: str = Field(default="finance_benchmark", description="Database name")
     username: str = Field(default="benchmark_user", description="Database username")
     password: str = Field(default="benchmark_pass", description="Database password")
-    
+
     # Connection pooling
     max_connections: int = Field(
         default=20,
@@ -244,7 +241,7 @@ class PostgreSQLConfig(BaseModel):
         le=300000,
         description="Connection idle timeout in milliseconds"
     )
-    
+
     # Performance settings
     statement_timeout_ms: int = Field(
         default=30000,
@@ -266,7 +263,7 @@ class PostgreSQLConfig(BaseModel):
 
 class BufferConfig(BaseModel):
     """In-memory buffer configuration"""
-    
+
     max_size: int = Field(
         default=100000,
         ge=1000,
@@ -293,7 +290,7 @@ class BufferConfig(BaseModel):
 
 class MonitoringConfig(BaseModel):
     """Monitoring and observability configuration"""
-    
+
     # Metrics export
     prometheus_enabled: bool = Field(
         default=True,
@@ -309,7 +306,7 @@ class MonitoringConfig(BaseModel):
         default="/metrics",
         description="Prometheus metrics endpoint path"
     )
-    
+
     # Logging configuration
     log_level: str = Field(
         default="INFO",
@@ -323,7 +320,7 @@ class MonitoringConfig(BaseModel):
         default=True,
         description="Include timestamps in logs"
     )
-    
+
     # Health checks
     health_check_enabled: bool = Field(
         default=True,
@@ -345,7 +342,7 @@ class MonitoringConfig(BaseModel):
         le=60000,
         description="Health check interval in milliseconds"
     )
-    
+
     # Performance tracking
     track_resource_usage: bool = Field(
         default=True,
@@ -379,7 +376,7 @@ class MonitoringConfig(BaseModel):
 
 class BenchmarkConfig(BaseModel):
     """Benchmark-specific configuration"""
-    
+
     # Test duration and load
     duration_ms: int = Field(
         default=60000,  # 1 minute
@@ -399,7 +396,7 @@ class BenchmarkConfig(BaseModel):
         le=60000,  # 1 minute
         description="Cooldown period in milliseconds"
     )
-    
+
     # Message generation
     message_rate_per_second: int = Field(
         default=10000,
@@ -423,9 +420,9 @@ class BenchmarkConfig(BaseModel):
         le=100.0,
         description="Burst rate multiplier"
     )
-    
+
     # Test symbols
-    symbols: List[str] = Field(
+    symbols: list[str] = Field(
         default=['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'META', 'NVDA', 'NFLX'],
         description="List of symbols to use in testing"
     )
@@ -433,7 +430,7 @@ class BenchmarkConfig(BaseModel):
         default=True,
         description="Enable symbol rotation during testing"
     )
-    
+
     # Data generation
     price_range_min: float = Field(
         default=1.0,
@@ -455,11 +452,11 @@ class BenchmarkConfig(BaseModel):
         ge=1.0,
         description="Maximum quantity for generated data"
     )
-    exchanges: List[str] = Field(
+    exchanges: list[str] = Field(
         default=['NYSE', 'NASDAQ', 'BATS', 'ARCA'],
         description="List of exchanges to use in testing"
     )
-    
+
     # Results collection
     collect_detailed_metrics: bool = Field(
         default=True,
@@ -469,7 +466,7 @@ class BenchmarkConfig(BaseModel):
         default=True,
         description="Save benchmark results to database"
     )
-    export_results_path: Optional[str] = Field(
+    export_results_path: str | None = Field(
         default=None,
         description="Path to export benchmark results"
     )
@@ -477,7 +474,7 @@ class BenchmarkConfig(BaseModel):
 
 class AppConfig(BaseSettings):
     """Main application configuration"""
-    
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -485,7 +482,7 @@ class AppConfig(BaseSettings):
         case_sensitive=False,
         extra="ignore"
     )
-    
+
     # Application metadata
     name: str = Field(
         default="finance-ingestion-python",
@@ -499,7 +496,7 @@ class AppConfig(BaseSettings):
         default="development",
         description="Environment (development, testing, production)"
     )
-    
+
     # Component configurations
     websocket: WebSocketConfig = Field(
         default_factory=WebSocketConfig,
@@ -529,7 +526,7 @@ class AppConfig(BaseSettings):
         default_factory=BenchmarkConfig,
         description="Benchmark configuration"
     )
-    
+
     # Runtime settings
     debug: bool = Field(
         default=False,
@@ -573,7 +570,7 @@ class AppConfig(BaseSettings):
 
 
 # Global configuration instance
-_config: Optional[AppConfig] = None
+_config: AppConfig | None = None
 
 
 @lru_cache(maxsize=1)

@@ -1,0 +1,6 @@
+# Ignore all local environment files
+.env.local
+.env.*.local
+
+# But keep the example file
+!.env.example

@@ -1,0 +1,6 @@
+# Root docker-compose.yml - Development environment by default
+# For production, use: docker compose -f docker-compose.yml -f infrastructure/docker/docker-compose.prod.yml up
+
+include:
+  - infrastructure/docker/docker-compose.base.yml
+  - infrastructure/docker/docker-compose.dev.yml

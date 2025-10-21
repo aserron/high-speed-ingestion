@@ -163,7 +163,25 @@ export class FullApp {
   }
 
   async startHealthService () {
-    return { name: 'health', stop: async () => {} }
+    // Import and start the API server
+    const { getAPIServer } = await import('../api/index.js')
+    const apiServer = getAPIServer(this.config)
+    
+    // Start the API server
+    const host = this.config?.api?.host || '0.0.0.0'
+    const port = this.config?.api?.port || 8000
+    
+    await apiServer.startServer(host, port)
+    
+    return { 
+      name: 'health', 
+      apiServer,
+      stop: async () => {
+        if (apiServer) {
+          await apiServer.stopServer()
+        }
+      }
+    }
   }
 
   setupGracefulShutdown () {

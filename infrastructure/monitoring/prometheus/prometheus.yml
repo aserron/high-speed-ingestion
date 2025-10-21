@@ -30,14 +30,14 @@ scrape_configs:
     scrape_interval: 5s
     scrape_timeout: 4s
 
-  # Redis metrics (if redis_exporter is added)
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['redis:6379']
-    scrape_interval: 10s
+  # Redis metrics (redis_exporter needed)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+  #   scrape_interval: 10s
 
-  # PostgreSQL metrics (if postgres_exporter is added)
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['postgres:5432']
-    scrape_interval: 10s
+  # PostgreSQL metrics (postgres_exporter needed)  
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+  #   scrape_interval: 10s

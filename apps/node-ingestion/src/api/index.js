@@ -5,8 +5,7 @@
  * with OpenAPI 3.0 specification documentation for monitoring and observability.
  */
 
-import express from 'express'
-import cors from 'cors'
+import Fastify from 'fastify'
 import { performance } from 'perf_hooks'
 import { getLogger } from '../logging/index.js'
 import { getMetricsCollector } from '../metrics/index.js'
@@ -41,60 +40,60 @@ export class APIServer {
   }
 
   initExpressApp () {
-    this.app = express()
+    this.app = Fastify({
+      logger: false // We'll use our own logger
+    })
 
-    // Middleware
-    this.app.use(cors())
-    this.app.use(express.json())
-    this.app.use(express.urlencoded({ extended: true }))
+    // Register CORS plugin
+    this.app.register(import('@fastify/cors'), {
+      origin: true
+    })
 
-    // Request logging middleware
-    this.app.use((req, res, next) => {
-      const start = performance.now()
+    // Request logging hook
+    this.app.addHook('onRequest', async (request, reply) => {
+      request.startTime = performance.now()
+    })
 
-      res.on('finish', () => {
-        const duration = performance.now() - start
-        this.logger.info('API request completed', null, {
-          method: req.method,
-          url: req.url,
-          statusCode: res.statusCode,
-          duration: `${duration.toFixed(2)}ms`,
-          userAgent: req.get('User-Agent')
-        })
-
-        // Track API metrics
-        this.metricsCollector.incrementCounter('api_requests_total', 1, {
-          method: req.method,
-          endpoint: req.route?.path || req.url,
-          status: res.statusCode.toString()
-        })
-
-        this.metricsCollector.recordLatency('api_request', duration * 1_000_000, {
-          method: req.method,
-          endpoint: req.route?.path || req.url
-        })
+    this.app.addHook('onResponse', async (request, reply) => {
+      const duration = performance.now() - request.startTime
+      this.logger.info('API request completed', null, {
+        method: request.method,
+        url: request.url,
+        statusCode: reply.statusCode,
+        duration: `${duration.toFixed(2)}ms`,
+        userAgent: request.headers['user-agent']
       })
 
-      next()
+      // Track API metrics
+      this.metricsCollector.incrementCounter('api_requests_total', 1, {
+        method: request.method,
+        endpoint: request.routeOptions?.url || request.url,
+        status: reply.statusCode.toString()
+      })
+
+      this.metricsCollector.recordLatency('api_request', duration * 1_000_000, {
+        method: request.method,
+        endpoint: request.routeOptions?.url || request.url
+      })
     })
 
     // Register routes
     this.registerRoutes()
 
-    // Error handling middleware
-    this.app.use(this.errorHandler.bind(this))
+    // Error handler
+    this.app.setErrorHandler(this.errorHandler.bind(this))
   }
 
   registerRoutes () {
     // Health check endpoint
-    this.app.get('/health', async (req, res) => {
+    this.app.get('/health', async (request, reply) => {
       try {
         const healthData = await this.getHealthCheck()
         const statusCode = healthData.status === HealthStatus.HEALTHY ? 200 : 503
-        res.status(statusCode).json(healthData)
+        reply.code(statusCode).send(healthData)
       } catch (error) {
         this.logger.error('Health check failed', null, { error: error.message })
-        res.status(500).json({
+        reply.code(500).send({
           status: HealthStatus.UNHEALTHY,
           error: 'Health check failed',
           timestamp: new Date().toISOString()
@@ -103,13 +102,13 @@ export class APIServer {
     })
 
     // Prometheus metrics endpoint
-    this.app.get('/metrics', async (req, res) => {
+    this.app.get('/metrics', async (request, reply) => {
       try {
         const metrics = await this.metricsCollector.exportPrometheusMetrics()
         const contentType = this.metricsCollector.getPrometheusContentType()
 
-        res.set('Content-Type', contentType)
-        res.send(metrics)
+        reply.header('Content-Type', contentType)
+        reply.send(metrics)
 
         // Track metrics export
         this.metricsCollector.incrementCounter('api_metrics_exports_total', 1, {
@@ -117,15 +116,15 @@ export class APIServer {
         })
       } catch (error) {
         this.logger.error('Metrics export failed', null, { error: error.message })
-        res.status(500).json({ error: 'Failed to export metrics' })
+        reply.code(500).send({ error: 'Failed to export metrics' })
       }
     })
 
     // Performance statistics endpoint
-    this.app.get('/stats', async (req, res) => {
+    this.app.get('/stats', async (request, reply) => {
       try {
         const stats = await this.getPerformanceStats()
-        res.json(stats)
+        reply.send(stats)
 
         // Track stats request
         this.metricsCollector.incrementCounter('api_stats_requests_total', 1, {
@@ -133,16 +132,16 @@ export class APIServer {
         })
       } catch (error) {
         this.logger.error('Performance stats failed', null, { error: error.message })
-        res.status(500).json({ error: 'Failed to get performance statistics' })
+        reply.code(500).send({ error: 'Failed to get performance statistics' })
       }
     })
 
     // Latency statistics endpoint
-    this.app.get('/stats/latency', async (req, res) => {
+    this.app.get('/stats/latency', async (request, reply) => {
       try {
         const latencyStats = this.metricsCollector.getLatencyStats()
 
-        res.json({
+        reply.send({
           timestamp: Date.now(),
           latencyStats
         })
@@ -153,17 +152,17 @@ export class APIServer {
         })
       } catch (error) {
         this.logger.error('Latency stats failed', null, { error: error.message })
-        res.status(500).json({ error: 'Failed to get latency statistics' })
+        reply.code(500).send({ error: 'Failed to get latency statistics' })
       }
     })
 
     // Throughput statistics endpoint
-    this.app.get('/stats/throughput', async (req, res) => {
+    this.app.get('/stats/throughput', async (request, reply) => {
       try {
         const throughputStats = this.metricsCollector.getThroughputStats()
         const resourceStats = this.metricsCollector.getResourceStats()
 
-        res.json({
+        reply.send({
           timestamp: Date.now(),
           throughput: throughputStats,
           resources: resourceStats
@@ -175,20 +174,20 @@ export class APIServer {
         })
       } catch (error) {
         this.logger.error('Throughput stats failed', null, { error: error.message })
-        res.status(500).json({ error: 'Failed to get throughput statistics' })
+        reply.code(500).send({ error: 'Failed to get throughput statistics' })
       }
     })
 
     // Storage statistics endpoint
-    this.app.get('/stats/storage', async (req, res) => {
+    this.app.get('/stats/storage', async (request, reply) => {
       try {
         if (!this.storageManager) {
-          return res.status(503).json({ error: 'Storage manager not available' })
+          return reply.code(503).send({ error: 'Storage manager not available' })
         }
 
         const storageStats = this.storageManager.getStats()
 
-        res.json({
+        reply.send({
           timestamp: Date.now(),
           storage: storageStats
         })
@@ -199,16 +198,16 @@ export class APIServer {
         })
       } catch (error) {
         this.logger.error('Storage stats failed', null, { error: error.message })
-        res.status(500).json({ error: 'Failed to get storage statistics' })
+        reply.code(500).send({ error: 'Failed to get storage statistics' })
       }
     })
 
     // Configuration endpoint
-    this.app.get('/config', async (req, res) => {
+    this.app.get('/config', async (request, reply) => {
       try {
         const sanitizedConfig = this.getSanitizedConfig()
 
-        res.json({
+        reply.send({
           timestamp: Date.now(),
           config: sanitizedConfig
         })
@@ -219,17 +218,17 @@ export class APIServer {
         })
       } catch (error) {
         this.logger.error('Config retrieval failed', null, { error: error.message })
-        res.status(500).json({ error: 'Failed to get configuration' })
+        reply.code(500).send({ error: 'Failed to get configuration' })
       }
     })
 
     // Configuration reload endpoint
-    this.app.post('/config/reload', async (req, res) => {
+    this.app.post('/config/reload', async (request, reply) => {
       try {
         // This would typically reload configuration from file/environment
         // For now, just return success
 
-        res.json({
+        reply.send({
           timestamp: Date.now(),
           status: 'success',
           message: 'Configuration reload requested'
@@ -241,20 +240,21 @@ export class APIServer {
         })
       } catch (error) {
         this.logger.error('Config reload failed', null, { error: error.message })
-        res.status(500).json({ error: 'Failed to reload configuration' })
+        reply.code(500).send({ error: 'Failed to reload configuration' })
       }
     })
 
     // OpenAPI specification endpoint
-    this.app.get('/openapi.json', (req, res) => {
+    this.app.get('/openapi.json', (request, reply) => {
       const openApiSpec = this.generateOpenAPISpec()
-      res.json(openApiSpec)
+      reply.send(openApiSpec)
     })
 
     // API documentation endpoint
-    this.app.get('/docs', (req, res) => {
+    this.app.get('/docs', (request, reply) => {
       const html = this.generateSwaggerUI()
-      res.send(html)
+      reply.header('Content-Type', 'text/html')
+      reply.send(html)
     })
   }
 
@@ -544,22 +544,22 @@ export class APIServer {
     `
   }
 
-  errorHandler (error, req, res, next) {
+  errorHandler (error, request, reply) {
     this.logger.error('API error', null, {
       error: error.message,
       stack: error.stack,
-      url: req.url,
-      method: req.method
+      url: request.url,
+      method: request.method
     })
 
     // Track API errors
     this.metricsCollector.incrementCounter('api_errors_total', 1, {
-      method: req.method,
-      endpoint: req.route?.path || req.url,
+      method: request.method,
+      endpoint: request.routeOptions?.url || request.url,
       errorType: error.constructor.name
     })
 
-    res.status(500).json({
+    reply.code(500).send({
       error: 'Internal server error',
       timestamp: new Date().toISOString()
     })
@@ -570,28 +570,25 @@ export class APIServer {
   }
 
   async startServer (host = '0.0.0.0', port = 8080) {
-    return new Promise((resolve, reject) => {
-      this.server = this.app.listen(port, host, (error) => {
-        if (error) {
-          this.logger.error('Failed to start API server', null, { error: error.message })
-          reject(error)
-        } else {
-          this.logger.info(`API server started on ${host}:${port}`)
-          resolve()
-        }
-      })
-    })
+    try {
+      await this.app.listen({ host, port })
+      this.logger.info(`API server started on ${host}:${port}`)
+    } catch (error) {
+      this.logger.error('Failed to start API server', null, { error: error.message })
+      throw error
+    }
   }
 
   async stopServer () {
-    if (this.server) {
-      return new Promise((resolve) => {
+    if (this.app) {
+      try {
         this.logger.info('Stopping API server')
-        this.server.close(() => {
-          this.logger.info('API server stopped')
-          resolve()
-        })
-      })
+        await this.app.close()
+        this.logger.info('API server stopped')
+      } catch (error) {
+        this.logger.error('Error stopping API server', null, { error: error.message })
+        throw error
+      }
     }
   }
 }

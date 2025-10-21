@@ -1,5 +1,3 @@
-version: "3.8"
-
 # Base services configuration
 # This file contains all service definitions and should be extended by environment-specific overrides
 # Usage: docker-compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up
@@ -12,8 +10,15 @@ services:
       dockerfile: Dockerfile
     container_name: finance-python-ingestion
     environment:
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/finance_benchmark
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=finance_benchmark
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_SSL=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
       - LOG_LEVEL=INFO
     depends_on:
       - redis
@@ -39,9 +44,23 @@ services:
     container_name: finance-node-ingestion
     environment:
       - APP_MODE=full
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/finance_benchmark
-      - LOG_LEVEL=info
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=finance_benchmark
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_SSL=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - WS_URL=ws://localhost:8080/ws
+      - PROMETHEUS_ENABLED=true
+      - PROMETHEUS_PORT=9090
+      - CORS_ENABLED=true
+      - CORS_ORIGIN=*
+      - RATE_LIMIT_ENABLED=false
+      - SSL_ENABLED=false
+      - LOG_LEVEL=debug
     depends_on:
       - redis
       - postgres
@@ -108,7 +127,7 @@ services:
     image: grafana/grafana:latest
     container_name: finance-grafana
     ports:
-      - "3000:3000"
+      - "9091:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
@@ -122,6 +141,9 @@ services:
       context: ../../apps/dashboard
       dockerfile: Dockerfile
     container_name: finance-dashboard
+    environment:
+      - PYTHON_SERVICE_URL=http://python-ingestion:8000
+      - NODE_SERVICE_URL=http://node-ingestion:8000
     ports:
       - "8080:8080"
     depends_on:

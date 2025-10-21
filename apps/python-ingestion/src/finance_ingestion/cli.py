@@ -1,363 +1,321 @@
 """
-Command Line Interface
+Command-line interface for the Finance Ingestion application.
 
-Provides CLI commands for running the financial data ingestion system
-with proper configuration, logging, and error handling.
+This module provides CLI commands for configuration validation, health checks,
+and other operational tasks.
 """
 
-import asyncio
-import signal
+import json
 import sys
-from pathlib import Path
-from typing import Optional
 
 import click
+from rich.console import Console
+from rich.table import Table
 
-# Import uvloop conditionally (not available on Windows)
-try:
-    import uvloop
-    UVLOOP_AVAILABLE = True
-except ImportError:
-    UVLOOP_AVAILABLE = False
+from .config import get_config, validate_config
 
-from . import __version__
-from .config import get_config, reload_config
-from .logging import setup_logging, get_logger
-from .exceptions import FinanceIngestionError, handle_exception
-
-
-# Global shutdown event for graceful shutdown
-shutdown_event = asyncio.Event()
-
-
-def signal_handler(signum, frame):
-    """Handle shutdown signals gracefully."""
-    logger = get_logger('cli')
-    logger.info(f"Received signal {signum}, initiating graceful shutdown...")
-    shutdown_event.set()
+console = Console()
 
 
 @click.group()
-@click.version_option(version=__version__)
+@click.version_option()
+def cli():
+    """Finance Ingestion CLI - Configuration and operational tools."""
+
+
+@cli.command()
 @click.option(
-    '--config-file',
-    type=click.Path(exists=True, path_type=Path),
-    help='Path to configuration file'
+    '--env',
+    type=click.Choice(['development', 'staging', 'production']),
+    help='Target environment to validate'
 )
 @click.option(
-    '--log-level',
-    type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']),
-    help='Override log level'
+    '--json-output',
+    is_flag=True,
+    help='Output results in JSON format'
 )
 @click.option(
     '--verbose',
     is_flag=True,
-    help='Enable verbose logging'
+    help='Show detailed configuration values'
 )
-@click.pass_context
-def cli(ctx, config_file, log_level, verbose):
-    """
-    Financial Data Ingestion System - Python Implementation
-    
-    High-performance financial data ingestion system for benchmarking
-    against Node.js implementation.
-    """
-    # Ensure context object exists
-    ctx.ensure_object(dict)
-    
+def validate_config_cmd(env: str | None, json_output: bool, verbose: bool):
+    """Validate configuration for the specified environment."""
+
     try:
-        # Load configuration
-        if config_file:
-            # TODO: Implement config file loading
-            pass
-        
-        config = get_config()
-        
-        # Override configuration with CLI options
-        if log_level:
-            config.monitoring.log_level = log_level
-        if verbose:
-            config.verbose = True
-        
-        # Set up logging
-        setup_logging(config)
-        
-        # Store config in context
-        ctx.obj['config'] = config
-        
-        logger = get_logger('cli')
-        logger.info(
-            "Finance Ingestion System starting",
-            version=__version__,
-            environment=config.environment,
-            log_level=config.monitoring.log_level
-        )
-        
+        is_valid, errors, warnings = validate_config(env)
+
+        if json_output:
+            # JSON output for programmatic use
+            result = {
+                'valid': is_valid,
+                'environment': env or 'current',
+                'errors': errors,
+                'warnings': warnings
+            }
+
+            if verbose:
+                try:
+                    config = get_config()
+                    # Mask sensitive values
+                    config_dict = _mask_sensitive_config(config.dict())
+                    result['configuration'] = config_dict
+                except Exception as e:
+                    result['configuration_error'] = str(e)
+
+            click.echo(json.dumps(result, indent=2))
+            sys.exit(0 if is_valid else 1)
+
+        # Rich console output for human use
+        _display_validation_results(is_valid, errors, warnings, env, verbose)
+        sys.exit(0 if is_valid else 1)
+
     except Exception as e:
-        click.echo(f"Error initializing application: {e}", err=True)
-        sys.exit(1)
-
-
-@cli.command()
-@click.option(
-    '--host',
-    default='localhost',
-    help='WebSocket server host'
-)
-@click.option(
-    '--port',
-    default=8080,
-    type=int,
-    help='WebSocket server port'
-)
-@click.option(
-    '--duration',
-    default=60,
-    type=int,
-    help='Run duration in seconds (0 for infinite)'
-)
-@click.option(
-    '--dry-run',
-    is_flag=True,
-    help='Run in dry-run mode (no actual processing)'
-)
-@click.pass_context
-def run(ctx, host, port, duration, dry_run):
-    """
-    Run the financial data ingestion system.
-    
-    Connects to WebSocket data feed and processes incoming market data
-    with real-time storage and performance monitoring.
-    """
-    config = ctx.obj['config']
-    logger = get_logger('cli.run')
-    
-    # Override configuration with CLI options
-    config.websocket.url = f"wss://{host}:{port}/market-data"
-    if duration > 0:
-        config.benchmark.duration_ms = duration * 1000
-    config.dry_run = dry_run
-    
-    logger.info(
-        "Starting ingestion system",
-        websocket_url=config.websocket.url,
-        duration_ms=config.benchmark.duration_ms if duration > 0 else "infinite",
-        dry_run=dry_run
-    )
-    
-    # Set up signal handlers for graceful shutdown
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    
-    try:
-        # Use uvloop for maximum performance (if available)
-        if UVLOOP_AVAILABLE:
-            uvloop.install()
-            logger.info("Using uvloop for enhanced performance")
+        if json_output:
+            click.echo(json.dumps({
+                'valid': False,
+                'environment': env or 'current',
+                'errors': [f'Validation failed: {e!s}'],
+                'warnings': []
+            }, indent=2))
         else:
-            logger.info("uvloop not available, using default asyncio event loop")
-        
-        # Run the main application
-        asyncio.run(_run_ingestion_system(config))
-        
-    except KeyboardInterrupt:
-        logger.info("Received keyboard interrupt, shutting down...")
-    except Exception as e:
-        handle_exception(e, logger, context={'command': 'run'})
+            console.print(f"[red]❌ Configuration validation failed: {e!s}[/red]")
         sys.exit(1)
 
 
 @cli.command()
-@click.option(
-    '--output',
-    type=click.Path(path_type=Path),
-    help='Output file for benchmark results'
-)
 @click.option(
     '--format',
-    type=click.Choice(['json', 'csv', 'html']),
-    default='json',
-    help='Output format for results'
+    type=click.Choice(['table', 'json']),
+    default='table',
+    help='Output format'
 )
-@click.pass_context
-def benchmark(ctx, output, format):
-    """
-    Run performance benchmarks.
-    
-    Executes comprehensive performance tests and generates
-    detailed benchmark reports.
-    """
-    config = ctx.obj['config']
-    logger = get_logger('cli.benchmark')
-    
-    logger.info(
-        "Starting benchmark suite",
-        output_file=str(output) if output else None,
-        output_format=format
-    )
-    
-    try:
-        # Use uvloop for maximum performance (if available)
-        if UVLOOP_AVAILABLE:
-            uvloop.install()
-        
-        # Run benchmark suite
-        asyncio.run(_run_benchmark_suite(config, output, format))
-        
-    except Exception as e:
-        handle_exception(e, logger, context={'command': 'benchmark'})
-        sys.exit(1)
+def show_config(format: str):
+    """Display current configuration."""
 
-
-@cli.command()
-@click.pass_context
-def validate_config(ctx):
-    """
-    Validate the current configuration.
-    
-    Checks configuration values and reports any issues.
-    """
-    config = ctx.obj['config']
-    logger = get_logger('cli.validate')
-    
-    logger.info("Validating configuration...")
-    
     try:
-        # Validate configuration
-        errors = []
-        
-        # Check WebSocket configuration
-        if not config.websocket.url.startswith(('ws://', 'wss://')):
-            errors.append("WebSocket URL must start with ws:// or wss://")
-        
-        # Check database configuration
-        if not config.postgresql.database:
-            errors.append("PostgreSQL database name is required")
-        
-        # Check Redis configuration
-        if config.redis.port < 1 or config.redis.port > 65535:
-            errors.append("Redis port must be between 1 and 65535")
-        
-        # Report results
-        if errors:
-            logger.error("Configuration validation failed", errors=errors)
-            for error in errors:
-                click.echo(f"ERROR: {error}", err=True)
-            sys.exit(1)
+        config = get_config()
+
+        if format == 'json':
+            config_dict = _mask_sensitive_config(config.dict())
+            click.echo(json.dumps(config_dict, indent=2))
         else:
-            logger.info("Configuration validation passed")
-            click.echo("Configuration is valid ✓")
-    
+            _display_config_table(config)
+
     except Exception as e:
-        handle_exception(e, logger, context={'command': 'validate-config'})
+        console.print(f"[red]❌ Failed to load configuration: {e!s}[/red]")
         sys.exit(1)
 
 
 @cli.command()
-@click.pass_context
-def health_check(ctx):
-    """
-    Perform system health checks.
-    
-    Checks connectivity to external dependencies and system resources.
-    """
-    config = ctx.obj['config']
-    logger = get_logger('cli.health')
-    
-    logger.info("Performing health checks...")
-    
+def health_check():
+    """Perform application health check."""
+
     try:
-        # Use uvloop for async operations (if available)
-        if UVLOOP_AVAILABLE:
-            uvloop.install()
-        
-        # Run health checks
-        asyncio.run(_run_health_checks(config))
-        
+        config = get_config()
+
+        # Basic configuration validation
+        is_valid, errors, warnings = validate_config()
+
+        if not is_valid:
+            console.print("[red]❌ Health check failed - configuration errors[/red]")
+            for error in errors:
+                console.print(f"  • {error}")
+            sys.exit(1)
+
+        # TODO: Add database connectivity check
+        # TODO: Add Redis connectivity check
+        # TODO: Add external service checks
+
+        console.print("[green]✅ Health check passed[/green]")
+
+        if warnings:
+            console.print("\n[yellow]⚠️  Warnings:[/yellow]")
+            for warning in warnings:
+                console.print(f"  • {warning}")
+
     except Exception as e:
-        handle_exception(e, logger, context={'command': 'health-check'})
+        console.print(f"[red]❌ Health check failed: {e!s}[/red]")
         sys.exit(1)
 
 
-async def _run_ingestion_system(config):
-    """
-    Main ingestion system entry point.
-    
-    This will be implemented in subsequent tasks as we build
-    the connection manager, message processor, and storage layer.
-    """
-    logger = get_logger('ingestion')
-    
-    logger.info("Ingestion system would start here")
-    logger.info("This will be implemented in subsequent tasks")
-    
-    # Placeholder for actual implementation
-    if config.dry_run:
-        logger.info("Running in dry-run mode - no actual processing")
-        await asyncio.sleep(5)  # Simulate some work
+def _display_validation_results(is_valid: bool, errors: list, warnings: list, env: str | None, verbose: bool):
+    """Display validation results using rich console formatting."""
+
+    # Header
+    env_text = env or "current environment"
+    if is_valid:
+        console.print(f"[green]✅ Configuration Valid[/green] for {env_text}")
     else:
-        logger.info("Would connect to WebSocket and start processing")
-        await asyncio.sleep(5)  # Simulate some work
-    
-    logger.info("Ingestion system completed")
+        console.print(f"[red]❌ Configuration Invalid[/red] for {env_text}")
+
+    # Configuration summary
+    if verbose:
+        try:
+            config = get_config()
+            _display_config_summary(config)
+        except Exception as e:
+            console.print(f"[yellow]⚠️  Could not load configuration details: {e!s}[/yellow]")
+
+    # Errors
+    if errors:
+        console.print("\n[red]❌ Errors:[/red]")
+        for error in errors:
+            console.print(f"  • {error}")
+
+    # Warnings
+    if warnings:
+        console.print("\n[yellow]⚠️  Warnings:[/yellow]")
+        for warning in warnings:
+            console.print(f"  • {warning}")
+
+    # Suggestions
+    if errors or warnings:
+        console.print("\n[blue]💡 Suggestions:[/blue]")
+
+        if any("password" in str(item).lower() for item in errors + warnings):
+            console.print("  • Set secure passwords using environment variables")
+            console.print("  • Use different passwords for each environment")
+
+        if any("ssl" in str(item).lower() for item in warnings):
+            console.print("  • Enable SSL/TLS for production deployments")
+            console.print("  • Configure SSL certificates and keys")
+
+        if any("cors" in str(item).lower() for item in errors):
+            console.print("  • Set specific CORS origins for production")
+            console.print("  • Use environment-specific CORS configuration")
+
+        if any("environment variable" in str(item) for item in errors):
+            console.print("  • Set required environment variables for your target environment")
+            console.print("  • Check your deployment configuration")
 
 
-async def _run_benchmark_suite(config, output_file, output_format):
-    """
-    Run the benchmark suite.
-    
-    This will be implemented in subsequent tasks as we build
-    the benchmarking infrastructure.
-    """
-    logger = get_logger('benchmark')
-    
-    logger.info("Benchmark suite would start here")
-    logger.info("This will be implemented in subsequent tasks")
-    
-    # Placeholder for actual implementation
-    await asyncio.sleep(2)  # Simulate benchmark execution
-    
-    if output_file:
-        logger.info(f"Would save results to {output_file} in {output_format} format")
-    
-    logger.info("Benchmark suite completed")
+def _display_config_summary(config):
+    """Display a summary of the loaded configuration."""
+
+    table = Table(title="📋 Configuration Summary", show_header=True, header_style="bold magenta")
+    table.add_column("Setting", style="cyan", no_wrap=True)
+    table.add_column("Value", style="green")
+
+    # Application settings
+    table.add_row("Environment", config.environment)
+    table.add_row("Application Port", str(config.port))
+    table.add_row("Log Level", config.log_level)
+    table.add_row("Metrics Enabled", "✅" if config.enable_metrics else "❌")
+
+    # Database settings
+    table.add_row("Database Host", f"{config.database.host}:{config.database.port}")
+    table.add_row("Database Name", config.database.name)
+    table.add_row("Database SSL", "✅" if config.database.ssl else "❌")
+
+    # Redis settings
+    table.add_row("Redis Host", f"{config.redis.host}:{config.redis.port}")
+    table.add_row("Redis Database", str(config.redis.db))
+
+    # WebSocket settings
+    if config.websocket.enabled:
+        table.add_row("WebSocket Port", str(config.websocket.port))
+        table.add_row("WebSocket Max Connections", str(config.websocket.max_connections))
+    else:
+        table.add_row("WebSocket", "❌ Disabled")
+
+    # Security settings
+    table.add_row("CORS Enabled", "✅" if config.security.cors_enabled else "❌")
+    table.add_row("Rate Limiting", "✅" if config.security.rate_limit_enabled else "❌")
+    table.add_row("SSL Enabled", "✅" if config.security.ssl_enabled else "❌")
+
+    console.print(table)
+
+    # Default value warnings
+    default_warnings = []
+
+    if config.database.password.get_secret_value() in ["postgres", "password", "admin"]:
+        default_warnings.append("Using default database password")
+
+    if config.redis.password and config.redis.password.get_secret_value() in ["redis", "password"]:
+        default_warnings.append("Using default Redis password")
+
+    if config.security.cors_origin == "*" and config.environment == "production":
+        default_warnings.append("CORS origin set to '*' in production")
+
+    if default_warnings:
+        console.print("\n[yellow]⚠️  Default Values Detected:[/yellow]")
+        for warning in default_warnings:
+            console.print(f"  • {warning}")
 
 
-async def _run_health_checks(config):
-    """
-    Run system health checks.
-    
-    This will be implemented in subsequent tasks as we build
-    the storage and connection infrastructure.
-    """
-    logger = get_logger('health')
-    
-    logger.info("Health checks would start here")
-    logger.info("This will be implemented in subsequent tasks")
-    
-    # Placeholder for actual implementation
-    checks = [
-        "WebSocket connectivity",
-        "Redis connectivity", 
-        "PostgreSQL connectivity",
-        "System resources"
-    ]
-    
-    for check in checks:
-        logger.info(f"Would check: {check}")
-        await asyncio.sleep(0.5)  # Simulate check
-    
-    logger.info("All health checks would pass")
-    click.echo("All health checks passed ✓")
+def _display_config_table(config):
+    """Display full configuration in table format."""
+
+    # Application Configuration
+    app_table = Table(title="Application Configuration", show_header=True, header_style="bold blue")
+    app_table.add_column("Setting", style="cyan")
+    app_table.add_column("Value", style="white")
+
+    app_table.add_row("Port", str(config.port))
+    app_table.add_row("Host", config.host)
+    app_table.add_row("Environment", config.environment)
+    app_table.add_row("Log Level", config.log_level)
+    app_table.add_row("Log Format", config.log_format)
+    app_table.add_row("Metrics Enabled", str(config.enable_metrics))
+    app_table.add_row("Clustering Enabled", str(config.enable_clustering))
+    app_table.add_row("Cluster Workers", str(config.cluster_workers))
+
+    console.print(app_table)
+
+    # Database Configuration
+    db_table = Table(title="Database Configuration", show_header=True, header_style="bold green")
+    db_table.add_column("Setting", style="cyan")
+    db_table.add_column("Value", style="white")
+
+    db_table.add_row("Host", config.database.host)
+    db_table.add_row("Port", str(config.database.port))
+    db_table.add_row("Database", config.database.name)
+    db_table.add_row("Username", config.database.username)
+    db_table.add_row("Password", "***" if config.database.password else "Not set")
+    db_table.add_row("SSL", str(config.database.ssl))
+    db_table.add_row("Pool Min", str(config.database.pool_min))
+    db_table.add_row("Pool Max", str(config.database.pool_max))
+
+    console.print(db_table)
+
+    # Redis Configuration
+    redis_table = Table(title="Redis Configuration", show_header=True, header_style="bold red")
+    redis_table.add_column("Setting", style="cyan")
+    redis_table.add_column("Value", style="white")
+
+    redis_table.add_row("Host", config.redis.host)
+    redis_table.add_row("Port", str(config.redis.port))
+    redis_table.add_row("Database", str(config.redis.db))
+    redis_table.add_row("Password", "***" if config.redis.password else "Not set")
+    redis_table.add_row("Connect Timeout", f"{config.redis.connect_timeout}ms")
+    redis_table.add_row("Command Timeout", f"{config.redis.command_timeout}ms")
+
+    console.print(redis_table)
+
+
+def _mask_sensitive_config(config_dict: dict) -> dict:
+    """Mask sensitive configuration values for safe display."""
+
+    sensitive_keys = ['password', 'secret', 'key', 'token', 'credential']
+
+    def mask_recursive(obj):
+        if isinstance(obj, dict):
+            return {
+                key: "***" if any(sensitive in key.lower() for sensitive in sensitive_keys)
+                     else mask_recursive(value)
+                for key, value in obj.items()
+            }
+        if isinstance(obj, list):
+            return [mask_recursive(item) for item in obj]
+        return obj
+
+    return mask_recursive(config_dict)
 
 
 def main():
     """Main entry point for the CLI."""
-    try:
-        cli()
-    except Exception as e:
-        click.echo(f"Unexpected error: {e}", err=True)
-        sys.exit(1)
+    cli()
 
 
 if __name__ == '__main__':

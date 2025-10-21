@@ -7,11 +7,11 @@ This module provides high-performance storage managers for:
 - In-memory circular buffers for high-frequency data
 """
 
-from .storage_manager import StorageManager, StorageMetrics, MarketDataMessage, CircularBuffer
+from .storage_manager import CircularBuffer, MarketDataMessage, StorageManager, StorageMetrics
 
 __all__ = [
-    'StorageManager',
-    'StorageMetrics', 
+    'CircularBuffer',
     'MarketDataMessage',
-    'CircularBuffer'
+    'StorageManager',
+    'StorageMetrics'
 ]

@@ -5,9 +5,8 @@ Defines a comprehensive exception hierarchy for the financial data ingestion sys
 with proper error categorization and context preservation.
 """
 
-from typing import Any, Dict, Optional, Union
-import traceback
 from datetime import datetime
+from typing import Any
 
 
 class FinanceIngestionError(Exception):
@@ -17,13 +16,13 @@ class FinanceIngestionError(Exception):
     Provides structured error information including error codes, context,
     and timestamp for better debugging and monitoring.
     """
-    
+
     def __init__(
         self,
         message: str,
-        error_code: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None,
-        cause: Optional[Exception] = None,
+        error_code: str | None = None,
+        context: dict[str, Any] | None = None,
+        cause: Exception | None = None,
     ):
         """
         Initialize the exception.
@@ -40,12 +39,12 @@ class FinanceIngestionError(Exception):
         self.context = context or {}
         self.cause = cause
         self.timestamp = datetime.utcnow()
-        
+
         # Preserve the original traceback if there's a cause
         if cause:
             self.__cause__ = cause
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert the exception to a dictionary for structured logging.
         
@@ -59,26 +58,26 @@ class FinanceIngestionError(Exception):
             "timestamp": self.timestamp.isoformat(),
             "context": self.context,
         }
-        
+
         if self.cause:
             result["cause"] = {
                 "type": self.cause.__class__.__name__,
                 "message": str(self.cause),
             }
-        
+
         return result
-    
+
     def __str__(self) -> str:
         """String representation of the exception."""
         parts = [f"{self.error_code}: {self.message}"]
-        
+
         if self.context:
             context_str = ", ".join(f"{k}={v}" for k, v in self.context.items())
             parts.append(f"Context: {context_str}")
-        
+
         if self.cause:
             parts.append(f"Caused by: {self.cause}")
-        
+
         return " | ".join(parts)
 
 
@@ -89,12 +88,12 @@ class ConfigurationError(FinanceIngestionError):
     This includes invalid configuration values, missing required settings,
     or configuration validation failures.
     """
-    
+
     def __init__(
         self,
         message: str,
-        config_key: Optional[str] = None,
-        config_value: Optional[Any] = None,
+        config_key: str | None = None,
+        config_value: Any | None = None,
         **kwargs
     ):
         context = kwargs.get("context", {})
@@ -102,7 +101,7 @@ class ConfigurationError(FinanceIngestionError):
             context["config_key"] = config_key
         if config_value is not None:
             context["config_value"] = str(config_value)
-        
+
         kwargs["context"] = context
         super().__init__(message, error_code="CONFIG_ERROR", **kwargs)
 
@@ -114,13 +113,13 @@ class ConnectionError(FinanceIngestionError):
     This includes WebSocket connection failures, database connection issues,
     Redis connection problems, and network-related errors.
     """
-    
+
     def __init__(
         self,
         message: str,
-        connection_type: Optional[str] = None,
-        endpoint: Optional[str] = None,
-        retry_count: Optional[int] = None,
+        connection_type: str | None = None,
+        endpoint: str | None = None,
+        retry_count: int | None = None,
         **kwargs
     ):
         context = kwargs.get("context", {})
@@ -130,7 +129,7 @@ class ConnectionError(FinanceIngestionError):
             context["endpoint"] = endpoint
         if retry_count is not None:
             context["retry_count"] = retry_count
-        
+
         kwargs["context"] = context
         super().__init__(message, error_code="CONNECTION_ERROR", **kwargs)
 
@@ -142,13 +141,13 @@ class ProcessingError(FinanceIngestionError):
     This includes message parsing failures, validation errors,
     serialization/deserialization issues, and processing pipeline failures.
     """
-    
+
     def __init__(
         self,
         message: str,
-        message_id: Optional[str] = None,
-        processing_stage: Optional[str] = None,
-        message_data: Optional[Dict[str, Any]] = None,
+        message_id: str | None = None,
+        processing_stage: str | None = None,
+        message_data: dict[str, Any] | None = None,
         **kwargs
     ):
         context = kwargs.get("context", {})
@@ -161,7 +160,7 @@ class ProcessingError(FinanceIngestionError):
             context["message_type"] = message_data.get("messageType")
             context["symbol"] = message_data.get("symbol")
             context["sequence_number"] = message_data.get("sequenceNumber")
-        
+
         kwargs["context"] = context
         super().__init__(message, error_code="PROCESSING_ERROR", **kwargs)
 
@@ -173,13 +172,13 @@ class StorageError(FinanceIngestionError):
     This includes database write failures, Redis operation errors,
     buffer overflow conditions, and persistence issues.
     """
-    
+
     def __init__(
         self,
         message: str,
-        storage_type: Optional[str] = None,
-        operation: Optional[str] = None,
-        affected_records: Optional[int] = None,
+        storage_type: str | None = None,
+        operation: str | None = None,
+        affected_records: int | None = None,
         **kwargs
     ):
         context = kwargs.get("context", {})
@@ -189,7 +188,7 @@ class StorageError(FinanceIngestionError):
             context["operation"] = operation
         if affected_records is not None:
             context["affected_records"] = affected_records
-        
+
         kwargs["context"] = context
         super().__init__(message, error_code="STORAGE_ERROR", **kwargs)
 
@@ -201,13 +200,13 @@ class ValidationError(FinanceIngestionError):
     This includes schema validation errors, data type mismatches,
     and business rule violations.
     """
-    
+
     def __init__(
         self,
         message: str,
-        field_name: Optional[str] = None,
-        field_value: Optional[Any] = None,
-        validation_rule: Optional[str] = None,
+        field_name: str | None = None,
+        field_value: Any | None = None,
+        validation_rule: str | None = None,
         **kwargs
     ):
         context = kwargs.get("context", {})
@@ -217,7 +216,7 @@ class ValidationError(FinanceIngestionError):
             context["field_value"] = str(field_value)
         if validation_rule:
             context["validation_rule"] = validation_rule
-        
+
         kwargs["context"] = context
         super().__init__(message, error_code="VALIDATION_ERROR", **kwargs)
 
@@ -229,13 +228,13 @@ class BackpressureError(FinanceIngestionError):
     This indicates that the system cannot keep up with the incoming
     message rate and needs to apply flow control.
     """
-    
+
     def __init__(
         self,
         message: str,
-        queue_size: Optional[int] = None,
-        max_queue_size: Optional[int] = None,
-        message_rate: Optional[float] = None,
+        queue_size: int | None = None,
+        max_queue_size: int | None = None,
+        message_rate: float | None = None,
         **kwargs
     ):
         context = kwargs.get("context", {})
@@ -245,7 +244,7 @@ class BackpressureError(FinanceIngestionError):
             context["max_queue_size"] = max_queue_size
         if message_rate is not None:
             context["message_rate"] = message_rate
-        
+
         kwargs["context"] = context
         super().__init__(message, error_code="BACKPRESSURE_ERROR", **kwargs)
 
@@ -257,12 +256,12 @@ class MetricsError(FinanceIngestionError):
     This includes Prometheus export failures, metrics calculation errors,
     and monitoring system issues.
     """
-    
+
     def __init__(
         self,
         message: str,
-        metric_name: Optional[str] = None,
-        metric_type: Optional[str] = None,
+        metric_name: str | None = None,
+        metric_type: str | None = None,
         **kwargs
     ):
         context = kwargs.get("context", {})
@@ -270,7 +269,7 @@ class MetricsError(FinanceIngestionError):
             context["metric_name"] = metric_name
         if metric_type:
             context["metric_type"] = metric_type
-        
+
         kwargs["context"] = context
         super().__init__(message, error_code="METRICS_ERROR", **kwargs)
 
@@ -282,13 +281,13 @@ class TimeoutError(FinanceIngestionError):
     This includes connection timeouts, processing timeouts,
     and operation deadlines.
     """
-    
+
     def __init__(
         self,
         message: str,
-        operation: Optional[str] = None,
-        timeout_ms: Optional[int] = None,
-        elapsed_ms: Optional[int] = None,
+        operation: str | None = None,
+        timeout_ms: int | None = None,
+        elapsed_ms: int | None = None,
         **kwargs
     ):
         context = kwargs.get("context", {})
@@ -298,7 +297,7 @@ class TimeoutError(FinanceIngestionError):
             context["timeout_ms"] = timeout_ms
         if elapsed_ms is not None:
             context["elapsed_ms"] = elapsed_ms
-        
+
         kwargs["context"] = context
         super().__init__(message, error_code="TIMEOUT_ERROR", **kwargs)
 
@@ -310,13 +309,13 @@ class ResourceError(FinanceIngestionError):
     This includes memory exhaustion, CPU overload,
     and other resource constraint violations.
     """
-    
+
     def __init__(
         self,
         message: str,
-        resource_type: Optional[str] = None,
-        current_usage: Optional[Union[int, float]] = None,
-        limit: Optional[Union[int, float]] = None,
+        resource_type: str | None = None,
+        current_usage: int | float | None = None,
+        limit: int | float | None = None,
         **kwargs
     ):
         context = kwargs.get("context", {})
@@ -326,17 +325,17 @@ class ResourceError(FinanceIngestionError):
             context["current_usage"] = current_usage
         if limit is not None:
             context["limit"] = limit
-        
+
         kwargs["context"] = context
         super().__init__(message, error_code="RESOURCE_ERROR", **kwargs)
 
 
 def handle_exception(
     exc: Exception,
-    logger: Optional[Any] = None,
-    context: Optional[Dict[str, Any]] = None,
+    logger: Any | None = None,
+    context: dict[str, Any] | None = None,
     reraise: bool = True,
-) -> Optional[FinanceIngestionError]:
+) -> FinanceIngestionError | None:
     """
     Handle and optionally convert exceptions to FinanceIngestionError.
     
@@ -363,7 +362,7 @@ def handle_exception(
     else:
         # Convert to appropriate FinanceIngestionError subclass
         finance_exc = _convert_exception(exc, context)
-    
+
     # Log the error if logger is provided
     if logger:
         logger.error(
@@ -371,16 +370,16 @@ def handle_exception(
             exc_info=exc,
             extra=finance_exc.to_dict()
         )
-    
+
     if reraise:
         raise finance_exc
-    
+
     return finance_exc
 
 
 def _convert_exception(
     exc: Exception,
-    context: Optional[Dict[str, Any]] = None
+    context: dict[str, Any] | None = None
 ) -> FinanceIngestionError:
     """
     Convert a generic exception to an appropriate FinanceIngestionError subclass.
@@ -393,24 +392,23 @@ def _convert_exception(
         The converted FinanceIngestionError
     """
     message = str(exc)
-    
+
     # Map common exception types to our hierarchy
     if isinstance(exc, (ConnectionRefusedError, ConnectionResetError, OSError)):
         return ConnectionError(message, cause=exc, context=context)
-    elif isinstance(exc, TimeoutError):
+    if isinstance(exc, TimeoutError):
         return TimeoutError(message, cause=exc, context=context)
-    elif isinstance(exc, (ValueError, TypeError)):
+    if isinstance(exc, (ValueError, TypeError)):
         return ValidationError(message, cause=exc, context=context)
-    elif isinstance(exc, MemoryError):
+    if isinstance(exc, MemoryError):
         return ResourceError(
             message,
             resource_type="memory",
             cause=exc,
             context=context
         )
-    else:
-        # Generic conversion
-        return FinanceIngestionError(message, cause=exc, context=context)
+    # Generic conversion
+    return FinanceIngestionError(message, cause=exc, context=context)
 
 
 class ErrorContext:
@@ -420,7 +418,7 @@ class ErrorContext:
     This allows for automatic context addition to any exceptions
     that occur within the context block.
     """
-    
+
     def __init__(self, **context):
         """
         Initialize the error context.
@@ -429,19 +427,19 @@ class ErrorContext:
             **context: Context key-value pairs to add to exceptions
         """
         self.context = context
-    
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_val and not isinstance(exc_val, FinanceIngestionError):
             # Convert and add context
             finance_exc = _convert_exception(exc_val, self.context)
             # Replace the exception
             raise finance_exc from exc_val
-        elif isinstance(exc_val, FinanceIngestionError):
+        if isinstance(exc_val, FinanceIngestionError):
             # Add context to existing FinanceIngestionError
             exc_val.context.update(self.context)
-        
+
         # Don't suppress the exception
         return False
