@@ -38,6 +38,7 @@ const redisSchema = Joi.object({
 // WebSocket configuration schema
 const websocketSchema = Joi.object({
   enabled: Joi.boolean().default(true).description('Enable WebSocket server'),
+  url: Joi.string().uri({ scheme: ['ws', 'wss'] }).default('ws://localhost:8080/ws').description('WebSocket server URL'),
   port: Joi.number().port().default(8080).description('WebSocket server port'),
   path: Joi.string().pattern(/^\//).default('/ws').description('WebSocket endpoint path'),
   heartbeatInterval: Joi.number().integer().min(1000).default(30000).description('Heartbeat interval in ms'),
@@ -74,6 +75,15 @@ const securitySchema = Joi.object({
   }).description('SSL private key path')
 })
 
+// Application configuration schema
+const appSchema = Joi.object({
+  name: Joi.string().default('finance-ingestion-node').description('Application name'),
+  version: Joi.string().default('1.0.0').description('Application version'),
+  environment: Joi.string().valid('development', 'staging', 'production').default('development').description('Deployment environment'),
+  buildNumber: Joi.string().optional().description('Build number'),
+  gitCommit: Joi.string().optional().description('Git commit hash')
+})
+
 // Main application configuration schema
 export const configSchema = Joi.object({
   // Application settings
@@ -88,11 +98,8 @@ export const configSchema = Joi.object({
     Joi.number().integer().min(1)
   ).default('auto').description('Number of cluster workers'),
   
-  // Environment metadata
-  environment: Joi.string().valid('development', 'staging', 'production').default('development').description('Deployment environment'),
-  version: Joi.string().default('1.0.0').description('Application version'),
-  buildNumber: Joi.string().optional().description('Build number'),
-  gitCommit: Joi.string().optional().description('Git commit hash'),
+  // Application metadata
+  app: appSchema.required(),
   
   // Sub-configurations
   database: databaseSchema.required(),

@@ -25,12 +25,16 @@ let _config = null
 export function loadConfig() {
   const config = {}
   
-  // Get the project root directory (assuming standard structure)
-  const projectRoot = path.resolve(__dirname, '../../../../../..')
+  // Load configuration from environment variables first (Docker-friendly)
+  Object.assign(config, loadEnvironmentVariables())
+  
+  // Try to load from config files if available (development)
+  const projectRoot = path.resolve(path.dirname(__filename), '../../../../..')
   const configDir = path.join(projectRoot, 'configs')
   
   if (!fs.existsSync(configDir)) {
-    console.warn(`Configuration directory not found: ${configDir}`)
+    // No config directory found, use environment variables only (typical in Docker)
+    console.log('Using environment variables for configuration (no config directory found)')
     return validateAndTransformConfig(config)
   }
   
@@ -128,11 +132,12 @@ function loadEnvironmentVariables() {
     'ENABLE_METRICS': 'enableMetrics',
     'ENABLE_CLUSTERING': 'enableClustering',
     'CLUSTER_WORKERS': 'clusterWorkers',
-    'NODE_ENV': 'environment',
-    'DEPLOYMENT_ENVIRONMENT': 'environment',
-    'DEPLOYMENT_VERSION': 'version',
-    'BUILD_NUMBER': 'buildNumber',
-    'GIT_COMMIT_HASH': 'gitCommit',
+    'NODE_ENV': 'app.environment',
+    'DEPLOYMENT_ENVIRONMENT': 'app.environment',
+    'DEPLOYMENT_VERSION': 'app.version',
+    'BUILD_NUMBER': 'app.buildNumber',
+    'GIT_COMMIT_HASH': 'app.gitCommit',
+    'APP_NAME': 'app.name',
     
     // Database settings
     'DB_HOST': 'database.host',
@@ -158,6 +163,7 @@ function loadEnvironmentVariables() {
     
     // WebSocket settings
     'WS_ENABLED': 'websocket.enabled',
+    'WS_URL': 'websocket.url',
     'WS_PORT': 'websocket.port',
     'WS_PATH': 'websocket.path',
     'WS_HEARTBEAT_INTERVAL': 'websocket.heartbeatInterval',
