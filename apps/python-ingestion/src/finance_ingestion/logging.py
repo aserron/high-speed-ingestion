@@ -5,29 +5,27 @@ Provides high-performance structured logging with JSON output, correlation IDs,
 and integration with the monitoring system for comprehensive observability.
 """
 
+from contextvars import ContextVar
 import logging
 import logging.config
+from pathlib import Path
 import sys
 import time
 import uuid
-from contextvars import ContextVar
-from typing import Any, Dict, Optional, Union
-from pathlib import Path
 
-import structlog
 from pythonjsonlogger import jsonlogger
+import structlog
 
 from .config import AppConfig, get_config
 from .exceptions import FinanceIngestionError
 
-
 # Context variable for correlation ID tracking
-correlation_id: ContextVar[Optional[str]] = ContextVar('correlation_id', default=None)
+correlation_id: ContextVar[str | None] = ContextVar('correlation_id', default=None)
 
 
 class CorrelationIdProcessor:
     """Structlog processor to add correlation IDs to log records."""
-    
+
     def __call__(self, logger, method_name, event_dict):
         """Add correlation ID to the event dictionary."""
         corr_id = correlation_id.get()
@@ -38,7 +36,7 @@ class CorrelationIdProcessor:
 
 class TimestampProcessor:
     """Structlog processor to add high-precision timestamps."""
-    
+
     def __call__(self, logger, method_name, event_dict):
         """Add timestamp to the event dictionary."""
         event_dict['timestamp'] = time.time_ns()  # Nanosecond precision
@@ -50,7 +48,7 @@ class TimestampProcessor:
 
 class PerformanceProcessor:
     """Structlog processor to add performance-related metadata."""
-    
+
     def __call__(self, logger, method_name, event_dict):
         """Add performance metadata to the event dictionary."""
         # Add log level as numeric value for easier filtering
@@ -62,19 +60,19 @@ class PerformanceProcessor:
             'critical': 50,
         }
         event_dict['level_num'] = level_map.get(method_name, 20)
-        
+
         # Add process/thread information for debugging
         import os
         import threading
         event_dict['process_id'] = os.getpid()
         event_dict['thread_id'] = threading.get_ident()
-        
+
         return event_dict
 
 
 class ExceptionProcessor:
     """Structlog processor to handle FinanceIngestionError exceptions."""
-    
+
     def __call__(self, logger, method_name, event_dict):
         """Process FinanceIngestionError exceptions for structured logging."""
         exc_info = event_dict.get('exc_info')
@@ -83,7 +81,7 @@ class ExceptionProcessor:
             event_dict.update(exc_info.to_dict())
             # Remove the raw exc_info to avoid duplication
             event_dict.pop('exc_info', None)
-        
+
         return event_dict
 
 
@@ -94,31 +92,31 @@ class CustomJSONFormatter(jsonlogger.JsonFormatter):
     Provides consistent JSON structure and handles special data types
     commonly used in financial applications.
     """
-    
+
     def add_fields(self, log_record, record, message_dict):
         """Add custom fields to the log record."""
         super().add_fields(log_record, record, message_dict)
-        
+
         # Ensure consistent field naming
         if 'levelname' in log_record:
             log_record['level'] = log_record.pop('levelname').lower()
-        
+
         if 'name' in log_record:
             log_record['logger'] = log_record.pop('name')
-        
+
         # Add application metadata
         config = get_config()
         log_record['application'] = config.name
         log_record['version'] = config.version
         log_record['environment'] = config.environment
-        
+
         # Format timestamp consistently
         if 'created' in log_record:
             log_record['timestamp'] = log_record['created']
-        
+
         # Handle financial data types
         self._format_financial_data(log_record)
-    
+
     def _format_financial_data(self, log_record):
         """Format financial data types for consistent logging."""
         # Format price and quantity fields with appropriate precision
@@ -132,7 +130,7 @@ class CustomJSONFormatter(jsonlogger.JsonFormatter):
                     log_record[field] = round(float(log_record[field]), 8)
 
 
-def setup_logging(config: Optional[AppConfig] = None) -> None:
+def setup_logging(config: AppConfig | None = None) -> None:
     """
     Set up the logging infrastructure for the application.
     
@@ -145,7 +143,7 @@ def setup_logging(config: Optional[AppConfig] = None) -> None:
     """
     if config is None:
         config = get_config()
-    
+
     # Configure standard library logging
     logging_config = {
         'version': 1,
@@ -164,7 +162,7 @@ def setup_logging(config: Optional[AppConfig] = None) -> None:
         'handlers': {
             'console': {
                 'class': 'logging.StreamHandler',
-                'formatter': config.monitoring.log_format,
+                'formatter': 'json' if config.monitoring.log_format == 'json' else 'standard',
                 'stream': sys.stdout,
             },
         },
@@ -195,12 +193,12 @@ def setup_logging(config: Optional[AppConfig] = None) -> None:
             'handlers': ['console'],
         },
     }
-    
+
     # Add file handler for production
     if config.is_production():
         log_dir = Path('/var/log/finance-ingestion')
         log_dir.mkdir(exist_ok=True)
-        
+
         logging_config['handlers']['file'] = {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': str(log_dir / 'application.log'),
@@ -208,14 +206,14 @@ def setup_logging(config: Optional[AppConfig] = None) -> None:
             'backupCount': 10,
             'formatter': 'json',
         }
-        
+
         # Add file handler to all loggers
         for logger_config in logging_config['loggers'].values():
             logger_config['handlers'].append('file')
         logging_config['root']['handlers'].append('file')
-    
+
     logging.config.dictConfig(logging_config)
-    
+
     # Configure structlog
     processors = [
         structlog.contextvars.merge_contextvars,
@@ -228,14 +226,14 @@ def setup_logging(config: Optional[AppConfig] = None) -> None:
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
     ]
-    
+
     if config.monitoring.log_format == 'json':
         processors.append(structlog.processors.JSONRenderer())
     else:
         processors.extend([
             structlog.dev.ConsoleRenderer(colors=not config.is_production()),
         ])
-    
+
     structlog.configure(
         processors=processors,
         wrapper_class=structlog.stdlib.BoundLogger,
@@ -244,7 +242,7 @@ def setup_logging(config: Optional[AppConfig] = None) -> None:
     )
 
 
-def get_logger(name: Optional[str] = None) -> structlog.BoundLogger:
+def get_logger(name: str | None = None) -> structlog.BoundLogger:
     """
     Get a structured logger instance.
     
@@ -262,11 +260,11 @@ def get_logger(name: Optional[str] = None) -> structlog.BoundLogger:
             name = frame.f_back.f_globals.get('__name__', 'finance_ingestion')
         else:
             name = 'finance_ingestion'
-    
+
     return structlog.get_logger(name)
 
 
-def set_correlation_id(corr_id: Optional[str] = None) -> str:
+def set_correlation_id(corr_id: str | None = None) -> str:
     """
     Set the correlation ID for the current context.
     
@@ -278,12 +276,12 @@ def set_correlation_id(corr_id: Optional[str] = None) -> str:
     """
     if corr_id is None:
         corr_id = str(uuid.uuid4())
-    
+
     correlation_id.set(corr_id)
     return corr_id
 
 
-def get_correlation_id() -> Optional[str]:
+def get_correlation_id() -> str | None:
     """
     Get the current correlation ID.
     
@@ -305,7 +303,7 @@ class LoggingContext:
     All log messages within this context will include the provided
     key-value pairs automatically.
     """
-    
+
     def __init__(self, **context):
         """
         Initialize the logging context.
@@ -315,12 +313,12 @@ class LoggingContext:
         """
         self.context = context
         self.token = None
-    
+
     def __enter__(self):
         """Enter the logging context."""
         self.token = structlog.contextvars.bind_contextvars(**self.context)
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit the logging context."""
         if self.token:
@@ -334,8 +332,8 @@ class PerformanceLogger:
     Provides convenient methods for logging latency, throughput,
     and other performance-related metrics.
     """
-    
-    def __init__(self, logger: Optional[structlog.BoundLogger] = None):
+
+    def __init__(self, logger: structlog.BoundLogger | None = None):
         """
         Initialize the performance logger.
         
@@ -343,12 +341,12 @@ class PerformanceLogger:
             logger: Optional logger instance. If not provided, creates a new one.
         """
         self.logger = logger or get_logger('performance')
-    
+
     def log_latency(
         self,
         operation: str,
         latency_ns: int,
-        message_id: Optional[str] = None,
+        message_id: str | None = None,
         **context
     ) -> None:
         """
@@ -365,20 +363,20 @@ class PerformanceLogger:
             'latency_ns': latency_ns,
             'latency_ms': latency_ns / 1_000_000,
         }
-        
+
         if message_id:
             log_data['message_id'] = message_id
-        
+
         log_data.update(context)
-        
+
         self.logger.info('Latency measurement', **log_data)
-    
+
     def log_throughput(
         self,
         operation: str,
         messages_per_second: float,
-        bytes_per_second: Optional[int] = None,
-        window_size_ms: Optional[int] = None,
+        bytes_per_second: int | None = None,
+        window_size_ms: int | None = None,
         **context
     ) -> None:
         """
@@ -395,17 +393,17 @@ class PerformanceLogger:
             'operation': operation,
             'messages_per_second': messages_per_second,
         }
-        
+
         if bytes_per_second is not None:
             log_data['bytes_per_second'] = bytes_per_second
-        
+
         if window_size_ms is not None:
             log_data['window_size_ms'] = window_size_ms
-        
+
         log_data.update(context)
-        
+
         self.logger.info('Throughput measurement', **log_data)
-    
+
     def log_resource_usage(
         self,
         cpu_percent: float,
@@ -428,14 +426,14 @@ class PerformanceLogger:
             'memory_percent': memory_percent,
             'memory_mb': memory_bytes / (1024 * 1024),
         }
-        
+
         log_data.update(context)
-        
+
         self.logger.info('Resource usage', **log_data)
 
 
 # Global performance logger instance
-_performance_logger: Optional[PerformanceLogger] = None
+_performance_logger: PerformanceLogger | None = None
 
 
 def get_performance_logger() -> PerformanceLogger:
