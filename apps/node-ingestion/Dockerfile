@@ -35,7 +35,7 @@ FROM node:18-alpine as runtime
 RUN apk add --no-cache \
     dumb-init \
     && addgroup -g 1001 -S nodejs \
-    && adduser -S appuser -u 1001
+    && adduser -S appuser -u 1001 -G nodejs
 
 # Set environment variables
 ENV NODE_ENV=production \

@@ -38,8 +38,8 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
-    echo "❌ Docker Compose is not installed. Please install Docker Compose first."
+if ! command -v docker &> /dev/null || ! docker compose version &> /dev/null; then
+    echo "❌ Docker Compose is not available. Please install Docker with Compose plugin."
     exit 1
 fi
 
@@ -69,7 +69,7 @@ fi
 
 # Start infrastructure services
 echo "🐳 Starting infrastructure services..."
-docker-compose up -d redis postgres
+docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml up -d redis postgres
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to be ready..."
@@ -79,14 +79,14 @@ sleep 5
 echo "🔍 Testing service connections..."
 
 # Test Redis
-if docker-compose exec -T redis redis-cli ping | grep -q "PONG"; then
+if docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec -T redis redis-cli ping | grep -q "PONG"; then
     echo "✅ Redis is ready"
 else
     echo "⚠️  Redis connection test failed"
 fi
 
 # Test PostgreSQL
-if docker-compose exec -T postgres pg_isready -U postgres | grep -q "accepting connections"; then
+if docker compose -f infrastructure/docker/docker-compose.base.yml -f infrastructure/docker/docker-compose.dev.yml exec -T postgres pg_isready -U postgres | grep -q "accepting connections"; then
     echo "✅ PostgreSQL is ready"
 else
     echo "⚠️  PostgreSQL connection test failed"
