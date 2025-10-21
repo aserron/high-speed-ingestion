@@ -5,7 +5,10 @@
       "args": [
         "duckduckgo-mcp-server"
       ],
-      "disabled": false
+      "disabled": false,
+      "autoApprove": [
+        "search"
+      ]
     },
     "obsidian": {
       "command": "npx",

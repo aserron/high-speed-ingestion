@@ -25,7 +25,16 @@
     "setup": "npm install && turbo run setup",
     "test:regression": "cd tests/performance && python regression_runner.py",
     "test:regression:quick": "cd tests/performance && python regression_runner.py --config regression_config_quick.json",
-    "test:regression:ci": "cd tests/performance && python regression_runner.py --config regression_config_ci.json"
+    "test:regression:ci": "cd tests/performance && python regression_runner.py --config regression_config_ci.json",
+    "validate-config": "npm run validate-config:python && npm run validate-config:node",
+    "validate-config:python": "cd apps/python-ingestion && python -m finance_ingestion.cli validate-config",
+    "validate-config:node": "cd apps/node-ingestion && npm run validate-config",
+    "validate-config:dev": "npm run validate-config:python -- --env development && npm run validate-config:node -- --env development",
+    "validate-config:staging": "npm run validate-config:python -- --env staging && npm run validate-config:node -- --env staging",
+    "validate-config:prod": "npm run validate-config:python -- --env production && npm run validate-config:node -- --env production",
+    "health-check": "npm run health-check:python && npm run health-check:node",
+    "health-check:python": "cd apps/python-ingestion && python -m finance_ingestion.cli health-check",
+    "health-check:node": "cd apps/node-ingestion && npm run health-check"
   },
   "devDependencies": {
     "turbo": "^1.10.0"

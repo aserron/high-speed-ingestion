@@ -31,6 +31,7 @@ uvicorn[standard]>=0.24.0
 
 # CLI interface
 click>=8.1.7
+rich>=13.7.0  # Rich console output for CLI
 
 # For production installation, use:
 # pip install -e .
