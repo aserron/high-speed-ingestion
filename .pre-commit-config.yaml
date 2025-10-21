@@ -1,43 +1,185 @@
-# Pre-commit hooks for code quality
+# Pre-commit hooks for comprehensive code quality
+# Install with: pre-commit install
+# Run manually: pre-commit run --all-files
+
 repos:
-  # Python hooks
+  # Python code quality
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
+    rev: v0.1.15
     hooks:
+      # Ruff linting with auto-fix
       - id: ruff
+        name: ruff-lint
         args: [--fix, --exit-non-zero-on-fix]
         files: ^apps/python-ingestion/
+        types: [python]
+      
+      # Ruff formatting
       - id: ruff-format
+        name: ruff-format
         files: ^apps/python-ingestion/
+        types: [python]
 
-  # JavaScript/Node.js hooks
+  # Python type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.1
+    hooks:
+      - id: mypy
+        name: mypy-type-check
+        files: ^apps/python-ingestion/src/
+        args: [--config-file=apps/python-ingestion/pyproject.toml]
+        additional_dependencies:
+          - pydantic>=2.5.0
+          - types-redis
+          - types-requests
+
+  # Python security scanning
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: bandit-security-check
+        files: ^apps/python-ingestion/src/
+        args: [-c, apps/python-ingestion/pyproject.toml]
+
+  # JavaScript/Node.js code quality
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.54.0
+    rev: v9.15.0
     hooks:
       - id: eslint
-        files: ^apps/node-ingestion/.*\.(js|ts)$
+        name: eslint-lint
+        files: ^apps/node-ingestion/.*\.(js|mjs)$
+        args: [--fix]
         additional_dependencies:
-          - eslint@8.54.0
-          - eslint-config-standard@17.1.0
-          - eslint-plugin-import@2.29.0
-          - eslint-plugin-node@11.1.0
-          - eslint-plugin-promise@6.1.1
+          - eslint@9.15.0
+          - '@eslint/js@9.15.0'
+          - globals@15.12.0
 
-  # General hooks
+  # Prettier formatting for JavaScript
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: prettier-format
+        files: ^apps/node-ingestion/.*\.(js|mjs|json)$
+        args: [--write]
+
+  # General file quality checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
+      # File formatting
       - id: trailing-whitespace
+        name: trim-whitespace
+        exclude: \.md$
       - id: end-of-file-fixer
+        name: fix-eof
+      - id: mixed-line-ending
+        name: fix-line-endings
+        args: [--fix=lf]
+      
+      # File validation
       - id: check-yaml
+        name: check-yaml
+        exclude: ^\.github/workflows/
       - id: check-json
+        name: check-json
+      - id: check-toml
+        name: check-toml
+      - id: check-xml
+        name: check-xml
+      
+      # Git checks
       - id: check-merge-conflict
+        name: check-merge-conflict
+      - id: check-case-conflict
+        name: check-case-conflict
+      - id: check-symlinks
+        name: check-symlinks
+      
+      # File size and content checks
       - id: check-added-large-files
+        name: check-large-files
         args: ['--maxkb=1000']
+      - id: check-executables-have-shebangs
+        name: check-shebangs
+      - id: check-shebang-scripts-are-executable
+        name: check-executable-shebangs
 
-  # Docker hooks
+  # Configuration file validation
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        name: yaml-lint
+        args: [-d, relaxed]
+        exclude: ^\.github/workflows/
+
+  # Docker file linting
   - repo: https://github.com/hadolint/hadolint
     rev: v2.12.0
     hooks:
       - id: hadolint-docker
+        name: hadolint
         files: Dockerfile.*
+
+  # Security checks for secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: \.lock$|package-lock\.json$
+
+  # Dependency security checks
+  - repo: local
+    hooks:
+      # Python dependency security
+      - id: safety-check
+        name: python-safety-check
+        entry: bash -c 'cd apps/python-ingestion && safety check --json --output safety-report.json || true'
+        language: system
+        files: ^apps/python-ingestion/requirements.*\.txt$
+        pass_filenames: false
+      
+      # Node.js dependency security
+      - id: npm-audit
+        name: node-audit-check
+        entry: bash -c 'cd apps/node-ingestion && npm audit --audit-level=moderate || true'
+        language: system
+        files: ^apps/node-ingestion/package.*\.json$
+        pass_filenames: false
+
+  # Configuration validation
+  - repo: local
+    hooks:
+      - id: config-validation
+        name: validate-configuration
+        entry: npm run validate-config:dev
+        language: system
+        files: ^configs/
+        pass_filenames: false
+
+# Global configuration
+default_language_version:
+  python: python3.11
+  node: '18'
+
+# Performance optimization
+default_stages: [commit]
+minimum_pre_commit_version: '3.5.0'
+
+# Exclude patterns
+exclude: |
+  (?x)^(
+    .*\.lock$|
+    .*\.log$|
+    .*\.tmp$|
+    .*/__pycache__/.*|
+    .*/node_modules/.*|
+    .*/\.venv/.*|
+    .*/build/.*|
+    .*/dist/.*|
+    .*/coverage/.*
+  )$
